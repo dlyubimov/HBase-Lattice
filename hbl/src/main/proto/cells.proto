@@ -1,0 +1,9 @@
+package hbl;
+
+option java_package= "com.inadco.hbl.protocodegen";
+option optimize_for = SPEED;
+
+message Aggregation  {
+    required uint64         cnt = 1 [default = 0];
+    required double         sum = 2 [ default = 0.0];
+}

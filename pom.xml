@@ -1,0 +1,175 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+<!-- 
+
+Copyright © 2010, 2011 Inadco, Inc. All rights reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+ -->
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.inadco.hbl</groupId>
+  <artifactId>hbl-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <name>HBase Lattice :: Parent</name>
+
+  <packaging>pom</packaging>
+
+  <repositories>
+
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/simple/libs-release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+
+   <repository>
+      <id>dlyubimov-maven-repo-releases</id>
+      <url>https://github.com/dlyubimov/dlyubimov-maven-repo/raw/master/releases</url>
+     <snapshots>    
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>dlyubimov-maven-repo-snapshots</id>
+      <url>https://github.com/dlyubimov/dlyubimov-maven-repo/raw/master/snapshots</url>
+     <snapshots>    
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+
+
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>dlyubimov-maven-repo-releases</id>
+      <name>releases</name>
+      <url>https://github.com/dlyubimov/dlyubimov-maven-repo/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>dlyubimov-maven-repo-snapshots</id>
+      <name>snapshots</name>
+      <url>https://github.com/dlyubimov/dlyubimov-maven-repo/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+
+  <modules>
+    <module>hbl</module>
+    <module>sample</module>
+  </modules>
+
+  <scm>
+    <!-- for this to work with release plugin, origin must be configured 
+      to the current remote. i also did not find a way to use gitosis urls with 
+      this. damn maven scm. -->
+    <developerConnection>scm:git:file://${basedir}</developerConnection>
+  </scm>
+
+
+  <profiles>
+    <profile>
+      <id>compiler</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <properties>
+
+        <ecoadapters.version>0.3.12</ecoadapters.version>
+
+      </properties>
+    </profile>
+
+  </profiles>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
+
+  </build>
+
+
+  <dependencyManagement>
+    <dependencies>
+      
+      <!-- sibling projects & modules  -->
+      
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <version>${project.version}</version>
+        <artifactId>hbl</artifactId>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <version>${project.version}</version>
+        <artifactId>sample</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>com.inadco.ecoadapters</groupId>
+        <artifactId>ecoadapters</artifactId>
+        <version>${ecoadapters.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.inadco.ecoadapters</groupId>
+        <artifactId>ecoadapters</artifactId>
+        <version>${ecoadapters.version}</version>
+        <classifier>sources</classifier>
+      </dependency>
+      <dependency>
+        <groupId>com.inadco.ecoadapters</groupId>
+        <artifactId>ecoadapters</artifactId>
+        <version>${ecoadapters.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      
+      <!-- 3rd party modules -->
+      
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>[1.8,)</version>
+      </dependency>
+
+    </dependencies>
+
+  </dependencyManagement>
+
+</project>
+
