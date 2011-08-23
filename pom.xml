@@ -23,7 +23,7 @@ Copyright © 2010, 2011 Inadco, Inc. All rights reserved.
 
   <groupId>com.inadco.hbl</groupId>
   <artifactId>hbl-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0-pre0</version>
   <name>HBase Lattice :: Parent</name>
 
   <packaging>pom</packaging>
