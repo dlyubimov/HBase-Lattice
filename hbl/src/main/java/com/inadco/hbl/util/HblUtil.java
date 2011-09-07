@@ -18,6 +18,10 @@
  */
 package com.inadco.hbl.util;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -139,6 +143,138 @@ public class HblUtil {
         for (int i = 0; i < decimalLen; i++)
             result = 10 * result + (composite[offset++] - '0');
         return result;
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////
+    // all the Var*** stuff is a shameless rip-off of the RLE + zigzag
+    // encoding used in protobuf as well.
+    // ///////////////////////////////////////////////////////////////////////////////
+
+    public static void writeVarUint32(DataOutput out, int val) throws IOException {
+        for (;; val >>>= 7) {
+            if ((val & ~0x7f) == 0) {
+                out.writeByte((byte) val);
+                break;
+            } else
+                out.writeByte((byte) (0x80 | val));
+        }
+    }
+
+    public static void writeVarUint64(DataOutput out, long val) throws IOException {
+        for (;; val >>>= 7) {
+            if ((val & ~0x7f) == 0) {
+                out.writeByte((byte) val);
+                break;
+            } else
+                out.writeByte((byte) (0x80 | val));
+        }
+    }
+
+    public static void writeVarInt32(DataOutput out, int val) throws IOException {
+        writeVarUint32(out, (val << 1) ^ (val >> -1));
+    }
+
+    public static void writeVarInt64(DataOutput out, long val) throws IOException {
+        writeVarUint64(out, (val << 1) ^ (val >> -1));
+    }
+
+    public static int readVarUint32(DataInput in) throws IOException {
+        int accum = 0, bitsRead = 0;
+        do {
+            int c = in.readByte();
+            if (c == -1)
+                throw new IOException("Unexpected EOF while reading uint32");
+
+            c &= 0xff;
+
+            if ((c & 0x80) == 0)
+                return accum | c << bitsRead;
+            else
+                accum |= (c & 0x7f) << bitsRead;
+            bitsRead += 7;
+        } while (bitsRead < 35);
+        throw new IOException("Illegal Varint format");
+    }
+
+    public static int readVarInt32(DataInput in) throws IOException {
+        int n = readVarUint32(in);
+        return (n >>> 1) ^ -(n & 1);
+    }
+
+    public static long readVarUint64(DataInput in) throws IOException {
+        long accum = 0;
+        int bitsRead = 0;
+        do {
+            int c = in.readByte();
+            if (c == -1)
+                throw new IOException("Unexpected EOF while reading uint64");
+
+            c &= 0xff;
+
+            if ((c & 0x80) == 0)
+                return accum | c << bitsRead;
+            else
+                accum |= (c & 0x7f) << bitsRead;
+            bitsRead += 7;
+        } while (bitsRead < 70);
+        throw new IOException("Illegal Varint format");
+    }
+
+    public static long readVarInt64(DataInput in) throws IOException {
+        long n = readVarUint64(in);
+        return (n >>> 1) ^ -(n & 1);
+
+    }
+
+    /**
+     * variable length encoding from protobuf. Would pack small positives (like
+     * incremental ids or offsets) more efficiently whereas random bitsets would
+     * take more space on average.
+     * 
+     * Same as the encoding used for uint32 values in protobuf.
+     * 
+     * @param bb
+     * @param val
+     */
+    static void setVarUint32(ByteBuffer bb, int val) throws IOException {
+        for (;; val >>>= 7) {
+            if ((val & ~0x7f) == 0) {
+                bb.put((byte) val);
+                break;
+            } else
+                bb.put((byte) (0x80 | val));
+        }
+    }
+
+    static int getVarUint32(ByteBuffer bb) throws IOException {
+        int accum = 0, bitsRead = 0;
+        do {
+            int c = bb.get() & 0xff;
+
+            if ((c & 0x80) == 0)
+                return accum | c << bitsRead;
+            else
+                accum |= (c & 0x7f) << bitsRead;
+            bitsRead += 7;
+        } while (bitsRead < 35);
+        throw new IOException("Illegal Varint format");
+    }
+
+    /**
+     * this is probably not a very often case (better for encoding small
+     * absolute values of both signs)
+     * 
+     * @param bb
+     * @param val
+     * @throws IOException
+     */
+    static void setVarInt32(ByteBuffer bb, int val) throws IOException {
+        setVarUint32(bb, (val << 1) ^ (val >> 31));
+    }
+
+    static int getVarInt32(ByteBuffer bb) throws IOException {
+        int n = getVarUint32(bb);
+        return (n >>> 1) ^ -(n & 1);
     }
 
 }
