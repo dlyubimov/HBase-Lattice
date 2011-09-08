@@ -76,7 +76,7 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
         DataBag db = new DefaultDataBag();
 
         byte[] key = new byte[c.getKeyLen()];
-        walkDimensions(input, db, key, c.getCuboidDimenions(), 0, 0, TupleFactory.getInstance());
+        walkDimensions(input, db, key, c.getCuboidDimensions(), 0, 0, TupleFactory.getInstance());
 
         return db;
     }

@@ -19,6 +19,8 @@
 package com.inadco.hbl.model;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.RawComparator;
 
 import com.inadco.hbl.api.Dimension;
 
@@ -37,4 +39,10 @@ public abstract class AbstractDimension implements Dimension {
         return name;
     }
 
+    @Override
+    public RawComparator<?> getMemberComparator() {
+        return Bytes.BYTES_RAWCOMPARATOR;
+    }
+
+    
 }

@@ -124,7 +124,7 @@ public class SimpleCuboid implements Cuboid {
     }
 
     @Override
-    public List<Dimension> getCuboidDimenions() {
+    public List<Dimension> getCuboidDimensions() {
         return unmodifiableDimensions;
     }
 

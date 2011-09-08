@@ -28,12 +28,14 @@ import org.apache.commons.lang.Validate;
 import com.inadco.hbl.util.HblUtil;
 
 /**
- * standard time hierarchy supporting [ALL].[year-month].[date-hour] buckets
+ * standard time hierarchy supporting [ALL].[year-month].[date-hour] buckets.<P>
+ * 
+ * I.e. the lowest granularity of a member bucket is hour.<P>
  * 
  * @author dmitriy
  * 
  */
-public class SimpleTimeHierarchy extends AbstractHierarchy {
+public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     // so we organize key as [YYYYMM][DDHH] concatenated literals.
     // this, length=6+4=10
@@ -43,7 +45,7 @@ public class SimpleTimeHierarchy extends AbstractHierarchy {
     private static final int      KEYLEN    = YM_KEYLEN + DH_KEYLEN;
     private static final TimeZone UTC       = TimeZone.getTimeZone("UTC");
 
-    public SimpleTimeHierarchy(String name) {
+    public SimpleTimeHourHierarchy(String name) {
         super(name, new String[] { "ALL", "year-month", "date-hour" });
     }
 

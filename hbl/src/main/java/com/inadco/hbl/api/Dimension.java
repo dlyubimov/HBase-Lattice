@@ -18,6 +18,8 @@
  */
 package com.inadco.hbl.api;
 
+import org.apache.hadoop.io.RawComparator;
+
 
 public interface Dimension {
     
@@ -26,5 +28,6 @@ public interface Dimension {
     
     void getKey(Object member, byte[] buff, int offset );
     
+    RawComparator<?> getMemberComparator();
 
 }

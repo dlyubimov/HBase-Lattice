@@ -18,6 +18,8 @@
  */
 package com.inadco.hbl.model;
 
+import org.apache.hadoop.io.RawComparator;
+
 import com.inadco.hbl.util.HblUtil;
 
 /**

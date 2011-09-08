@@ -31,7 +31,7 @@ public interface Cuboid {
 
     List<String> getCuboidPath();
 
-    List<Dimension> getCuboidDimenions();
+    List<Dimension> getCuboidDimensions();
 
     /**
      * Get cuboids' hbase table name.

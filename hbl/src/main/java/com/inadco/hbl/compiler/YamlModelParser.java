@@ -45,7 +45,7 @@ import com.inadco.hbl.model.HexDimension;
 import com.inadco.hbl.model.SimpleCube;
 import com.inadco.hbl.model.SimpleCuboid;
 import com.inadco.hbl.model.SimpleMeasure;
-import com.inadco.hbl.model.SimpleTimeHierarchy;
+import com.inadco.hbl.model.SimpleTimeHourHierarchy;
 
 /**
  * parse cube mode definition out of Yaml document.
@@ -116,7 +116,7 @@ public final class YamlModelParser {
         // understand !SimpleCuboid as custom tag
         addTag(SimpleCuboid.class, c, rp);
         addTag(HexDimension.class, c, rp);
-        addTag(SimpleTimeHierarchy.class, c, rp);
+        addTag(SimpleTimeHourHierarchy.class, c, rp);
         addTag(SimpleMeasure.class, c, rp);
         return new Yaml(c, rp);
 
