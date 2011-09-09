@@ -21,9 +21,6 @@ package com.inadco.hbl.compiler;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -167,7 +164,7 @@ public class Pig8CubeIncrementalCompilerBean {
         try {
             InputStream cubeIs = cubeModel.getInputStream();
             closeables.addFirst(cubeIs);
-            cubeModelYamlStr = fromStream(cubeIs, "utf-8");
+            cubeModelYamlStr = IOUtil.fromStream(cubeIs, "utf-8");
             cube = YamlModelParser.parseYamlModel(cubeModelYamlStr);
 
         } finally {
@@ -197,7 +194,7 @@ public class Pig8CubeIncrementalCompilerBean {
                 Pig8CubeIncrementalCompilerBean.class.getClassLoader().getResourceAsStream("hbl-compiler.pig");
             Validate.notNull(is, "hbl-compiler.pig not found");
             closeables.addFirst(is);
-            String compilerSrc = fromStream(is, "utf-8");
+            String compilerSrc = IOUtil.fromStream(is, "utf-8");
 
             substitutes.put("workDir", workDir);
             substitutes.put("inputRelation", inputRelationName);
@@ -226,21 +223,11 @@ public class Pig8CubeIncrementalCompilerBean {
 
     }
 
-    public static String fromStream(InputStream is, String encoding) throws IOException {
-        StringWriter sw = new StringWriter();
-        Reader r = new InputStreamReader(is, "utf-8");
-        int ch;
-        while (-1 != (ch = r.read()))
-            sw.write(ch);
-        sw.close();
-        return sw.toString();
-    }
-
     private void generatePreambula(Map<String, String> substitutes, Deque<Closeable> closeables) throws IOException {
         InputStream is = pigPreambula.getInputStream();
         Validate.notNull(is, "preambula not found");
         closeables.addFirst(is);
-        String preambulaStr = fromStream(is, "utf-8");
+        String preambulaStr = IOUtil.fromStream(is, "utf-8");
         substitutes.put("preambula", preambulaStr);
     }
 
@@ -296,7 +283,7 @@ public class Pig8CubeIncrementalCompilerBean {
         Validate.notNull(bodyTemplateIs, "body template resource not found");
         closeables.addFirst(bodyTemplateIs);
 
-        String bodyTemplate = fromStream(bodyTemplateIs, "utf-8");
+        String bodyTemplate = IOUtil.fromStream(bodyTemplateIs, "utf-8");
 
         Map<String, String> bodySubstitutes = new HashMap<String, String>();
         StringBuffer sbBody = new StringBuffer();
@@ -314,9 +301,10 @@ public class Pig8CubeIncrementalCompilerBean {
         substitutes.put("cuboidPath", HblUtil.encodeCuboidPath(cuboid));
         substitutes.put("cuboidTable", cuboid.getCuboidTableName());
 
-        // this kind of largely relies on the fact that iterating over measure values comes in the same order. 
+        // this kind of largely relies on the fact that iterating over measure
+        // values comes in the same order.
         // todo: standardize the measure order in the codegen.
-        
+
         // measure evaluation -- this is actually teh same for all cuboids at
         // this time.
         StringBuffer sb = new StringBuffer();
@@ -368,11 +356,8 @@ public class Pig8CubeIncrementalCompilerBean {
     }
 
     private String generateHbaseProtoStorageSpec(Measure measure) {
-        return String.format("%s:%s:%s",
-                             HblAdmin.HBL_METRIC_FAMILY,
-                             measure.getName(),
-                             Aggregation.class.getName()
-                                 .replaceAll(Pattern.quote("$"), Matcher.quoteReplacement("\\$")));
+        return String.format("%s:%s:%s", HblAdmin.HBL_METRIC_FAMILY, measure.getName(), Aggregation.class.getName()
+            .replaceAll(Pattern.quote("$"), Matcher.quoteReplacement("\\$")));
     }
 
     private static String preprocess(String src, Map<String, String> substitutes) {
@@ -411,7 +396,7 @@ public class Pig8CubeIncrementalCompilerBean {
     }
 
     public static String generateMeasureMetricSchema(String metricName) {
-        return String.format("%s:(sum:double,cnt:long)",metricName);
+        return String.format("%s:(sum:double,cnt:long)", metricName);
     }
 
 }

@@ -22,7 +22,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -444,5 +448,16 @@ public final class IOUtil {
         }
 
     }
+    
+    public static String fromStream(InputStream is, String encoding) throws IOException {
+        StringWriter sw = new StringWriter();
+        Reader r = new InputStreamReader(is, "utf-8");
+        int ch;
+        while (-1 != (ch = r.read()))
+            sw.write(ch);
+        sw.close();
+        return sw.toString();
+    }
+
 
 }

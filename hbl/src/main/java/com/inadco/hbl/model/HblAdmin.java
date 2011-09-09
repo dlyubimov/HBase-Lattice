@@ -84,7 +84,7 @@ public class HblAdmin {
         try {
             InputStream cubeIs = cubeModel.getInputStream();
             closeables.addFirst(cubeIs);
-            cubeModelYamlStr = Pig8CubeIncrementalCompilerBean.fromStream(cubeIs, "utf-8");
+            cubeModelYamlStr = IOUtil.fromStream(cubeIs, "utf-8");
             cube = YamlModelParser.parseYamlModel(cubeModelYamlStr);
 
         } finally {

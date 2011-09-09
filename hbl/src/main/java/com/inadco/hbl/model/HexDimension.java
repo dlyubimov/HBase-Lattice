@@ -18,8 +18,6 @@
  */
 package com.inadco.hbl.model;
 
-import org.apache.hadoop.io.RawComparator;
-
 import com.inadco.hbl.util.HblUtil;
 
 /**
@@ -38,8 +36,7 @@ import com.inadco.hbl.util.HblUtil;
 
 public class HexDimension extends AbstractDimension {
     protected String name;
-    protected int keylen;
-
+    protected int    keylen;
 
     public HexDimension(String name, int keylen) {
         super(name);
@@ -49,16 +46,14 @@ public class HexDimension extends AbstractDimension {
 
     @Override
     public int getKeyLen() {
-        return keylen<<1;
+        return keylen << 1;
     }
 
     @Override
     public void getKey(Object member, byte[] buff, int offset) {
-        
-        byte[] key=(byte[]) member;
+
+        byte[] key = (byte[]) member;
         HblUtil.fillCompositeKeyWithHex(key, 0, keylen, buff, offset);
     }
-
-    
 
 }
