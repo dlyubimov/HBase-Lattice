@@ -30,6 +30,10 @@ public abstract class BaseFunc<T> extends EvalFunc<T> {
 
     protected Cube cube;
     
+    protected BaseFunc() { 
+        
+    }
+    
     public BaseFunc( String encodedModel ) {
         super();
         try {

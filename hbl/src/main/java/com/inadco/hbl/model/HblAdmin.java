@@ -48,15 +48,15 @@ import com.inadco.hbl.util.IOUtil;
 @Component("HblAdmin")
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class HblAdmin {
-    
-    private static final Logger s_log = Logger.getLogger(HblAdmin.class);
 
-    public static final String HBL_METRIC_FAMILY_STR = "hbl";
-    public static final byte[] HBL_METRIC_FAMILY     = Bytes.toBytes(HBL_METRIC_FAMILY_STR);
+    private static final Logger s_log                 = Logger.getLogger(HblAdmin.class);
 
-    private Resource           cubeModel;
-    private String             cubeModelYamlStr;
-    private Cube               cube;
+    public static final String  HBL_METRIC_FAMILY_STR = "hbl";
+    public static final byte[]  HBL_METRIC_FAMILY     = Bytes.toBytes(HBL_METRIC_FAMILY_STR);
+
+    private Resource            cubeModel;
+    private String              cubeModelYamlStr;
+    private Cube                cube;
 
     /**
      * Non-spring constructor
@@ -76,6 +76,14 @@ public class HblAdmin {
     public void setCubeModel(Resource cubeModel) {
         this.cubeModel = cubeModel;
     }
+    
+    public String getCubeModelYamlStr() {
+        return cubeModelYamlStr;
+    }
+
+    public Cube getCube() {
+        return cube;
+    }
 
     @PostConstruct
     public void init() throws IOException {
@@ -92,6 +100,22 @@ public class HblAdmin {
         }
     }
 
+    public void dropCube(Configuration conf) throws IOException {
+        HBaseAdmin hba = new HBaseAdmin(conf);
+        IOException lastErr = null;
+
+        for (Cuboid c : cube.getCuboids()) {
+            try {
+                dropCuboid(hba, c);
+            } catch (IOException exc) {
+                s_log.error(exc.getMessage(), exc);
+                lastErr = exc;
+            }
+        }
+        if (lastErr != null)
+            throw lastErr;
+    }
+
     /**
      * deploys the cube model to hbase by creating necessary tables. if table
      * already exists, it doesn't currently change its attributes.
@@ -100,19 +124,19 @@ public class HblAdmin {
     public void deployCube(Configuration conf) throws IOException {
         HBaseAdmin hba = new HBaseAdmin(conf);
         for (Cuboid c : cube.getCuboids())
-            // TODO: parse those things from cuboid description
             initCuboid(hba, c);
     }
 
     private void initCuboid(HBaseAdmin admin, Cuboid c) throws IOException {
-        
+
         byte[] tablename = Bytes.toBytes(c.getCuboidTableName());
-        
-        if ( admin.tableExists(tablename ) ) { 
-            s_log.info ( String.format ( "cuboid table %s already exists, cowardly refusing to re-create...",c.getCuboidTableName()));
+
+        if (admin.tableExists(tablename)) {
+            s_log.info(String.format("cuboid table %s already exists, cowardly refusing to re-create...",
+                                     c.getCuboidTableName()));
             return;
         }
-        
+
         HTableDescriptor htd = new HTableDescriptor(tablename);
 
         HColumnDescriptor hcd = new HColumnDescriptor(HBL_METRIC_FAMILY);
@@ -123,6 +147,16 @@ public class HblAdmin {
         htd.addFamily(hcd);
 
         admin.createTable(htd);
+
+    }
+
+    private void dropCuboid(HBaseAdmin admin, Cuboid c) throws IOException {
+        byte[] tablename = Bytes.toBytes(c.getCuboidTableName());
+
+        if (admin.tableExists(tablename)) {
+            admin.disableTable(tablename);
+            admin.deleteTable(tablename);
+        }
 
     }
 }

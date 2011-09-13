@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
@@ -41,6 +42,7 @@ import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Measure;
 import com.inadco.hbl.model.HblAdmin;
+import com.inadco.hbl.piggybank.AggregationFromMeasureBag;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
@@ -245,6 +247,20 @@ public class Pig8CubeIncrementalCompilerBean {
         // String.format("DEFINE hbl_d2k com.inadco.hbl.piggybank.Dimensions2CuboidKey('%s');\n",
         // YamlModelParser.encodeCubeModel(cubeModelYamlStr));
 
+        StringBuffer sb = new StringBuffer();
+        for (Map.Entry<String, ? extends Measure> me : cube.getMeasures().entrySet()) {
+            String def =
+                String.format("DEFINE %s %s('%s','$cubeModel');\n",
+                              getMeasureAggregateFuncName(me.getValue()),
+                              AggregationFromMeasureBag.class.getName(),
+                              me.getValue().getName());
+            sb.append(def);
+        }
+        substitutes.put("measureDefs", sb.toString());
+    }
+
+    private static String getMeasureAggregateFuncName(Measure m) {
+        return String.format("hbl_aggr_%s", m.getName());
     }
 
     private void generateCuboidStoreDefs(Map<String, String> substitutes, Deque<Closeable> closeables)
@@ -262,7 +278,7 @@ public class Pig8CubeIncrementalCompilerBean {
         StringBuffer hbaseSpecs = new StringBuffer();
 
         for (Measure m : cube.getMeasures().values()) {
-            hbaseSpecs.append(generateHbaseProtoStorageSpec(m));
+            hbaseSpecs.append(generateHbaseByteArrayStorageSpec(m));
             hbaseSpecs.append(' ');
         }
         sb.append(String.format("DEFINE store_%s com.inadco.ecoadapters.pig.HBaseProtobufStorage ('%s');\n",
@@ -311,7 +327,7 @@ public class Pig8CubeIncrementalCompilerBean {
         for (Measure m : cube.getMeasures().values()) {
             if (sb.length() != 0)
                 sb.append(", ");
-            sb.append(String.format("hbl_m2d('%1$s',%1$s) as %1$s", m.getName()));
+            sb.append(m.getName());
         }
         substitutes.put("measuresEval", sb.toString());
 
@@ -320,7 +336,7 @@ public class Pig8CubeIncrementalCompilerBean {
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
-            sb.append(generateMeasureMetricEval(m.getName(), "GROUP_" + cuboid.getCuboidTableName()));
+            sb.append(generateMeasureMetricEval(m, "GROUP_" + cuboid.getCuboidTableName()));
         }
         substitutes.put("measureMetricEvals", sb.toString());
 
@@ -329,7 +345,7 @@ public class Pig8CubeIncrementalCompilerBean {
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
-            sb.append(generateMeasureMetricMerge(m.getName()));
+            sb.append(generateMeasureMetricMerge(m));
         }
         substitutes.put("measureMetricMerges", sb.toString());
 
@@ -355,9 +371,16 @@ public class Pig8CubeIncrementalCompilerBean {
 
     }
 
-    private String generateHbaseProtoStorageSpec(Measure measure) {
-        return String.format("%s:%s:%s", HblAdmin.HBL_METRIC_FAMILY, measure.getName(), Aggregation.class.getName()
-            .replaceAll(Pattern.quote("$"), Matcher.quoteReplacement("\\$")));
+    protected String generateHbaseProtoStorageSpec(Measure measure) {
+        return String.format("%s:%s:%s",
+                             Bytes.toString(HblAdmin.HBL_METRIC_FAMILY),
+                             measure.getName(),
+                             Aggregation.class.getName()
+                                 .replaceAll(Pattern.quote("$"), Matcher.quoteReplacement("\\$")));
+    }
+
+    private String generateHbaseByteArrayStorageSpec(Measure measure) {
+        return String.format("%s:%s", Bytes.toString(HblAdmin.HBL_METRIC_FAMILY), measure.getName());
     }
 
     private static String preprocess(String src, Map<String, String> substitutes) {
@@ -381,18 +404,25 @@ public class Pig8CubeIncrementalCompilerBean {
 
     }
 
-    private static String generateMeasureMetricEval(String metricName, String groupName) {
-        return String.format("TOTUPLE(SUM(%1$s.%2$s),COUNT_STAR(%1$s)) as %3$s",
-                             groupName,
-                             metricName,
-                             generateMeasureMetricSchema(metricName));
+    private static String generateMeasureMetricEval(Measure m, String groupName) {
+        // return
+        // String.format("TOTUPLE(SUM(%1$s.%2$s),COUNT_STAR(%1$s)) as %3$s",
+        // groupName,
+        // metricName,
+        // generateMeasureMetricSchema(metricName));
+        return String.format("%s(%s.%s) as %3$s", getMeasureAggregateFuncName(m), groupName, m.getName());
     }
 
-    private static String generateMeasureMetricMerge(String metricName) {
-        return String.format("TOTUPLE( " + "(hbl_old.%1$s is null?%1$s.sum:hbl_old.%1$s.sum+%1$s.sum),"
-                                 + "(hbl_old.%1$s is null?%1$s.cnt:hbl_old.%1$s.cnt+%1$s.cnt)" + ") as %2$s",
-                             metricName,
-                             generateMeasureMetricSchema(metricName));
+    private static String generateMeasureMetricMerge(Measure m) {
+        // return String.format("TOTUPLE( " +
+        // "(hbl_old.%1$s is null?%1$s.sum:hbl_old.%1$s.sum+%1$s.sum),"
+        // + "(hbl_old.%1$s is null?%1$s.cnt:hbl_old.%1$s.cnt+%1$s.cnt)" +
+        // ") as %2$s",
+        // metricName,
+        // generateMeasureMetricSchema(metricName));
+        return String.format("(hbl_old.%1$s is null?%1$s:%2$s(TOBAG(hbl_old.%1$s,%1$s))) as %1$s",
+                             m.getName(),
+                             getMeasureAggregateFuncName(m));
     }
 
     public static String generateMeasureMetricSchema(String metricName) {

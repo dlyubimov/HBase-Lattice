@@ -5,9 +5,9 @@
 ---
   - Example1 # cube name as id
   - # dimensions
-    - &dim1 !HexDimension [dim1,16]
-    - &dim2 !HexDimension [dim2,16]
-    - &dim3 !HexDimension [dim3,16]
+    - &dim1 !HexDimension [dim1,8]
+    - &dim2 !HexDimension [dim2,8]
+    - &dim3 !HexDimension [dim3,8]
     - &dimImpressionTime !SimpleTimeHierarchy [impressionTime]
     
   - # cuboids
@@ -21,6 +21,7 @@
     - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim3, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
+    - !SimpleCuboid [[*dim1, *dim2]]
   
   - # measures 
     - !SimpleMeasure [ measure1 ]

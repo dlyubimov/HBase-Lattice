@@ -22,13 +22,15 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 
 import org.apache.commons.lang.Validate;
-import org.apache.pig.EvalFunc;
 import org.apache.pig.data.Tuple;
 
-import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Measure;
-import com.inadco.hbl.compiler.YamlModelParser;
 
+/**
+ * @deprecated 
+ * @author dmitriy
+ *
+ */
 public class Measure2Double extends BaseFunc<Double> {
 
     public Measure2Double(String encodedModel) {
