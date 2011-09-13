@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.io.Writable;
-
 public interface Cube  {
     
     String getName();

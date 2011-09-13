@@ -18,7 +18,6 @@
  */
 package com.inadco.hbl.api;
 
-import org.apache.hadoop.io.Writable;
 
 /**
  * Operational bridge and definition holder of measures in the input.
