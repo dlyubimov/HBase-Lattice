@@ -161,6 +161,13 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+      <optional>true</optional>
+      <classifier>sources</classifier>
+    </dependency>
+
     <!-- spring -->
     <dependency>
       <groupId>org.springframework</groupId>

@@ -354,7 +354,7 @@ public class Pig8CubeIncrementalCompilerBean {
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
-            sb.append(generateMeasureMetricSchema(m.getName()));
+            sb.append(generateMeasureMetricSchema(m));
         }
         substitutes.put("measureMetricsSchema", sb.toString());
 
@@ -425,8 +425,8 @@ public class Pig8CubeIncrementalCompilerBean {
                              getMeasureAggregateFuncName(m));
     }
 
-    public static String generateMeasureMetricSchema(String metricName) {
-        return String.format("%s:(sum:double,cnt:long)", metricName);
+    public static String generateMeasureMetricSchema(Measure m) {
+        return String.format("%s:bytearray", m.getName());
     }
 
 }

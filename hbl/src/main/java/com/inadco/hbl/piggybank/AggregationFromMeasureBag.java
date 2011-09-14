@@ -29,6 +29,7 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.data.TupleFactory;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.inadco.hbl.api.Cube;
@@ -47,6 +48,10 @@ import com.inadco.hbl.scanner.SliceOperation;
 public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implements Algebraic, Accumulator<DataByteArray> {
 
     private Initial delegate;
+
+    public AggregationFromMeasureBag() {
+        super();
+    }
 
     public AggregationFromMeasureBag(String measureName, String encodedModel) {
         delegate = new Initial(measureName, encodedModel);
@@ -126,7 +131,8 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
     @Override
     public DataByteArray exec(Tuple input) throws IOException {
-        return delegate.exec(input);
+        Tuple t = delegate.exec(input);
+        return t == null ? null : (DataByteArray) t.get(0);
     }
 
     @Override
@@ -136,7 +142,12 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
     @Override
     public DataByteArray getValue() {
-        return delegate.getValue();
+        Tuple t = delegate.getValue();
+        try {
+            return t == null ? null : (DataByteArray) t.get(0);
+        } catch (ExecException exc) {
+            throw new RuntimeException(exc);
+        }
     }
 
     @Override
@@ -152,7 +163,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
     @Override
     public String getIntermed() {
-        return Final.class.getName();
+        return Intermediate.class.getName();
     }
 
     @Override
@@ -160,7 +171,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         return Final.class.getName();
     }
 
-    public class Initial extends BaseFunc<DataByteArray> implements Accumulator<DataByteArray> {
+    public static class Initial extends BaseFunc<Tuple> implements Accumulator<Tuple> {
 
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
@@ -181,13 +192,62 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         }
 
         @Override
-        public DataByteArray getValue() {
-            return new DataByteArray(accumulator.build().toByteArray());
+        public Tuple getValue() {
+            return TupleFactory.getInstance().newTuple(new DataByteArray(accumulator.build().toByteArray()));
         }
 
         @Override
         public void cleanup() {
             accumulator = Aggregation.newBuilder();
+        }
+
+        @Override
+        public Tuple exec(Tuple input) throws IOException {
+            try {
+                accumulate(input);
+                return getValue();
+            } finally {
+                cleanup();
+            }
+        }
+    }
+
+    public static class Intermediate extends Initial {
+
+        @Override
+        public void accumulate(Tuple b) throws IOException {
+            combineFromBag(cube, measureName, afr, b, accumulator);
+        }
+    }
+
+    public static class Final extends BaseFunc<DataByteArray> implements Accumulator<DataByteArray> {
+
+        protected String                    measureName;
+        protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
+        protected AggregateFunctionRegistry afr         = new AggregateFunctionRegistry();
+
+        public Final() {
+            super();
+        }
+
+        public Final(String measureName, String encodedModel) {
+            super(encodedModel);
+            this.measureName = measureName;
+        }
+
+        @Override
+        public void accumulate(Tuple b) throws IOException {
+            combineFromBag(cube, measureName, afr, b, accumulator);
+        }
+
+        @Override
+        public void cleanup() {
+            accumulator = Aggregation.newBuilder();
+        }
+
+        @Override
+        public DataByteArray getValue() {
+            return new DataByteArray(accumulator.build().toByteArray());
         }
 
         @Override
@@ -198,22 +258,6 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
             } finally {
                 cleanup();
             }
-        }
-    }
-
-    public class Final extends Initial {
-
-        public Final() {
-            super();
-        }
-
-        public Final(String measureName, String encodedModel) {
-            super(measureName, encodedModel);
-        }
-
-        @Override
-        public void accumulate(Tuple b) throws IOException {
-            combineFromBag(cube, measureName, afr, b, accumulator);
         }
 
     }
