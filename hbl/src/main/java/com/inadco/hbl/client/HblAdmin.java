@@ -16,7 +16,7 @@
  *  
  *  
  */
-package com.inadco.hbl.model;
+package com.inadco.hbl.client;
 
 import java.io.Closeable;
 import java.io.IOException;

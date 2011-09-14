@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Measure;
-import com.inadco.hbl.model.HblAdmin;
+import com.inadco.hbl.client.HblAdmin;
 import com.inadco.hbl.piggybank.AggregationFromMeasureBag;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.util.HblUtil;
