@@ -62,6 +62,12 @@ public class FSum implements AggregateFunction {
         sum+=measure;
         result.setSum(sum);
     }
+
+    @Override
+    public double getDoubleValue(Aggregation source) {
+        return source.getSum();
+    }
+    
     
     
 

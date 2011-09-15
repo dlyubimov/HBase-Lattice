@@ -26,7 +26,6 @@ import java.util.List;
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.FilterBase;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
@@ -114,6 +113,14 @@ public class CompositeKeyRowFilter extends FilterBase {
     }
 
     private void initModel() throws IOException {
+        
+        // FIXME: this decoding and parsing is probably going to be the heaviest 
+        // piece for all of this -- even if it is saved in hbase (and perhaps 
+        // especially if it is saved in hbase) so cube model passing is a subject 
+        // of the heavies optimization. The cube model needs to be enabled thru 
+        // a writable, or avro, or thrift, etc., although polymorphic membership 
+        // is not translating very well (requires saving of a class name with 
+        // every such object)
         model = YamlModelParser.decodeCubeModel(modelStr);
         cuboid = model.findCuboidForPath(HblUtil.decodeCuboidPath(cuboidPath));
         if (cuboid == null)
@@ -211,7 +218,7 @@ public class CompositeKeyRowFilter extends FilterBase {
         if (offset > 0)
             System.arraycopy(key, keyOffset, nextKeyHint, 0, offset - keyOffset);
         if (plus1) {
-            if (incrementKey(nextKeyHint, 0, offset - keyOffset))
+            if (HblUtil.incrementKey(nextKeyHint, 0, offset - keyOffset))
                 return true;
         }
         // copy lower bound for the current key
@@ -228,29 +235,5 @@ public class CompositeKeyRowFilter extends FilterBase {
         return new KeyValue(nextKeyHint, 0l);
     }
 
-    /**
-     * increment key by 1, catch situations with overflow. Hopefully, since it
-     * is a little bit more purposed, it would be a little more efficent than
-     * {@link Bytes#incrementBytes(byte[], long)}.
-     * <P>
-     * 
-     * @param key
-     * @param offset
-     * @param length
-     * @return true if increment resulted in overflow (such as FF->00), so no
-     *         more keys.
-     */
-    private boolean incrementKey(byte[] key, int offset, int length) {
-        if (length == 0)
-            return true;
-
-        int i;
-        for (i = offset + length - 1; i >= offset; i--) {
-            key[i] = (byte) (1 + key[i]);
-            if (key[i] != 0)
-                break;
-        }
-        return !(i >= offset);
-    }
 
 }

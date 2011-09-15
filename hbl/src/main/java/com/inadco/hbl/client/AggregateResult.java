@@ -16,18 +16,10 @@
  *  
  *  
  */
-package com.inadco.hbl.scanner;
+package com.inadco.hbl.client;
 
-import com.inadco.hbl.protocodegen.Cells.Aggregation;
-
-public interface AggregateFunction {
+public interface AggregateResult {
     
-   void apply(Aggregation.Builder result, Double measure ); 
-   
-   void merge(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation );
-   public String getName() ;
-   public boolean supportsComplementScan();
-   
-   public double getDoubleValue(Aggregation source);
+    double getDoubleAggregate(String measure, String functionName ) ; 
 
 }

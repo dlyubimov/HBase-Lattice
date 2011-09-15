@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.inadco.hbl.api.Cuboid;
 
 public class HblUtil {
@@ -236,7 +238,7 @@ public class HblUtil {
      * @param bb
      * @param val
      */
-    static void setVarUint32(ByteBuffer bb, int val) throws IOException {
+    public static void setVarUint32(ByteBuffer bb, int val) throws IOException {
         for (;; val >>>= 7) {
             if ((val & ~0x7f) == 0) {
                 bb.put((byte) val);
@@ -246,7 +248,7 @@ public class HblUtil {
         }
     }
 
-    static int getVarUint32(ByteBuffer bb) throws IOException {
+    public static int getVarUint32(ByteBuffer bb) throws IOException {
         int accum = 0, bitsRead = 0;
         do {
             int c = bb.get() & 0xff;
@@ -275,6 +277,31 @@ public class HblUtil {
     static int getVarInt32(ByteBuffer bb) throws IOException {
         int n = getVarUint32(bb);
         return (n >>> 1) ^ -(n & 1);
+    }
+
+    /**
+     * increment key by 1, catch situations with overflow. Hopefully, since it
+     * is a little bit more purposed, it would be a little more efficent than
+     * {@link Bytes#incrementBytes(byte[], long)}.
+     * <P>
+     * 
+     * @param key
+     * @param offset
+     * @param length
+     * @return true if increment resulted in overflow (such as FF->00), so no
+     *         more keys.
+     */
+    public static boolean incrementKey(byte[] key, int offset, int length) {
+        if (length == 0)
+            return true;
+
+        int i;
+        for (i = offset + length - 1; i >= offset; i--) {
+            key[i] = (byte) (1 + key[i]);
+            if (key[i] != 0)
+                break;
+        }
+        return !(i >= offset);
     }
 
 }

@@ -60,7 +60,14 @@ public class FCount implements AggregateFunction {
             accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() - source.getCnt() : -source.getCnt());
             break;
         }
-
     }
+
+
+    @Override
+    public double getDoubleValue(Aggregation source) {
+        return source.getCnt();
+    }
+    
+    
 
 }

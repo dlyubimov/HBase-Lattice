@@ -43,6 +43,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.io.DataInputBuffer;
@@ -449,6 +452,22 @@ public final class IOUtil {
 
     }
     
+    public static class PoolableHtableCloseable implements Closeable { 
+        private HTablePool pool;
+        private HTableInterface htable;
+        
+        public PoolableHtableCloseable(HTablePool pool, HTableInterface htable) {
+            super();
+            this.pool = pool;
+            this.htable = htable;
+        }
+
+        @Override
+        public void close() throws IOException {
+            pool.putTable(htable) ;
+        }
+    }
+    
     public static String fromStream(InputStream is, String encoding) throws IOException {
         StringWriter sw = new StringWriter();
         Reader r = new InputStreamReader(is, "utf-8");
@@ -458,6 +477,8 @@ public final class IOUtil {
         sw.close();
         return sw.toString();
     }
+    
+    
 
 
 }
