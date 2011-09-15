@@ -25,12 +25,15 @@ import java.util.TimeZone;
 
 import org.apache.commons.lang.Validate;
 
+import com.inadco.hbl.client.HierarchyMember;
 import com.inadco.hbl.util.HblUtil;
 
 /**
- * standard time hierarchy supporting [ALL].[year-month].[date-hour] buckets.<P>
+ * standard time hierarchy supporting [ALL].[year-month].[date-hour] buckets.
+ * <P>
  * 
- * I.e. the lowest granularity of a member bucket is hour.<P>
+ * I.e. the lowest granularity of a member bucket is hour.
+ * <P>
  * 
  * @author dmitriy
  * 
@@ -52,6 +55,16 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     @Override
     public int getKeyLen() {
         return KEYLEN;
+    }
+
+    @Override
+    public void getKey(Object member, byte[] buff, int offset) {
+        if (member instanceof HierarchyMember) {
+            HierarchyMember hm = (HierarchyMember) member;
+            getKey(hm.getMember(), hm.getDepth(), buff, offset);
+        } else {
+            getKey(member, 2, buff, offset);
+        }
     }
 
     @Override

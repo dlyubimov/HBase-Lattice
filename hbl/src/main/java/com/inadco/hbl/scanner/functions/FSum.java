@@ -30,12 +30,12 @@ import com.inadco.hbl.scanner.SliceOperation;
  * 
  */
 public class FSum implements AggregateFunction {
-    
+
     @Override
     public String getName() {
         return "SUM";
     }
-    
+
     @Override
     public boolean supportsComplementScan() {
         return true;
@@ -57,18 +57,16 @@ public class FSum implements AggregateFunction {
 
     @Override
     public void apply(Builder result, Double measure) {
-        if ( measure == null ) return;
-        double sum=result.hasSum()?0d:result.getSum();
-        sum+=measure;
+        if (measure == null)
+            return;
+        double sum = result.hasSum() ? 0d : result.getSum();
+        sum += measure;
         result.setSum(sum);
     }
 
     @Override
     public double getDoubleValue(Aggregation source) {
-        return source.getSum();
+        return source.hasSum() ? 0d : source.getSum();
     }
-    
-    
-    
 
 }

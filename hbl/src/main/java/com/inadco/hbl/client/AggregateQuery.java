@@ -28,7 +28,7 @@ public interface AggregateQuery {
 
     AggregateQuery addOpenSlice(String dimension, Object leftBound, Object rightBound);
 
-    AggregateQuery addLeftOpenSlice(String dimension, Object leftBound, Object rightBound);
+    AggregateQuery addHalfOpenSlice(String dimension, Object leftBound, Object rightBound);
 
     /**
      * 

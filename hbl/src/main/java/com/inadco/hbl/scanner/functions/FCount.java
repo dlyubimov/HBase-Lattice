@@ -65,7 +65,7 @@ public class FCount implements AggregateFunction {
 
     @Override
     public double getDoubleValue(Aggregation source) {
-        return source.getCnt();
+        return source.hasCnt()?0:source.getCnt();
     }
     
     
