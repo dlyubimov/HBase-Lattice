@@ -22,34 +22,48 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.commons.lang.Validate;
 import org.apache.hadoop.io.Writable;
 
+import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.util.HblUtil;
+
+/**
+ * element of specification for composite key scan filter.
+ * 
+ * @author dmitriy
+ * 
+ */
 
 public class Range implements Writable {
 
-    private byte[] start, end;
-    private boolean leftOpen, rightOpen;
+    private byte[]        start, end;
+    private boolean       leftOpen, rightOpen;
+    private int           hierarchyDepth;
+
+    private transient int keyLen;
+    private transient SliceOperation sliceOperation;
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        start = new byte[HblUtil.readVarUint32(in)];
+        keyLen = HblUtil.readVarUint32(in);
+        start = new byte[keyLen];
         in.readFully(start);
-        end = new byte[HblUtil.readVarUint32(in)];
+        end = new byte[keyLen];
         in.readFully(end);
         int stuff = in.readByte();
         if (stuff == -1)
             throw new IOException("Unexpected EOF reading range specficiation");
         leftOpen = (stuff & 0x01) != 0;
         rightOpen = (stuff & 0x02) != 0;
+        hierarchyDepth=HblUtil.readVarUint32(in);
 
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-        HblUtil.writeVarUint32(out, start.length);
+        HblUtil.writeVarUint32(out, keyLen);
         out.write(start);
-        HblUtil.writeVarUint32(out, end.length);
         out.write(end);
         int stuff = 0;
         if (leftOpen)
@@ -57,6 +71,7 @@ public class Range implements Writable {
         if (rightOpen)
             stuff |= 0x02;
         out.writeByte(stuff);
+        HblUtil.writeVarUint32(out, hierarchyDepth);
     }
 
     public Range() {
@@ -96,6 +111,13 @@ public class Range implements Writable {
 
     public Range(byte[] start, byte[] end, boolean shallow, boolean leftOpen, boolean rightOpen) {
         super();
+
+        Validate.notNull(start);
+        Validate.notNull(end);
+
+        this.keyLen = start.length;
+        Validate.isTrue(end.length == keyLen);
+
         this.start = shallow ? start : start.clone();
         this.end = shallow ? end : end.clone();
         this.leftOpen = leftOpen;
@@ -138,4 +160,29 @@ public class Range implements Writable {
         this.rightOpen = rightOpen;
     }
 
+    public int getKeyLen() {
+        return keyLen;
+    }
+
+    public void setKeyLen(int compositeKeyLen) {
+        this.keyLen = compositeKeyLen;
+    }
+
+    public int getHierarchyDepth() {
+        return hierarchyDepth;
+    }
+
+    public void setHierarchyDepth(int hierarchyDepth) {
+        this.hierarchyDepth = hierarchyDepth;
+    }
+
+    public SliceOperation getSliceOperation() {
+        return sliceOperation;
+    }
+
+    public void setSliceOperation(SliceOperation sliceOperation) {
+        this.sliceOperation = sliceOperation;
+    }
+    
+    
 }

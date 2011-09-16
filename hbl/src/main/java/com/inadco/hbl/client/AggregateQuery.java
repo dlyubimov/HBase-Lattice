@@ -23,6 +23,8 @@ import java.io.IOException;
 public interface AggregateQuery {
 
     AggregateQuery addMeasure(String measure);
+    
+    AggregateQuery addGroupBy(String dimName);
 
     AggregateQuery addClosedSlice(String dimension, Object leftBound, Object rightBound);
 
@@ -42,6 +44,10 @@ public interface AggregateQuery {
     AggregateQuery
         addSlice(String dimension, Object leftBound, boolean leftOpen, Object rightBound, boolean rightOpen);
 
-    AggregateResult execute() throws IOException;
+    AggregateResultSet execute() throws IOException;
 
+    /**
+     * reset for re-use
+     */
+    void reset(); 
 }

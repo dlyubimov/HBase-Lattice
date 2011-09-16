@@ -20,14 +20,29 @@ package com.inadco.hbl.api;
 
 import org.apache.hadoop.io.RawComparator;
 
+import com.inadco.hbl.client.impl.Slice;
+import com.inadco.hbl.model.HierarchyMember;
 
 public interface Dimension {
-    
+
     String getName();
+
     int getKeyLen();
-    
-    void getKey(Object member, byte[] buff, int offset );
-    
+
+    /**
+     * convert java member type object into hbase key.
+     * 
+     * 
+     * @param member
+     *            java type this dimension supports. Hierarchies must support
+     *            {@link HierarchyMember} as well.
+     * @param buff
+     * @param offset
+     */
+    void getKey(Object member, byte[] buff, int offset);
+
     RawComparator<?> getMemberComparator();
+    
+    Range[] optimizeSliceScan(Slice slice);
 
 }

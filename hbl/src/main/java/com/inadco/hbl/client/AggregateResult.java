@@ -18,8 +18,11 @@
  */
 package com.inadco.hbl.client;
 
-public interface AggregateResult {
-    
-    double getDoubleAggregate(String measure, String functionName ) ; 
+
+public interface AggregateResult  {
+
+    double getDoubleAggregate(String measure, String functionName);
+
+    Object getGroupMember(String dimensionName);
 
 }

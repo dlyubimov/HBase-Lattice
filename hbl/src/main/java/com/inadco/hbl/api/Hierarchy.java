@@ -48,4 +48,15 @@ public interface Hierarchy extends Dimension {
      * [ALL].[year-month].[date-hour] there are 3 levels.<P>
      */
     int getDepth();
+    
+    /**
+     * Test the key depth coming in a scan. 
+     * 
+     * @param buff hierarchy key coming in a scan. 
+     * 
+     * @param offset offset of the key
+     * 
+     * @return key hierarchy depth corresponding to this key.
+     */
+    int keyDepth(byte[] buff, int offset );
 }

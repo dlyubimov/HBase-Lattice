@@ -34,9 +34,9 @@ import org.apache.pig.data.TupleFactory;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Measure;
+import com.inadco.hbl.client.AggregateFunctionRegistry;
+import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
-import com.inadco.hbl.scanner.AggregateFunctionRegistry;
-import com.inadco.hbl.scanner.SliceOperation;
 
 /**
  * Takes bag of measure objects and returns {@link Aggregation} serialized into

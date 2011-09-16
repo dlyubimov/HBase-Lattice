@@ -18,33 +18,53 @@
  */
 package com.inadco.hbl.client.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.Validate;
 
+import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
-import com.inadco.hbl.scanner.AggregateFunction;
 
 public class AggregateResultImpl implements AggregateResult {
 
-    private Map<String, Aggregation>       measureAggregates;
-    private Map<String, AggregateFunction> functions;
+    private Map<String, Object>       groupMembers;     // dimension members by
+                                                         // dim name
+    private Map<String, Aggregation>  measureAggregates;
+    private AggregateFunctionRegistry afr;
 
-    AggregateResultImpl(Map<String, Aggregation> measureAggregates, Map<String, AggregateFunction> functions) {
+    // private Map<String, AggregateFunction> functions;
+
+    AggregateResultImpl(AggregateFunctionRegistry afr) {
         super();
-        this.measureAggregates = measureAggregates;
-        this.functions = functions;
+        this.afr = afr;
+        groupMembers = new HashMap<String, Object>();
+        measureAggregates = new HashMap<String, Aggregation>();
+    }
+
+    Map<String, Object> getGroupMembers() {
+        return groupMembers;
+    }
+
+    Map<String, Aggregation> getMeasureAggregates() {
+        return measureAggregates;
     }
 
     @Override
     public double getDoubleAggregate(String measure, String functionName) {
-        AggregateFunction func = functions.get(functionName);
+        AggregateFunction func = afr.findFunction(functionName);
         Validate.notNull(func, "aggregate function not supported");
         Aggregation measureAggregate = measureAggregates.get(measure);
         Validate.notNull(measureAggregate, "requested measure is not in the query result");
 
         return func.getDoubleValue(measureAggregate);
+    }
+
+    @Override
+    public Object getGroupMember(String dimensionName) {
+        return groupMembers.get(dimensionName);
     }
 
 }

@@ -16,8 +16,9 @@
  *  
  *  
  */
-package com.inadco.hbl.scanner;
+package com.inadco.hbl.api;
 
+import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
 public interface AggregateFunction {

@@ -16,7 +16,7 @@
  *  
  *  
  */
-package com.inadco.hbl.scanner;
+package com.inadco.hbl.client.impl;
 
 public enum SliceOperation {
     ADD,

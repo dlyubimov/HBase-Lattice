@@ -16,15 +16,17 @@
  *  
  *  
  */
-package com.inadco.hbl.scanner;
+package com.inadco.hbl.client;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.client.impl.SliceOperation;
+import com.inadco.hbl.client.impl.functions.FCount;
+import com.inadco.hbl.client.impl.functions.FSum;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
-import com.inadco.hbl.scanner.functions.FCount;
-import com.inadco.hbl.scanner.functions.FSum;
 
 public class AggregateFunctionRegistry {
 
@@ -68,4 +70,7 @@ public class AggregateFunctionRegistry {
         functions.put(function.getName().toUpperCase(), function);
     }
 
+    public AggregateFunction findFunction ( String name ) { 
+        return functions.get(name);
+    }
 }

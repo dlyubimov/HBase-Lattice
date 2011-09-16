@@ -1,4 +1,4 @@
-package com.inadco.hbl.client;
+package com.inadco.hbl.model;
 
 public class HierarchyMember {
     private Object member;

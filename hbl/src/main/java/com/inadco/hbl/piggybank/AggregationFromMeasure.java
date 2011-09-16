@@ -27,8 +27,8 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 
 import com.inadco.hbl.api.Measure;
+import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
-import com.inadco.hbl.scanner.AggregateFunctionRegistry;
 
 /**
  * 

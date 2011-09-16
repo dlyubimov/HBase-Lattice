@@ -25,7 +25,8 @@ import java.util.TimeZone;
 
 import org.apache.commons.lang.Validate;
 
-import com.inadco.hbl.client.HierarchyMember;
+import com.inadco.hbl.api.Range;
+import com.inadco.hbl.client.impl.Slice;
 import com.inadco.hbl.util.HblUtil;
 
 /**
@@ -94,6 +95,14 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     public void getAllKey(byte[] buff, int offset) {
         Arrays.fill(buff, offset, offset + KEYLEN, (byte) 0);
     }
+    
+
+    @Override
+    public int keyDepth(byte[] buff, int offset) {
+        if (buff[offset]==0 ) return 0; // all-key
+        if (buff[offset+6]==0) return 1; // monthly key
+        return 2; // hourly key otherwise.
+    }
 
     public void getMonthlyKey(byte[] buff, int offset, GregorianCalendar gcal) {
         HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.YEAR), 4, buff, offset);
@@ -125,4 +134,10 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     }
 
+    @Override
+    public Range[] optimizeSliceScan(Slice slice) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
 }
