@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang.Validate;
 
@@ -42,6 +43,7 @@ import com.inadco.hbl.client.impl.scanner.ScanSpec;
 public class AggregateQueryImpl implements AggregateQuery {
 
     private Cube                    cube;
+    private ExecutorService         es;
     /**
      * dim name -> range slice requested
      */
@@ -50,9 +52,10 @@ public class AggregateQueryImpl implements AggregateQuery {
 
     private List<String>            groupDimensions = new ArrayList<String>();
 
-    public AggregateQueryImpl(Cube cube) {
+    public AggregateQueryImpl(Cube cube, ExecutorService es) {
         super();
         this.cube = cube;
+        this.es = es;
     }
 
     @Override
@@ -125,10 +128,10 @@ public class AggregateQueryImpl implements AggregateQuery {
 
         List<Range> partialSpec = new ArrayList<Range>();
 
-        int numGroupKeys=groupDimensions.size();
-        
-        generateScanSpecs(cuboid,scans,partialSpec,0,numGroupKeys,SliceOperation.ADD);
-        
+        int numGroupKeys = groupDimensions.size();
+
+        generateScanSpecs(cuboid, scans, partialSpec, 0, numGroupKeys, SliceOperation.ADD);
+
         return null;
 
     }
