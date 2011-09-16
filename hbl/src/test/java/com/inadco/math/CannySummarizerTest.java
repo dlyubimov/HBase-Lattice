@@ -86,7 +86,7 @@ public class CannySummarizerTest {
         System.out.printf("cannyRate1: %.4f\n", cr.getValue());
     }
 
-    @Test(dependsOnMethods = { "testCannyAvg", }, enabled = !DEBUG)
+    @Test(dependsOnMethods = { "testCannyAvg" }, enabled = !DEBUG)
     public void testCannyAvgCombine() {
         cs1.combine(cs2);
         double err = Math.abs(cs.getValue() - cs1.getValue());
