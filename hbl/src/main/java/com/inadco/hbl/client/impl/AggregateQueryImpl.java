@@ -30,11 +30,13 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Hierarchy;
+import com.inadco.hbl.api.Measure;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.AggregateQuery;
 import com.inadco.hbl.client.AggregateResultSet;
@@ -61,6 +63,7 @@ public class AggregateQueryImpl implements AggregateQuery {
     @Override
     public AggregateQuery addMeasure(String measure) {
         Validate.notNull(measure);
+        Validate.isTrue(cube.getMeasures().containsKey(measure), "Unknown measure name");
         measures.add(measure);
         return this;
     }
@@ -129,8 +132,28 @@ public class AggregateQueryImpl implements AggregateQuery {
         List<Range> partialSpec = new ArrayList<Range>();
 
         int numGroupKeys = groupDimensions.size();
+        int groupKeyLen = 0;
+        
+        for ( int i = 0; i < numGroupKeys; i++ ) 
+            groupKeyLen+=cuboid.getCuboidDimensions().get(i).getKeyLen();
+        
+        byte[][] measureQualifiers = new byte[measures.size()][];
+        int mCnt=0;
+        for ( String mName:measures) 
+            measureQualifiers[mCnt++]=Bytes.toBytes(mName);
+        
 
-        generateScanSpecs(cuboid, scans, partialSpec, 0, numGroupKeys, SliceOperation.ADD);
+        Measure[] measuresArr = new Measure[measures.size()];
+
+        int i = 0;
+        Map<String, ? extends Measure> measureMap = cube.getMeasures();
+        // we already validated measure names are valid during add()
+        for (String measure : measures)
+            measuresArr[i++] = measureMap.get(measure);
+
+        generateScanSpecs(cuboid, scans, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
+        
+        // TODO: proceeed with creating group, filtering and final merging iterators.s
 
         return null;
 
@@ -151,12 +174,18 @@ public class AggregateQueryImpl implements AggregateQuery {
                                    List<ScanSpec> scanHolder,
                                    List<Range> partialSpec,
                                    int dimIndex,
-                                   int numGroupKeys,
-                                   SliceOperation so) {
+                                   int groupKeyLen,
+                                   SliceOperation so,
+                                   byte[][] measureQualifiers) {
         List<Dimension> dimensions = cuboid.getCuboidDimensions();
         if (dimIndex == dimensions.size()) {
             // add leaf
-            scanHolder.add(new ScanSpec(partialSpec.toArray(new Range[dimIndex]), cuboid, numGroupKeys, so));
+            scanHolder.add(new ScanSpec(
+                measureQualifiers,
+                groupKeyLen,
+                partialSpec.toArray(new Range[dimIndex]),
+                cuboid,
+                so));
             return;
         }
         Dimension dim = dimensions.get(dimIndex);
@@ -182,7 +211,7 @@ public class AggregateQueryImpl implements AggregateQuery {
                 partialSpec.set(dimIndex, allrange);
             }
 
-            generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, numGroupKeys, so);
+            generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, so, measureQualifiers);
         } else {
             if (slices.size() != 0)
                 throw new UnsupportedOperationException(
@@ -212,7 +241,7 @@ public class AggregateQueryImpl implements AggregateQuery {
                     else
                         nextSo = SliceOperation.ADD;
                     partialSpec.set(dimIndex, r);
-                    generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, numGroupKeys, nextSo);
+                    generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, nextSo, measureQualifiers);
                 }
             }
         }

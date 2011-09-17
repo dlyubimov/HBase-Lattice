@@ -57,6 +57,10 @@ import edu.emory.mathcs.backport.java.util.Arrays;
 public class CompositeKeyRowFilter extends FilterBase {
     private Range[]              pathRange;
 
+    // of course since we are using Writable serialization rather than java
+    // native, keyword 'transitve' doesn't mean anything in this context, but
+    // i'd like to use it as a marker for something i don't really serialize.
+    private transient int[]      rightZerosToFilter;
     private transient int[]      keyOffsets;
     private transient int        compositeKeyLen;
     private transient byte[]     nextKeyHint;
@@ -79,12 +83,14 @@ public class CompositeKeyRowFilter extends FilterBase {
         int keyNum = HblUtil.readVarUint32(in);
         pathRange = new Range[keyNum];
         keyOffsets = new int[keyNum];
+        rightZerosToFilter = new int[keyNum];
         for (int i = 0; i < keyNum; i++) {
             Range r = new Range();
             r.readFields(in);
             pathRange[i] = r;
             if (i > 0)
                 keyOffsets[i] = keyOffsets[i - 1] + pathRange[i - 1].getKeyLen();
+            rightZerosToFilter[i] = r.getRightZerosNumToFilter();
         }
         compositeKeyLen = keyNum > 0 ? keyOffsets[keyNum - 1] + pathRange[keyNum - 1].getKeyLen() : 0;
 
@@ -98,35 +104,41 @@ public class CompositeKeyRowFilter extends FilterBase {
     }
 
     @Override
-    public boolean filterRowKey(final byte[] buffer, final int keyOffset, final int length) {
+    public boolean filterRowKey(final byte[] buffer, final int rowKeyOffset, final int rowLength) {
 
         for (int i = 0; i < pathRange.length; i++) {
-            int keylen;
+            int keyLen, keyOffset;
             int comp =
-                Bytes.BYTES_RAWCOMPARATOR.compare(buffer,
-                                                  keyOffset + keyOffsets[i],
-                                                  keylen = pathRange[i].getKeyLen(),
-                                                  pathRange[i].getLeftBound(),
-                                                  0,
-                                                  keylen);
+                Bytes.BYTES_RAWCOMPARATOR.compare(buffer, keyOffset = rowKeyOffset + keyOffsets[i], keyLen =
+                    pathRange[i].getKeyLen(), pathRange[i].getLeftBound(), 0, keyLen);
             if (comp < 0 || comp == 0 && pathRange[i].isLeftOpen()) {
-                if (setHint2LowerBound(i, buffer, keyOffset, length, false))
+                if (setHint2LowerBound(i, buffer, rowKeyOffset, rowLength, false))
                     return true;
                 nextKeyCode = ReturnCode.SEEK_NEXT_USING_HINT;
                 return false;
             }
             comp =
-                Bytes.BYTES_RAWCOMPARATOR.compare(buffer,
-                                                  keyOffset + keyOffsets[i],
-                                                  keylen,
-                                                  pathRange[i].getRightBound(),
-                                                  0,
-                                                  keylen);
-            if ( comp >0 || comp==0&&pathRange[i].isRightOpen() ) { 
-                if (setHint2LowerBound(i,buffer,keyOffset,length,true))
+                Bytes.BYTES_RAWCOMPARATOR.compare(buffer, keyOffset, keyLen, pathRange[i].getRightBound(), 0, keyLen);
+            if (comp > 0 || comp == 0 && pathRange[i].isRightOpen()) {
+                if (setHint2LowerBound(i, buffer, rowKeyOffset, rowLength, true))
                     return true;
-                nextKeyCode=ReturnCode.SEEK_NEXT_USING_HINT;
+                nextKeyCode = ReturnCode.SEEK_NEXT_USING_HINT;
                 return false;
+            }
+
+            // filter out wrong hierarchy depths
+            // which is signified by filtering more than 0 of
+            // 0x0 bytes on the right side of the key.
+            // in other words, if there' that many 0x0 at the end,
+            // fitler it out.
+
+            int z = rightZerosToFilter[i];
+            if (z > 0) {
+                for (; z > 0; z--)
+                    if (0 != buffer[keyOffset + keyLen - z])
+                        break;
+                if (z == 0)
+                    return true; // wrong hierarchy depth key filter.
             }
         }
         nextKeyCode = ReturnCode.INCLUDE;

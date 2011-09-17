@@ -23,23 +23,23 @@ import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.impl.SliceOperation;
 
 public class ScanSpec {
-    private Range[] ranges;
-    
+    private Range[]        ranges;
+
     // need this to filter hierarchy keys for depth
-    private Cuboid cuboid;
-    
-    // number of left-hand keys to be used for grouping
-    private int numGroupKeys;
-    
-    // this is not used by grouping scanner, but 
-    // it is subsequently used by group merging iterator 
+    private Cuboid         cuboid;
+
+    // this is not used by grouping scanner, but
+    // it is subsequently used by group merging iterator
     private SliceOperation sliceOperation;
 
-    public ScanSpec(Range[] ranges, Cuboid cuboid, int numGroupKeys, SliceOperation sliceOperation) {
+    private byte[][]        measureQualifiers;
+    private int             groupKeyLen;
+
+    public ScanSpec(byte[][] measureQualifiers, int groupKeyLen, Range[] ranges, Cuboid cuboid, SliceOperation sliceOperation) {
         super();
+//        this.measures = measures;
         this.ranges = ranges;
         this.cuboid = cuboid;
-        this.numGroupKeys = numGroupKeys;
         this.sliceOperation = sliceOperation;
     }
 
@@ -51,13 +51,20 @@ public class ScanSpec {
         return cuboid;
     }
 
-    public int getNumGroupKeys() {
-        return numGroupKeys;
-    }
-
     public SliceOperation getSliceOperation() {
         return sliceOperation;
     }
+
+    public byte[][] getMeasureQualifiers() {
+        return measureQualifiers;
+    }
+
+    public int getGroupKeyLen() {
+        return groupKeyLen;
+    }
+
+
     
     
+
 }
