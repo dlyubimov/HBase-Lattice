@@ -1,8 +1,31 @@
+/*
+ * 
+ *  Copyright © 2010, 2011 Inadco, Inc. All rights reserved.
+ *  
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *  
+ *  
+ */
 package com.inadco.datastructs;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
+import com.inadco.hbl.util.IOUtil;
 
 import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,21 +42,23 @@ import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicBoolean;
  * @param <T>
  *            pipe element type
  */
-public class BlockingPipe<T> {
+public class BlockingPipe<T> implements Closeable {
 
     private BlockingQueue<Object> queue;
 
-    private static final Object   EOF    = new Object();
+    private static final Object   EOF        = new Object();
 
-    private AtomicBoolean         closed = new AtomicBoolean(false);
+    private AtomicBoolean         closed     = new AtomicBoolean(false);
+    private Deque<Closeable>      closeables = new ArrayDeque<Closeable>();
 
-    BlockingPipe(int queueCapacity) {
+    public BlockingPipe(int queueCapacity) {
         super();
 
         queue = new ArrayBlockingQueue<Object>(queueCapacity);
+        closeables.addFirst(input);
+        closeables.addFirst(output);
     }
 
-    
     public static Object getEof() {
         return EOF;
     }
@@ -45,6 +70,16 @@ public class BlockingPipe<T> {
     public InputIterator<T> getOutput() {
         return output;
     }
+    
+    @Override
+    public void close() throws IOException {
+        try {
+            IOUtil.closeAll(closeables);
+        } finally { 
+            closed.set(true);
+        }
+    }
+
 
 
     private OutputIterator<T> input  = new OutputIterator<T>() {

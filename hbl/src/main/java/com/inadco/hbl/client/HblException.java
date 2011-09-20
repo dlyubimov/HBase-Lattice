@@ -16,22 +16,25 @@
  *  
  *  
  */
-package com.inadco.datastructs;
+package com.inadco.hbl.client;
 
-import java.io.Closeable;
-import java.io.IOException;
+public class HblException extends Exception {
 
-/**
- * Output streaming iterator, counterpart for  
- * {@link InputIterator} for abstracting streaming, 
- * or defining output strategies.
- * 
- * @author lyubimovd
- *
- */
-public interface OutputIterator<T> extends Closeable {
+    private static final long serialVersionUID = 1L;
 
-    boolean hasNext() throws IOException;
-    void    add(T item) throws IOException;
-    
+    public HblException() {
+    }
+
+    public HblException(String message) {
+        super(message);
+    }
+
+    public HblException(Throwable cause) {
+        super(cause);
+    }
+
+    public HblException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

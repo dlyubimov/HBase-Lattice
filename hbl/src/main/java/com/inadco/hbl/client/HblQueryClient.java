@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.springframework.core.io.Resource;
 
 import com.inadco.hbl.api.Cube;
@@ -37,16 +38,30 @@ import com.inadco.hbl.client.impl.AggregateQueryImpl;
 import com.inadco.hbl.compiler.YamlModelParser;
 import com.inadco.hbl.util.IOUtil;
 
-public class HblQueryClient {
+/**
+ * HBL query client implementation
+ * <P>
+ * 
+ * Warning: right now this does not implement hbase client shutdown, it assumes
+ * caller manages hbase client sharing policies, so this won't close any hbase
+ * connections (even if it implicitly creates a new one).
+ * 
+ * @author dmitriy
+ * 
+ */
+public class HblQueryClient implements Closeable {
 
-    private static final int DEFAULT_MAX_THREADS = 50;
+    private static final int          DEFAULT_MAX_THREADS = 50;
+    private static final int          DEFAULT_QUEUE_SIZE  = 2;
 
-    private Configuration    conf;
-    private String           encodedYamlStr;
-    private String           yamlModelStr;
-    private ExecutorService  es;
-
-    private Cube             cube;
+    // private Configuration conf;
+    // private String encodedYamlStr;
+    private String                    yamlModelStr;
+    private ExecutorService           es;
+    private HTablePool                tpool;
+    private AggregateFunctionRegistry afr;
+    private Cube                      cube;
+    private Deque<Closeable>          closeables          = new ArrayDeque<Closeable>();
 
     public HblQueryClient(Configuration conf, Resource yamlModel) throws IOException {
         this(conf, yamlModel, DEFAULT_MAX_THREADS);
@@ -57,10 +72,22 @@ public class HblQueryClient {
     }
 
     public HblQueryClient(Configuration conf, Resource yamlModel, int maxThreads) throws IOException {
+        // Hight queue size not only doesn't help but would actually harm, since
+        // if we can't allocate all tasks
+        // into threads, we will be screwed since we can't finish the tasks
+        // unless we consume all the pipes from them.
+        // In fact, this is going to be a big problem until we enable some
+        // hierarchical scan advised as batches, not scans.
         ThreadPoolExecutor tpe =
-            new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
-        tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+            new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
+                DEFAULT_QUEUE_SIZE));
+        tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         init(conf, yamlModel, tpe);
+    }
+
+    @Override
+    public void close() throws IOException {
+        IOUtil.closeAll(closeables);
     }
 
     private void init(Configuration conf, Resource yamlModel, ExecutorService es) throws IOException {
@@ -71,7 +98,7 @@ public class HblQueryClient {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
 
-            this.conf = conf;
+            // this.conf = conf;
             this.es = es;
 
             InputStream is = yamlModel.getInputStream();
@@ -80,15 +107,18 @@ public class HblQueryClient {
             closeables.addFirst(is);
 
             yamlModelStr = IOUtil.fromStream(is, "utf-8");
-            encodedYamlStr = YamlModelParser.encodeCubeModel(yamlModelStr);
+            // encodedYamlStr = YamlModelParser.encodeCubeModel(yamlModelStr);
             cube = YamlModelParser.parseYamlModel(yamlModelStr);
+
+            afr = new AggregateFunctionRegistry();
+            tpool = new HTablePool(conf, 400);
 
         } finally {
             IOUtil.closeAll(closeables);
         }
     }
 
-    AggregateQuery createQuery () { 
-        return new AggregateQueryImpl(cube,es);
+    AggregateQuery createQuery() {
+        return new AggregateQueryImpl(cube, es, tpool, afr);
     }
 }

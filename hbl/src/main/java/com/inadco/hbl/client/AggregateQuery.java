@@ -18,7 +18,6 @@
  */
 package com.inadco.hbl.client;
 
-import java.io.IOException;
 
 public interface AggregateQuery {
 
@@ -44,7 +43,7 @@ public interface AggregateQuery {
     AggregateQuery
         addSlice(String dimension, Object leftBound, boolean leftOpen, Object rightBound, boolean rightOpen);
 
-    AggregateResultSet execute() throws IOException;
+    AggregateResultSet execute() throws HblException;
 
     /**
      * reset for re-use

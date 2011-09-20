@@ -21,8 +21,8 @@ package com.inadco.hbl.client;
 
 public interface AggregateResult  {
 
-    double getDoubleAggregate(String measure, String functionName);
+    double getDoubleAggregate(String measure, String functionName) throws HblException;
 
-    Object getGroupMember(String dimensionName);
+    Object getGroupMember(String dimensionName) throws HblException;
 
 }

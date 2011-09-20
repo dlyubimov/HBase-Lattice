@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.hbl.api.Cube;
@@ -38,26 +39,32 @@ import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Hierarchy;
 import com.inadco.hbl.api.Measure;
 import com.inadco.hbl.api.Range;
+import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateQuery;
 import com.inadco.hbl.client.AggregateResultSet;
+import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 
 public class AggregateQueryImpl implements AggregateQuery {
 
-    private Cube                    cube;
-    private ExecutorService         es;
+    private Cube                      cube;
+    private ExecutorService           es;
     /**
      * dim name -> range slice requested
      */
-    private Map<String, Set<Slice>> dimSlices       = new HashMap<String, Set<Slice>>();
-    private Set<String>             measures        = new HashSet<String>();
+    private Map<String, Set<Slice>>   dimSlices       = new HashMap<String, Set<Slice>>();
+    private Set<String>               measures        = new HashSet<String>();
 
-    private List<String>            groupDimensions = new ArrayList<String>();
+    private List<String>              groupDimensions = new ArrayList<String>();
+    private HTablePool                tpool;
+    private AggregateFunctionRegistry afr;
 
-    public AggregateQueryImpl(Cube cube, ExecutorService es) {
+    public AggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
         super();
         this.cube = cube;
         this.es = es;
+        this.tpool = tpool;
+        this.afr = afr;
     }
 
     @Override
@@ -114,48 +121,52 @@ public class AggregateQueryImpl implements AggregateQuery {
     }
 
     @Override
-    public AggregateResultSet execute() throws IOException {
+    public AggregateResultSet execute() throws HblException {
+        try {
 
-        Cuboid cuboid = findCuboid();
+            Cuboid cuboid = findCuboid();
 
-        Validate.notNull(cuboid, "Unable find suitable cuboid for the slice query.");
+            Validate.notNull(cuboid, "Unable find suitable cuboid for the slice query.");
 
-        // FIXME, TODO: check slices for overlapping. otherwise, if slices
-        // overlap, not only we'd be performing more scans than needed, but
-        // they will also contain duplicate counts.
+            // FIXME, TODO: check slices for overlapping. otherwise, if slices
+            // overlap, not only we'd be performing more scans than needed, but
+            // they will also contain duplicate counts.
 
-        // for now we just have to assume that slices will not overlap.
+            // for now we just have to assume that slices will not overlap.
 
-        // create cartesian product of ScanSpec's
-        List<ScanSpec> scans = new ArrayList<ScanSpec>();
+            // create cartesian product of ScanSpec's
+            List<ScanSpec> scanSpecs = new ArrayList<ScanSpec>();
 
-        List<Range> partialSpec = new ArrayList<Range>();
+            List<Range> partialSpec = new ArrayList<Range>();
 
-        int numGroupKeys = groupDimensions.size();
-        int groupKeyLen = 0;
-        
-        for ( int i = 0; i < numGroupKeys; i++ ) 
-            groupKeyLen+=cuboid.getCuboidDimensions().get(i).getKeyLen();
-        
-        byte[][] measureQualifiers = new byte[measures.size()][];
-        int mCnt=0;
-        for ( String mName:measures) 
-            measureQualifiers[mCnt++]=Bytes.toBytes(mName);
-        
+            int numGroupKeys = groupDimensions.size();
+            int groupKeyLen = 0;
 
-        Measure[] measuresArr = new Measure[measures.size()];
+            for (int i = 0; i < numGroupKeys; i++)
+                groupKeyLen += cuboid.getCuboidDimensions().get(i).getKeyLen();
 
-        int i = 0;
-        Map<String, ? extends Measure> measureMap = cube.getMeasures();
-        // we already validated measure names are valid during add()
-        for (String measure : measures)
-            measuresArr[i++] = measureMap.get(measure);
+            byte[][] measureQualifiers = new byte[measures.size()][];
+            Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
+            int mCnt = 0;
+            for (String mName : measures) {
+                measureName2indexMap.put(mName, mCnt);
+                measureQualifiers[mCnt++] = Bytes.toBytes(mName);
+            }
 
-        generateScanSpecs(cuboid, scans, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
-        
-        // TODO: proceeed with creating group, filtering and final merging iterators.s
+            Measure[] measuresArr = new Measure[measures.size()];
 
-        return null;
+            int i = 0;
+            Map<String, ? extends Measure> measureMap = cube.getMeasures();
+            // we already validated measure names are valid during add()
+            for (String measure : measures)
+                measuresArr[i++] = measureMap.get(measure);
+
+            generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
+
+            return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2indexMap);
+        } catch (IOException exc) {
+            throw new HblException(exc.getMessage(), exc);
+        }
 
     }
 
@@ -241,7 +252,13 @@ public class AggregateQueryImpl implements AggregateQuery {
                     else
                         nextSo = SliceOperation.ADD;
                     partialSpec.set(dimIndex, r);
-                    generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, nextSo, measureQualifiers);
+                    generateScanSpecs(cuboid,
+                                      scanHolder,
+                                      partialSpec,
+                                      dimIndex + 1,
+                                      groupKeyLen,
+                                      nextSo,
+                                      measureQualifiers);
                 }
             }
         }

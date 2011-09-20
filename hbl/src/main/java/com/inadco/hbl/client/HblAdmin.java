@@ -41,7 +41,6 @@ import org.springframework.stereotype.Component;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
-import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.compiler.YamlModelParser;
 import com.inadco.hbl.util.IOUtil;
 
