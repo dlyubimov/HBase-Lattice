@@ -118,7 +118,7 @@ public class HblQueryClient implements Closeable {
         }
     }
 
-    AggregateQuery createQuery() {
+    public AggregateQuery createQuery() {
         return new AggregateQueryImpl(cube, es, tpool, afr);
     }
 }

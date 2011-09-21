@@ -58,11 +58,4 @@ public class HexDimension extends AbstractDimension {
         HblUtil.fillCompositeKeyWithHex(key, 0, keylen, buff, offset);
     }
 
-    @Override
-    public Range[] optimizeSliceScan(Slice slice) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
 }

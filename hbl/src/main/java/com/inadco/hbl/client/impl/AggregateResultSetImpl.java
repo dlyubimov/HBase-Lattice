@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,6 @@ import com.inadco.hbl.client.impl.scanner.RawScanResult;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.util.IOUtil;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 public class AggregateResultSetImpl implements AggregateResultSet, AggregateResult {
 
@@ -166,7 +165,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
 
     @Override
     public double getDoubleAggregate(String measure, String functionName) throws HblException {
-        try { 
+        try {
             Integer index = measureName2IndexMap.get(measure);
             if (index == null)
                 throw new HblException(String.format("Invalid measure name:%s.", measure));
@@ -175,15 +174,15 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                 throw new HblException(String.format("Invalid function name:%s.", functionName));
             if (result == null)
                 throw new HblException("no current result");
-            Aggregation measureAggr=result[index];
-            if ( measureAggr==null ) { 
-                measureAggr= delegate.current().getMeasures()[index].build();
-                result[index]=measureAggr; // cache
+            Aggregation measureAggr = result[index];
+            if (measureAggr == null) {
+                measureAggr = delegate.current().getMeasures()[index].build();
+                result[index] = measureAggr; // cache
             }
-    
+
             return af.getDoubleValue(measureAggr);
-        } catch (IOException exc ) { 
-            throw new HblException ( exc.getMessage(),exc);
+        } catch (IOException exc) {
+            throw new HblException(exc.getMessage(), exc);
         }
 
     }

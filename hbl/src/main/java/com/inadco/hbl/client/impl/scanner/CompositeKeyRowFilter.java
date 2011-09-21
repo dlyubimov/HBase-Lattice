@@ -60,7 +60,7 @@ public class CompositeKeyRowFilter extends FilterBase {
     // of course since we are using Writable serialization rather than java
     // native, keyword 'transitve' doesn't mean anything in this context, but
     // i'd like to use it as a marker for something i don't really serialize.
-    private transient int[]      rightZerosToFilter;
+    private transient int[]      subkeyLengths;
     private transient int[]      keyOffsets;
     private transient int        compositeKeyLen;
     private transient byte[]     nextKeyHint;
@@ -83,14 +83,14 @@ public class CompositeKeyRowFilter extends FilterBase {
         int keyNum = HblUtil.readVarUint32(in);
         pathRange = new Range[keyNum];
         keyOffsets = new int[keyNum];
-        rightZerosToFilter = new int[keyNum];
+        subkeyLengths = new int[keyNum];
         for (int i = 0; i < keyNum; i++) {
             Range r = new Range();
             r.readFields(in);
             pathRange[i] = r;
             if (i > 0)
                 keyOffsets[i] = keyOffsets[i - 1] + pathRange[i - 1].getKeyLen();
-            rightZerosToFilter[i] = r.getRightZerosNumToFilter();
+            subkeyLengths[i] = r.getSubkeyLen();
         }
         compositeKeyLen = keyNum > 0 ? keyOffsets[keyNum - 1] + pathRange[keyNum - 1].getKeyLen() : 0;
 
@@ -132,14 +132,16 @@ public class CompositeKeyRowFilter extends FilterBase {
             // in other words, if there' that many 0x0 at the end,
             // fitler it out.
 
-            int z = rightZerosToFilter[i];
-            if (z > 0) {
-                for (; z > 0; z--)
-                    if (0 != buffer[keyOffset + keyLen - z])
-                        break;
-                if (z == 0)
-                    return true; // wrong hierarchy depth key filter.
+            int z = subkeyLengths[i];
+            if ( z > 0 ) {
+                if ( buffer[keyOffset+z-1]==0)
+                    return true;
             }
+            if ( z < keyLen) { 
+                if ( buffer[keyOffset+z] != 0)
+                    return false;
+            }
+            
         }
         nextKeyCode = ReturnCode.INCLUDE;
         return false;

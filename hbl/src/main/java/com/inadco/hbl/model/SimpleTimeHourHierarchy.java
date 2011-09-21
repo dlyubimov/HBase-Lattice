@@ -25,6 +25,7 @@ import java.util.TimeZone;
 
 import org.apache.commons.lang.Validate;
 
+import com.inadco.hbl.api.HierarchyMember;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.impl.Slice;
 import com.inadco.hbl.util.HblUtil;
@@ -56,6 +57,22 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     @Override
     public int getKeyLen() {
         return KEYLEN;
+    }
+
+    @Override
+    public int getSubkeyLen(int depth) {
+        switch (depth) {
+        case 0:
+            return 0;
+        case 1:
+            return YM_KEYLEN;
+        case 2:
+            return KEYLEN;
+        default:
+            Validate.isTrue(false, "invalid depth");
+            return -1; // not reached
+        }
+
     }
 
     @Override
@@ -95,12 +112,13 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     public void getAllKey(byte[] buff, int offset) {
         Arrays.fill(buff, offset, offset + KEYLEN, (byte) 0);
     }
-    
 
     @Override
     public int keyDepth(byte[] buff, int offset) {
-        if (buff[offset]==0 ) return 0; // all-key
-        if (buff[offset+6]==0) return 1; // monthly key
+        if (buff[offset] == 0)
+            return 0; // all-key
+        if (buff[offset + 6] == 0)
+            return 1; // monthly key
         return 2; // hourly key otherwise.
     }
 
@@ -136,8 +154,10 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     @Override
     public Range[] optimizeSliceScan(Slice slice) {
-        // TODO Auto-generated method stub
-        return null;
+        // todo: optimize this better using complement scans.
+        Range[] ranges = super.optimizeSliceScan(slice);
+        ranges[0].setSubkeyLen(DH_KEYLEN);
+        return ranges;
     }
-    
+
 }

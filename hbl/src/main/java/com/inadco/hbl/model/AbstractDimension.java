@@ -23,6 +23,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.RawComparator;
 
 import com.inadco.hbl.api.Dimension;
+import com.inadco.hbl.api.Range;
+import com.inadco.hbl.client.impl.Slice;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
 
 public abstract class AbstractDimension implements Dimension {
 
@@ -44,5 +48,27 @@ public abstract class AbstractDimension implements Dimension {
         return Bytes.BYTES_RAWCOMPARATOR;
     }
 
-    
+    @Override
+    public Range[] optimizeSliceScan(Slice slice) {
+        int keylen = getKeyLen();
+        byte[] leftKey = new byte[keylen], rightKey = new byte[keylen];
+
+        Object leftBound = slice.getLeftBound();
+        if (leftBound != null)
+            getKey(leftBound, leftKey, 0);
+
+        Object rightBound = slice.getRightBound();
+        if (rightBound != null)
+            getKey(rightBound, rightKey, 0);
+        else
+            Arrays.fill(rightKey, (byte) 0xff);
+        Range r = new Range(leftKey, rightKey, true);
+        r.setKeyLen(keylen);
+        r.setSubkeyLen(keylen);
+        r.setLeftOpen(leftBound == null ? false : slice.isLeftOpen());
+        r.setRightOpen(rightBound == null ? false : slice.isRightOpen());
+        return new Range[] { r };
+
+    }
+
 }

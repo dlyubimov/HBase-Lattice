@@ -21,7 +21,6 @@ package com.inadco.hbl.api;
 import org.apache.hadoop.io.RawComparator;
 
 import com.inadco.hbl.client.impl.Slice;
-import com.inadco.hbl.model.HierarchyMember;
 
 public interface Dimension {
 

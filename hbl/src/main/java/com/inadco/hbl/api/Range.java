@@ -39,9 +39,9 @@ public class Range implements Writable {
 
     private byte[]        start, end;
     private boolean       leftOpen, rightOpen;
-    private int           rightZerosNumToFilter;
-
-    private transient int keyLen;
+    private int           subkeyLen;
+    private int           keyLen;
+    
     private transient SliceOperation sliceOperation;
 
     @Override
@@ -56,7 +56,7 @@ public class Range implements Writable {
             throw new IOException("Unexpected EOF reading range specficiation");
         leftOpen = (stuff & 0x01) != 0;
         rightOpen = (stuff & 0x02) != 0;
-        rightZerosNumToFilter=HblUtil.readVarUint32(in);
+        subkeyLen=HblUtil.readVarUint32(in);
 
     }
 
@@ -71,7 +71,7 @@ public class Range implements Writable {
         if (rightOpen)
             stuff |= 0x02;
         out.writeByte(stuff);
-        HblUtil.writeVarUint32(out, rightZerosNumToFilter);
+        HblUtil.writeVarUint32(out, subkeyLen);
     }
 
     public Range() {
@@ -168,12 +168,12 @@ public class Range implements Writable {
         this.keyLen = compositeKeyLen;
     }
 
-    public int getRightZerosNumToFilter() {
-        return rightZerosNumToFilter;
+    public int getSubkeyLen() {
+        return subkeyLen;
     }
 
-    public void setRightZerosNumToFilter(int rightZerosNumToFilter) {
-        this.rightZerosNumToFilter = rightZerosNumToFilter;
+    public void setSubkeyLen(int subkeyLen) {
+        this.subkeyLen = subkeyLen;
     }
 
     public SliceOperation getSliceOperation() {
