@@ -210,7 +210,11 @@ public class AggregateQueryImpl implements AggregateQuery {
                 // which is all 0's .
                 byte[] allKey = new byte[dim.getKeyLen()];
                 Range allpoint = new Range(allKey, allKey, true, false, false);
-                partialSpec.set(dimIndex, allpoint);
+                if (partialSpec.size() == dimIndex)
+                    partialSpec.add(allpoint);
+                else
+                    partialSpec.set(dimIndex, allpoint);
+
 
             } else {
                 // total range for a dimension: perhaps subefficient!
@@ -219,12 +223,15 @@ public class AggregateQueryImpl implements AggregateQuery {
                 byte[] endKey = new byte[keylen];
                 Arrays.fill(endKey, (byte) 0xFF);
                 Range allrange = new Range(startKey, endKey, true, false, false);
-                partialSpec.set(dimIndex, allrange);
+                if (partialSpec.size() == dimIndex)
+                    partialSpec.add(allrange);
+                else
+                    partialSpec.set(dimIndex, allrange);
             }
 
             generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, so, measureQualifiers);
         } else {
-            if (slices.size() != 0)
+            if (slices.size() != 1)
                 throw new UnsupportedOperationException(
                     "queries to multiple slices of the same dimension are not supported (yet)!");
             Slice slice = slices.iterator().next();
@@ -251,16 +258,14 @@ public class AggregateQueryImpl implements AggregateQuery {
                         nextSo = SliceOperation.COMPLEMENT;
                     else
                         nextSo = SliceOperation.ADD;
-                    partialSpec.set(dimIndex, r);
-                    generateScanSpecs(cuboid,
-                                      scanHolder,
-                                      partialSpec,
-                                      dimIndex + 1,
-                                      groupKeyLen,
-                                      nextSo,
-                                      measureQualifiers);
                 }
+                if (partialSpec.size() == dimIndex)
+                    partialSpec.add(r);
+                else
+                    partialSpec.set(dimIndex, r);
+                generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, nextSo, measureQualifiers);
             }
+
         }
     }
 

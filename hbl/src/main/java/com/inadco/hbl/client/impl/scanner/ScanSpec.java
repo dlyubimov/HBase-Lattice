@@ -32,12 +32,16 @@ public class ScanSpec {
     // it is subsequently used by group merging iterator
     private SliceOperation sliceOperation;
 
-    private byte[][]        measureQualifiers;
-    private int             groupKeyLen;
+    private byte[][]       measureQualifiers;
+    private int            groupKeyLen;
 
-    public ScanSpec(byte[][] measureQualifiers, int groupKeyLen, Range[] ranges, Cuboid cuboid, SliceOperation sliceOperation) {
+    public ScanSpec(byte[][] measureQualifiers,
+                    int groupKeyLen,
+                    Range[] ranges,
+                    Cuboid cuboid,
+                    SliceOperation sliceOperation) {
         super();
-//        this.measures = measures;
+        this.measureQualifiers = measureQualifiers;
         this.ranges = ranges;
         this.cuboid = cuboid;
         this.sliceOperation = sliceOperation;
@@ -62,9 +66,5 @@ public class ScanSpec {
     public int getGroupKeyLen() {
         return groupKeyLen;
     }
-
-
-    
-    
 
 }

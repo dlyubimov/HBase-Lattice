@@ -41,7 +41,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
         super();
         this.scanSpec = scanSpec;
         Validate.notNull(scanSpec);
-        Validate.isTrue(scanSpec.getMeasureQualifiers().length > 0, "scan requested no measures");
+        Validate.notEmpty(scanSpec.getMeasureQualifiers(), "scan requested no measures");
 
         byte[] tableName = Bytes.toBytes(scanSpec.getCuboid().getCuboidTableName());
         CompositeKeyRowFilter krf = new CompositeKeyRowFilter(scanSpec.getRanges());

@@ -82,18 +82,24 @@ public class CompositeKeyRowFilter extends FilterBase {
     public void readFields(DataInput in) throws IOException {
         int keyNum = HblUtil.readVarUint32(in);
         pathRange = new Range[keyNum];
-        keyOffsets = new int[keyNum];
-        subkeyLengths = new int[keyNum];
         for (int i = 0; i < keyNum; i++) {
             Range r = new Range();
             r.readFields(in);
             pathRange[i] = r;
+        }
+        initTransients();
+    }
+
+    public void initTransients() {
+        int keyNum = pathRange.length;
+        keyOffsets = new int[keyNum];
+        subkeyLengths = new int[keyNum];
+        for (int i = 0; i < keyNum; i++) {
             if (i > 0)
                 keyOffsets[i] = keyOffsets[i - 1] + pathRange[i - 1].getKeyLen();
-            subkeyLengths[i] = r.getSubkeyLen();
+            subkeyLengths[i] = pathRange[i].getSubkeyLen();
         }
         compositeKeyLen = keyNum > 0 ? keyOffsets[keyNum - 1] + pathRange[keyNum - 1].getKeyLen() : 0;
-
     }
 
     @Override
@@ -133,15 +139,15 @@ public class CompositeKeyRowFilter extends FilterBase {
             // fitler it out.
 
             int z = subkeyLengths[i];
-            if ( z > 0 ) {
-                if ( buffer[keyOffset+z-1]==0)
+            if (z > 0) {
+                if (buffer[keyOffset + z - 1] == 0)
                     return true;
             }
-            if ( z < keyLen) { 
-                if ( buffer[keyOffset+z] != 0)
+            if (z < keyLen) {
+                if (buffer[keyOffset + z] != 0)
                     return false;
             }
-            
+
         }
         nextKeyCode = ReturnCode.INCLUDE;
         return false;
@@ -160,6 +166,8 @@ public class CompositeKeyRowFilter extends FilterBase {
      *         ranges.
      */
     public byte[] getCompositeBound(boolean lower) {
+        if (keyOffsets == null)
+            initTransients();
         byte[] bound = new byte[compositeKeyLen];
         if (lower) {
             for (int i = 0; i < pathRange.length; i++)
