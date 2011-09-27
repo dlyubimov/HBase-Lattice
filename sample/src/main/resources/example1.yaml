@@ -8,7 +8,7 @@
     - &dim1 !HexDimension [dim1,16]
     - &dim2 !HexDimension [dim2,16]
     - &dim3 !HexDimension [dim3,16]
-    - &dimImpressionTime !SimpleTimeHierarchy [impressionTime]
+    - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime]
     
   - # cuboids
     - !SimpleCuboid 
