@@ -140,8 +140,9 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
             // ourselves without events. Obviously, this would mean
             // we did not see what the other party saw.
             double delta = o.t - t;
-            pi = Math.exp(-delta / alpha);
-            nu = Math.exp(-k * delta / alpha / (k - 1));
+            double piArg = -delta / alpha;
+            pi = Math.exp(piArg);
+            nu = Math.exp(piArg * k / (k - 1));
 
             t = o.t;
             w *= pi;
@@ -151,8 +152,9 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
             pi = nu = 1;
         } else {
             double delta = t - o.t;
-            pi = Math.exp(-delta / alpha);
-            nu = Math.exp(-k * delta / alpha / (k - 1));
+            double piArg = -delta / alpha;
+            pi = Math.exp(piArg);
+            nu = Math.exp(piArg * k / (k - 1));
         }
 
         // another problem is that we don't really know if other corresponds to
@@ -185,8 +187,9 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
                     "empty negative history and non-empty positive history cannot be combined in a meaningful way.");
 
         double delta = Math.abs(t - o.t);
-        double pi = Math.exp(-delta / alpha);
-        double nu = Math.exp(-k * delta / alpha / (k - 1));
+        double piArg = -delta / alpha;
+        double pi = Math.exp(piArg);
+        double nu = Math.exp(piArg * k / (k - 1));
 
         if (t >= o.t) {
             s += o.s * pi;
@@ -241,8 +244,9 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
     }
 
     protected double addFuture(double x, double t, boolean doUpdate) {
-        double pi = this.t == 0 ? 0 : Math.exp((this.t - t) / alpha);
-        double nu = this.t == 0 ? 0 : Math.exp(k * (this.t - t) / alpha / (k - 1));
+        double piArg = (this.t - t) / alpha;
+        double pi = this.t == 0 ? 0 : Math.exp(piArg);
+        double nu = this.t == 0 ? 0 : Math.exp(piArg * k / (k - 1));
         double w = pi * this.w;
         double v = nu * this.v;
         double s = x + pi * this.s;
@@ -260,8 +264,9 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
     }
 
     protected double updatePast(double x, double t) {
-        double pi = Math.exp((t - this.t) / alpha);
-        double nu = Math.exp(k * (t - this.t) / alpha / (k - 1));
+        double piArg = (t - this.t) / alpha;
+        double pi = Math.exp(piArg);
+        double nu = Math.exp(piArg * k / (k - 1));
         w += pi;
         v += nu;
         s += pi * x;

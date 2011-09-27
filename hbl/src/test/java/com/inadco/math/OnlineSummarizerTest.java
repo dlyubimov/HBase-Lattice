@@ -188,17 +188,14 @@ public class OnlineSummarizerTest {
         rcombined2 = IOUtil.tryClone(rs2);
         rcombined2.combine(rs1);
 
-        double err = Math.abs(rs.getRate() - rs1.getRate());
-        System.out.printf("combine error: %e\n", err);
-
-        Assert.assertTrue(Math.abs(rs.getRate() - rcombined1.getRate()) < PREC);
-        Assert.assertTrue(Math.abs(rs.getRate() - rcombined2.getRate()) < PREC);
-
         rcomplement1 = IOUtil.tryClone(rs);
         rcomplement1.complement(rs1, false);
         rcomplement2 = IOUtil.tryClone(rs);
         rcomplement2.complement(rs2, false);
 
+
+        Assert.assertTrue(Math.abs(rs.getRate() - rcombined1.getRate()) < PREC);
+        Assert.assertTrue(Math.abs(rs.getRate() - rcombined2.getRate()) < PREC);
         Assert.assertTrue(Math.abs(rcomplement1.getRate() - rs2.getRate()) < PREC);
         Assert.assertTrue(Math.abs(rcomplement2.getRate() - rs1.getRate()) < PREC);
 

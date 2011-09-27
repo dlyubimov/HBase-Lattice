@@ -70,18 +70,20 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         if (t >= o.t) {
             s += pi * o.s;
             u += nu * o.u;
-            double oHist = pi * o.w + (1 - pi) * alpha;
+            double oHist = pi * o.w + alpha * k * (1 - pi);
             if (oHist > w) {
                 w = oHist;
-                v = nu * o.v + alpha * (k - 1) * (1 - nu) / k;
+                double nuk = (k - 1) * (k - 1) / k;
+                v = nu * o.v + alpha * nuk * (1 - nu);
             }
         } else {
             s = pi * s + o.s;
             u = nu * u + o.u;
-            double tHist = pi * w + (1 - pi) * alpha;
+            double tHist = pi * w + alpha * k * (1 - pi);
             if (tHist > o.w) {
                 w = tHist;
-                v = nu * v + alpha * (k - 1) * (1 - nu) / k;
+                double nuk = (k - 1) * (k - 1) / k;
+                v = nu * v + alpha * nuk * (1 - nu);
             } else {
                 w = o.w;
                 v = o.v;
@@ -124,19 +126,22 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
             // ourselves without events. Obviously, this would mean
             // we did not see what the other party saw.
             double delta = o.t - t;
-            pi = Math.exp(-delta / alpha);
-            nu = Math.exp(-k * delta / alpha / (k - 1));
+            double piArg = -delta / alpha;
+            pi = Math.exp(piArg);
+            nu = Math.exp(piArg * k / (k - 1));
 
             t = o.t;
-            w *= (1 - pi) * alpha;
-            v *= alpha * (k - 1) * (1 - nu) / k;
+            w = pi * w + alpha * k * (1 - pi);
+            double nuk = (k - 1) * (k - 1) / k;
+            v = nu * v + alpha * nuk * (1 - nu);
             s *= pi;
             u *= nu;
             pi = nu = 1;
         } else {
             double delta = t - o.t;
-            pi = Math.exp(-delta / alpha);
-            nu = Math.exp(-k * delta / alpha / (k - 1));
+            double piArg = -delta / alpha;
+            pi = Math.exp(piArg);
+            nu = Math.exp(piArg * k / (k - 1));
         }
 
         // another problem is that we don't really know if other corresponds to
@@ -148,7 +153,6 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         u -= nu * o.u;
         w -= pi * o.w;
         v -= nu * o.v;
-
     }
 
     @Override
@@ -171,19 +175,18 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
     public double getT0() {
         if (t == 0)
             return 0; // no observations;
-        double delta = -alpha * Math.log(1 - w / alpha);
-
-        assert delta >= 0;
-
-        return t - delta;
+        // FIXME:
+        throw new UnsupportedOperationException();
     }
 
     @Override
     protected double addFuture(double x, double t, boolean doUpdate) {
-        double pi = this.t == 0 ? 1 : Math.exp((this.t - t) / alpha);
-        double nu = this.t == 0 ? 1 : Math.exp(k * (this.t - t) / alpha / (k - 1));
-        double w = pi * this.w + alpha * (1 - pi);
-        double v = nu * this.v + alpha * (k - 1) * (1 - nu) / k;
+        double piArg = (this.t - t) / alpha;
+        double pi = this.t == 0 ? 1 : Math.exp(piArg);
+        double nu = this.t == 0 ? 1 : Math.exp(piArg * k / (k - 1));
+        double w = pi * this.w + k * alpha * (1 - pi);
+        double nuk = (k - 1) * (k - 1) / k;
+        double v = nu * this.v + nuk * alpha * (1 - nu);
         double s = x + pi * this.s;
         double u = x + nu * this.u;
 

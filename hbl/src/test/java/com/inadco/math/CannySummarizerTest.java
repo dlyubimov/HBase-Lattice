@@ -66,7 +66,7 @@ public class CannySummarizerTest {
         else
             cs2.update(x, t);
 
-//        System.out.printf("cannyAvg: %.4f\n", cs.getValue());
+        // System.out.printf("cannyAvg: %.4f\n", cs.getValue());
 
     }
 
@@ -79,7 +79,7 @@ public class CannySummarizerTest {
         else
             cs2.update(x, t);
 
-//        System.out.printf("cannyAvg1: %.4f\n", cs.getValue());
+        // System.out.printf("cannyAvg1: %.4f\n", cs.getValue());
 
     }
 
@@ -97,7 +97,7 @@ public class CannySummarizerTest {
 
         if (currSplit == null)
             currSplit = cr1;
-        else if (currSplit == cr1 && rnd.nextDouble() < 0.01) {
+        else if (currSplit == cr1 && rnd.nextDouble() < 2 / N) {
             currSplit = cr2;
             // in order for test to work, we have to
             // "pull" amount of time in rs1 so that it connects
@@ -136,8 +136,17 @@ public class CannySummarizerTest {
 
         Assert.assertTrue(Math.abs(cs.getValue() - combined1.getValue()) < PREC);
         Assert.assertTrue(Math.abs(cs.getValue() - combined2.getValue()) < PREC);
+
+        // One of these still seem to give a considerable error, intermittently,
+        // and only one of, and in both avg and rate cases, whereas
+        // everything else is comfortably under 1E-13. Maybe it is something
+        // with the test that i still don't see?
         Assert.assertTrue(Math.abs(cs2.getValue() - complement1.getValue()) < PREC);
         Assert.assertTrue(Math.abs(cs1.getValue() - complement2.getValue()) < PREC);
+        
+        complement1.combine(complement2);
+        Assert.assertTrue(Math.abs(cs.getValue() - complement1.getValue()) < PREC);
+        
 
     }
 
@@ -258,7 +267,7 @@ public class CannySummarizerTest {
                 CannySummarizerTest.this.n++;
                 // in 10% of cases we may step back in history to simulate
                 // backward history updates
-                return new Object[] { t += Math.abs(1000 + rnd.nextGaussian()) * 33, 1 }; // +-10%
+                return new Object[] { t += Math.abs(1000 + rnd.nextGaussian() * 33), 1 }; // +-10%
             }
 
             @Override
