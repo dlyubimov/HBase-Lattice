@@ -62,18 +62,93 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         double pi = Math.exp(-delta / alpha);
         double nu = Math.exp(-k * delta / alpha / (k - 1));
         // hist len -- take whichever longer
-        if (o.w > w) {
-            w = o.w;
-            v = o.v;
-        }
+        // if (o.w > w) {
+        // w = o.w;
+        // v = o.v;
+        // }
         // events are just summed up
         if (t >= o.t) {
             s += pi * o.s;
             u += nu * o.u;
+            double oHist = pi * o.w + (1 - pi) * alpha;
+            if (oHist > w) {
+                w = oHist;
+                v = nu * o.v + alpha * (k - 1) * (1 - nu) / k;
+            }
         } else {
             s = pi * s + o.s;
             u = nu * u + o.u;
+            double tHist = pi * w + (1 - pi) * alpha;
+            if (tHist > o.w) {
+                w = tHist;
+                v = nu * v + alpha * (k - 1) * (1 - nu) / k;
+            } else {
+                w = o.w;
+                v = o.v;
+            }
         }
+    }
+
+    /**
+     * warning. This works only for continuous slices that are connected
+     * properly.
+     * <P>
+     * 
+     * i.e. if you have timeline t1...tn such that t1<t2...<tn, and you had
+     * samples corresponding to times t1..ti added to S1, then it will create a
+     * rate for interval corresponding to ti..tn but samples x_i+1..xn which is
+     * probably not what one expects exactly. The solution is of course to add
+     * sample (0, ti) to the "other" summarizer and then this will return
+     * expected sum of (x_1,t_1)...(x_i,t_i).
+     * <P>
+     * 
+     * Better yet is to set explicit boundaries for slices by adding 0 samples
+     * at the slice boundaries.
+     * <P>
+     */
+
+    @Override
+    public void complement(IrregularSamplingSummarizer other, boolean artificialStretch) {
+        Validate.isTrue(other instanceof OnlineCannyRateSummarizer);
+        OnlineCannyRateSummarizer o = (OnlineCannyRateSummarizer) other;
+        Validate.isTrue(o.alpha == alpha, "Unable to combine incompatible summarizers: different exponential decay.");
+        Validate.isTrue(o.k == k, "Unable to combine incompatible summarizers: different k parameter in Canny filter.");
+        Validate.isTrue(t >= o.t || artificialStretch,
+                        "we are supposed to be a superset (this.t >= other.t) doesn't hold.");
+
+        double pi, nu;
+        if (t < o.t) {
+            // so apparently 'other' are newer observations and
+            // we are missing some of the new observations in the
+            // superset. So what we can do in this case, we can "stretch"
+            // ourselves without events. Obviously, this would mean
+            // we did not see what the other party saw.
+            double delta = o.t - t;
+            pi = Math.exp(-delta / alpha);
+            nu = Math.exp(-k * delta / alpha / (k - 1));
+
+            t = o.t;
+            w *= (1 - pi) * alpha;
+            v *= alpha * (k - 1) * (1 - nu) / k;
+            s *= pi;
+            u *= nu;
+            pi = nu = 1;
+        } else {
+            double delta = t - o.t;
+            pi = Math.exp(-delta / alpha);
+            nu = Math.exp(-k * delta / alpha / (k - 1));
+        }
+
+        // another problem is that we don't really know if other corresponds to
+        // last events or less than last events, so we can't correct t exactly.
+        // This will affect stuff like biased estimators, because from their
+        // point of view, there just were no recent observations. So complements
+        // are probably not for biased estimates so much.
+        s -= pi * o.s;
+        u -= nu * o.u;
+        w -= pi * o.w;
+        v -= nu * o.v;
+
     }
 
     @Override
@@ -86,6 +161,21 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         if (tNow < t)
             tNow = t;
         return addFuture(0, tNow, false);
+    }
+
+    /**
+     * return time of the first sample (reconstructed, approx)
+     * 
+     * @return
+     */
+    public double getT0() {
+        if (t == 0)
+            return 0; // no observations;
+        double delta = -alpha * Math.log(1 - w / alpha);
+
+        assert delta >= 0;
+
+        return t - delta;
     }
 
     @Override

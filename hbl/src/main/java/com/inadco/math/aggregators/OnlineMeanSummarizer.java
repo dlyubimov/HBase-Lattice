@@ -43,8 +43,11 @@ public class OnlineMeanSummarizer implements OnlineSummarizer<OnlineMeanSummariz
     long   n;
 
     
-
     
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 
     public OnlineMeanSummarizer(long maxN) {
         super();
@@ -102,6 +105,13 @@ public class OnlineMeanSummarizer implements OnlineSummarizer<OnlineMeanSummariz
         n += other.n;
         if (n > maxN)
             n = maxN;
+    }
+    
+    @Override
+    public void complement(OnlineMeanSummarizer other, boolean artificialStretch) {
+        // FIXME: this should be possible here, shouldn't it?
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override

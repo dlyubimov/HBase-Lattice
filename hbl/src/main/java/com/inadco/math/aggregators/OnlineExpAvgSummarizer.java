@@ -44,6 +44,11 @@ public class OnlineExpAvgSummarizer implements IrregularSamplingSummarizer {
     // params
     protected double     alpha;
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
     /**
      * default constructor -- to be used with {@link Writable}, really.
      */
@@ -120,9 +125,7 @@ public class OnlineExpAvgSummarizer implements IrregularSamplingSummarizer {
         Validate.isTrue(other instanceof OnlineExpAvgSummarizer);
         OnlineExpAvgSummarizer o = (OnlineExpAvgSummarizer) other;
 
-        if (o.alpha != alpha)
-            throw new IllegalArgumentException(
-                "Unable to combine incompatible summarizers: different exponential decay.");
+        Validate.isTrue(o.alpha == alpha, "Unable to combine incompatible summarizers: different exponential decay.");
 
         if (o.t == 0) {
             // do nothing -- other summarizer was empty
@@ -141,6 +144,40 @@ public class OnlineExpAvgSummarizer implements IrregularSamplingSummarizer {
             s = o.s + pi * s;
             t = o.t;
         }
+    }
+
+    @Override
+    public void complement(IrregularSamplingSummarizer other, boolean artificialStretch) {
+        Validate.isTrue(other instanceof OnlineExpAvgSummarizer);
+        OnlineExpAvgSummarizer o = (OnlineExpAvgSummarizer) other;
+
+        Validate.isTrue(o.alpha == alpha, "Unable to combine incompatible summarizers: different exponential decay.");
+
+        Validate.isTrue(t >= o.t || artificialStretch,
+                        "we are supposed to be a superset (this.t >= other.t) doesn't hold.");
+
+        double pi;
+        if (t < o.t) {
+            // so apparently 'other' are newer observations and
+            // we are missing some of the new observations in the
+            // superset. So what we can do in this case, we can "stretch"
+            // ourselves without events. Obviously, this would mean
+            // we did not see what the other party saw.
+            pi = Math.exp((t - o.t) / alpha);
+            t = o.t;
+            w = pi * w;
+            s = pi * s;
+            pi = 1;
+        } else
+            pi = Math.exp((o.t - t) / alpha);
+
+        // another problem is that we don't really know if other corresponds to
+        // last events or less than last events, so we can't correct t exactly.
+        // This will affect stuff like biased estimators, because from their
+        // point of view, there just were no recent observations. So complements
+        // are probably not for biased estimates so much.
+        s -= pi * o.s;
+        w -= pi * o.w;
     }
 
     @Override

@@ -40,7 +40,11 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
     protected double           w, u, s, v;
     protected double           t;
 
-    
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
     public OnlineCannyAvgSummarizer() {
         super();
     }
@@ -103,13 +107,11 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
             double nu = Math.exp(-k * delta / alpha / (k - 1));
 
             if (t >= o.t) {
-
                 w += pi * o.w;
                 v += nu * o.v;
                 s += pi * o.s;
                 u += nu * o.u;
             } else {
-
                 w = o.w + pi * w;
                 v = o.v + nu * v;
                 s = o.s + pi * s;
@@ -118,6 +120,50 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
             }
         }
 
+    }
+
+    @Override
+    public void complement(IrregularSamplingSummarizer other, boolean artificialStretch) {
+
+        Validate.isTrue(other instanceof OnlineCannyAvgSummarizer);
+        OnlineCannyAvgSummarizer o = (OnlineCannyAvgSummarizer) other;
+        Validate.isTrue(o.alpha == alpha, "Unable to combine incompatible summarizers: different exponential decay.");
+        Validate.isTrue(o.k == k, "Unable to combine incompatible summarizers: different k parameter in Canny filter.");
+        Validate.isTrue(t >= o.t || artificialStretch,
+                        "we are supposed to be a superset (this.t >= other.t) doesn't hold.");
+
+        double pi, nu;
+        if (t < o.t) {
+            // so apparently 'other' are newer observations and
+            // we are missing some of the new observations in the
+            // superset. So what we can do in this case, we can "stretch"
+            // ourselves without events. Obviously, this would mean
+            // we did not see what the other party saw.
+            double delta = o.t - t;
+            pi = Math.exp(-delta / alpha);
+            nu = Math.exp(-k * delta / alpha / (k - 1));
+
+            t = o.t;
+            w *= pi;
+            v *= nu;
+            s *= pi;
+            u *= nu;
+            pi = nu = 1;
+        } else {
+            double delta = t - o.t;
+            pi = Math.exp(-delta / alpha);
+            nu = Math.exp(-k * delta / alpha / (k - 1));
+        }
+
+        // another problem is that we don't really know if other corresponds to
+        // last events or less than last events, so we can't correct t exactly.
+        // This will affect stuff like biased estimators, because from their
+        // point of view, there just were no recent observations. So complements
+        // are probably not for biased estimates so much.
+        s -= pi * o.s;
+        u -= nu * o.u;
+        w -= pi * o.w;
+        v -= nu * o.v;
     }
 
     /**
@@ -162,7 +208,7 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
 
     @Override
     public double getValue() {
-        return (k * s - (k - 1) * u) / (k * w - (k - 1) * v);
+        return w == 0 ? 0 : (k * s - (k - 1) * u) / (k * w - (k - 1) * v);
     }
 
     @Override
