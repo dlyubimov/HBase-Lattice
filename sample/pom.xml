@@ -43,6 +43,14 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>hbl</artifactId>
     </dependency>
+    
+    <!-- pig -->
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+    </dependency>
+    
+    
   </dependencies>
 
 </project>
