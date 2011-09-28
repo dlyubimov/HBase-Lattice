@@ -136,11 +136,11 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
         if (t < o.t) {
             /*
              * the problem is of course that in case t==o.t we don't have the
-             * delta correctly. so we use a workaround assuming the slices are 100%
-             * adjacent, so we are subtracting either the right slice, or the left 
-             * slice.
+             * delta correctly. so we use a workaround assuming the slices are
+             * 100% adjacent, so we are subtracting either the right slice, or
+             * the left slice.
              */
-            double delta = o.t == t? o.getT0()-t:o.t-t;
+            double delta = o.t == t ? o.getT0() - t : o.t - t;
             double piArg = -delta / alpha;
             pi = Math.exp(piArg);
             nu = Math.exp(piArg * k / (k - 1));
@@ -156,18 +156,13 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
             double piArg = -delta / alpha;
             pi = Math.exp(piArg);
             nu = Math.exp(piArg * k / (k - 1));
-            
+
         }
 
-        // another problem is that we don't really know if other corresponds to
-        // last events or less than last events, so we can't correct t exactly.
-        // This will affect stuff like biased estimators, because from their
-        // point of view, there just were no recent observations. So complements
-        // are probably not for biased estimates so much.
-        s -= /*pi * */ o.s;
-        u -= /* nu * */ o.u;
-        w -= /* pi * */ o.w;
-        v -= /* nu * */ o.v;
+        s -= pi * o.s;
+        u -= nu * o.u;
+        w -= pi * o.w;
+        v -= nu * o.v;
     }
 
     /**
