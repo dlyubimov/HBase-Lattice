@@ -267,7 +267,7 @@ public class CannySummarizerTest {
                 CannySummarizerTest.this.n++;
                 // in 10% of cases we may step back in history to simulate
                 // backward history updates
-                return new Object[] { t += Math.abs(1000 + rnd.nextGaussian() * 33), 1 }; // +-10%
+                return new Object[] { t += Math.abs(1000 + rnd.nextGaussian() * 100), 1 }; // +-10%
             }
 
             @Override
