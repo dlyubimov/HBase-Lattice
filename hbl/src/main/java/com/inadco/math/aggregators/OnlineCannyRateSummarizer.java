@@ -176,8 +176,9 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
     public double getT0() {
         if (t == 0)
             return 0; // no observations;
-        // FIXME:
-        throw new UnsupportedOperationException();
+        // // FIXME:
+        // throw new UnsupportedOperationException();
+        return t + alpha * Math.log(1 - w / alpha);
     }
 
     @Override

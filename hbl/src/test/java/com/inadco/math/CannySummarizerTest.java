@@ -97,7 +97,7 @@ public class CannySummarizerTest {
 
         if (currSplit == null)
             currSplit = cr1;
-        else if (currSplit == cr1 && rnd.nextDouble() < 2 / N) {
+        else if (currSplit == cr1 && rnd.nextDouble() < 3d / N) {
             currSplit = cr2;
             // in order for test to work, we have to
             // "pull" amount of time in rs1 so that it connects
@@ -175,6 +175,9 @@ public class CannySummarizerTest {
         Assert.assertTrue(Math.abs(cr.getValue() - rcombined2.getValue()) < PREC);
         Assert.assertTrue(Math.abs(cr2.getValue() - rcomplement1.getValue()) < PREC);
         Assert.assertTrue(Math.abs(cr1.getValue() - rcomplement2.getValue()) < PREC);
+        
+        rcomplement1.combine(rcomplement2);
+        Assert.assertTrue(Math.abs(cr.getValue() - rcomplement1.getValue()) < PREC);
 
     }
 
