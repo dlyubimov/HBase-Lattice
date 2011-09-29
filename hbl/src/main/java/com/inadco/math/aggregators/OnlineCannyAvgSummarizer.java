@@ -159,10 +159,21 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
 
         }
 
-        s -= pi * o.s;
-        u -= nu * o.u;
-        w -= pi * o.w;
-        v -= nu * o.v;
+         s -= pi * o.s;
+         u -= nu * o.u;
+         w -= pi * o.w;
+         v -= nu * o.v;
+
+//        double tsum = k * s - (k - 1) * u;
+//        double otsum = k * pi * o.s - (k - 1) * o.u * nu;
+//        tsum -= otsum;
+//        u = (k * s - tsum) / (k - 1);
+//
+//        tsum = k * w - (k - 1) * v;
+//        otsum = k * pi * o.w - (k - 1) * o.v * nu;
+//        tsum -= otsum;
+//        v = (k * w - tsum) / (k - 1);
+
     }
 
     /**

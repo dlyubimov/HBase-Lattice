@@ -38,7 +38,7 @@ public class OnlineSummarizerTest {
     private static final double               CONVERGED  = 0.25;
     private static final double               HISTORYLEN = 600000;      // 10
     // MIN
-    private static final int                  N          = 600;
+    private static final int                  N          = 200;
     private static final double               PREC       = 1E-7;
 
     private OnlineExpBiasedBinomialSummarizer s          = new OnlineExpBiasedBinomialSummarizer(BIAS, HISTORYLEN), // phased
@@ -94,7 +94,7 @@ public class OnlineSummarizerTest {
 
     }
 
-    @Test(dependsOnMethods = "combineSplits", invocationCount = 20, enabled = !DEBUG)
+    @Test(dependsOnMethods = "combineSplits",  enabled = !DEBUG)
     void testAssertion() throws Exception {
         double time = t + rnd.nextInt(20000);
 

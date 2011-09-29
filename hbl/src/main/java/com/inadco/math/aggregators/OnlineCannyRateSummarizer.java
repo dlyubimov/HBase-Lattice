@@ -92,24 +92,6 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         }
     }
 
-    /**
-     * warning. This works only for continuous slices that are connected
-     * properly.
-     * <P>
-     * 
-     * i.e. if you have timeline t1...tn such that t1<t2...<tn, and you had
-     * samples corresponding to times t1..ti added to S1, then it will create a
-     * rate for interval corresponding to ti..tn but samples x_i+1..xn which is
-     * probably not what one expects exactly. The solution is of course to add
-     * sample (0, ti) to the "other" summarizer and then this will return
-     * expected sum of (x_1,t_1)...(x_i,t_i).
-     * <P>
-     * 
-     * Better yet is to set explicit boundaries for slices by adding 0 samples
-     * at the slice boundaries.
-     * <P>
-     */
-
     @Override
     public void complement(IrregularSamplingSummarizer other, boolean artificialStretch) {
         Validate.isTrue(other instanceof OnlineCannyRateSummarizer);
@@ -145,11 +127,6 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
             nu = Math.exp(piArg * k / (k - 1));
         }
 
-        // another problem is that we don't really know if other corresponds to
-        // last events or less than last events, so we can't correct t exactly.
-        // This will affect stuff like biased estimators, because from their
-        // point of view, there just were no recent observations. So complements
-        // are probably not for biased estimates so much.
         s -= pi * o.s;
         u -= nu * o.u;
         w -= pi * o.w;
