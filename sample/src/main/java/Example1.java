@@ -1,45 +1,124 @@
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Calendar;
+import java.util.Deque;
+import java.util.GregorianCalendar;
 import java.util.Map.Entry;
+import java.util.Random;
+import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.pig.ExecType;
 import org.apache.pig.impl.PigContext;
 import org.apache.pig.tools.grunt.Grunt;
 import org.apache.pig.tools.parameters.ParameterSubstitutionPreprocessor;
-import org.apache.pig.tools.parameters.ParseException;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
+import com.google.protobuf.ByteString;
+import com.inadco.hb.example1.codegen.Example1.CompilerInput;
+import com.inadco.hbl.client.HblAdmin;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
+import com.inadco.hbl.util.HblUtil;
+import com.inadco.hbl.util.IOUtil;
 
 public class Example1 extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
-
         ToolRunner.run(new Example1(), args);
     }
 
     @Override
     public int run(String[] args) throws Exception {
-        Pig8CubeIncrementalCompilerBean compiler =
-            new Pig8CubeIncrementalCompilerBean(new ClassPathResource("example1.yaml"), new ClassPathResource(
-                "example1-preambula.pig"), 5);
+        
+        // script resource 
+        Resource cubeModelRsrc = new ClassPathResource ( "example1.yaml");
+        
 
         FileSystem dfs = FileSystem.get(getConf());
         Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
         Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
+
+        // prepare incremental simulated input 
+        
+        simulateInput(dfs, inputPath);
+        
+        // make sure hbase schema is rolled out 
+        HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
+        hblAdmin.dropCube(getConf());
+        hblAdmin.deployCube(getConf());
+
+        // run compiler for the model 
+        Pig8CubeIncrementalCompilerBean compiler =
+            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource(
+                "example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
 
         runScript(script, inputPath);
 
         return 0;
+    }
+
+    private static final int    N         = 100;
+    private static final double clickRate = 0.25;
+
+    private void simulateInput(FileSystem fs, Path inputDir) throws IOException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+
+        byte[] idBytes = new byte[16];
+
+        ByteString[] id = new ByteString[2];
+        id[0] = ByteString.copyFrom(idBytes);
+        HblUtil.incrementKey(idBytes, 0, idBytes.length);
+        id[1] = ByteString.copyFrom(idBytes);
+
+        Random rnd = new Random();
+
+        try {
+            GregorianCalendar start = new GregorianCalendar(2011, 8, 1);
+            start.setTimeZone(TimeZone.getTimeZone("UTC"));
+            // flush the cal
+            start.getTimeInMillis();
+
+            Path inpFile = new Path(inputDir, "example1");
+            fs.mkdirs(inputDir);
+            SequenceFile.Writer w =
+                SequenceFile.createWriter(fs, getConf(), inpFile, IntWritable.class, BytesWritable.class);
+            closeables.addFirst(w);
+
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < i; j++) {
+                    for (int k = 0; k < 2; k++) {
+                        CompilerInput.Builder inp = CompilerInput.newBuilder();
+                        inp.setDim1(id[k]);
+                        inp.setDim2(id[k]);
+                        inp.setDim3(id[k]);
+                        inp.setImpressionTime(start.getTimeInMillis());
+                        inp.setImpCnt(1);
+                        inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
+                    }
+                }
+                start.add(Calendar.HOUR_OF_DAY, 1);
+            }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+
     }
 
     private void runScript(String script, Path inputPath) throws IOException {
@@ -51,13 +130,11 @@ public class Example1 extends Configured implements Tool {
              * Pig's way to do this
              */
             PigContext pc = new PigContext();
-            pc.setExecType(ExecType.MAPREDUCE); // actually always try
-                                                // to use hdfs, just use
-                                                // local tracker in
-                                                // debug.
+            pc.setExecType(ExecType.MAPREDUCE); 
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
+            
             for (Entry<String, String> entry : getConf())
                 pc.getProperties().put(entry.getKey(), entry.getValue());
 

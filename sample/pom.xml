@@ -27,12 +27,46 @@
 
     <plugins>
       <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="target/generated-sources" />
+
+                <exec executable="protoc" failonerror="true">
+                  <arg value="--java_out=target/generated-sources" />
+                  <arg value="--proto_path=${basedir}/src/main/proto" />
+                  <arg
+                    value="--descriptor_set_out=target/generated-sources/hbl-cells.protodesc" />
+                  <arg value="--include_imports" />
+                  <arg value="${basedir}/src/main/proto/Example1.proto" />
+                </exec>
+
+              </tasks>
+              <sourceRoot>target/generated-sources</sourceRoot>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-source-plugin</artifactId>
       </plugin>
 
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+      </plugin>
+
 
     </plugins>
 
@@ -42,15 +76,16 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>hbl</artifactId>
+      <scope>provided</scope>
     </dependency>
-    
+
     <!-- pig -->
     <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
     </dependency>
-    
-    
+
+
   </dependencies>
 
 </project>

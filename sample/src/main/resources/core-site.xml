@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+
+<!-- Unlike 0.7, Pig 0.8 seems to be dead set on finding this one in classpath, 
+  so give it something. We don't assume local client setup (but maybe we should). -->
+<configuration>
+  <!-- <property> -->
+  <!-- <name>hadoop.tmp.dir</name> -->
+  <!-- <value>/data/hadoop</value> -->
+  <!-- </property> -->
+
+
+  <property>
+    <name>fs.default.name</name>
+    <value>hdfs://localhost:11010</value>
+  </property>
+  
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>localhost</value>
+  </property>
+  
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>
+    <value>2181</value>
+  </property>
+
+</configuration>
