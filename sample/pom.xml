@@ -79,6 +79,17 @@
       <artifactId>hbl</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.inadco.ecoadapters</groupId>
+      <artifactId>ecoadapters</artifactId>
+    </dependency>
+
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+
 
     <!--  sources for eclipse navigation -->
     <dependency>
@@ -113,6 +124,12 @@
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+      <classifier>sources</classifier>
     </dependency>
 
   </dependencies>

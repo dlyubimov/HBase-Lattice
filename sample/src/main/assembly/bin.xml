@@ -6,20 +6,20 @@
   <formats>
     <format>jar</format>
   </formats>
-  <includeBaseDirectory>true</includeBaseDirectory>
+  <includeBaseDirectory>false</includeBaseDirectory>
   <dependencySets>
 
-<!--     <dependencySet> -->
-<!--       <unpack>false</unpack> -->
-<!--       <outputDirectory>/lib</outputDirectory> -->
-<!--       <scope>runtime</scope> -->
-<!--     </dependencySet> -->
-
     <dependencySet>
-      <unpack>true</unpack>
-      <outputDirectory>/</outputDirectory>
+      <unpack>false</unpack>
+      <outputDirectory>/lib</outputDirectory>
       <scope>runtime</scope>
     </dependencySet>
+
+<!--     <dependencySet> -->
+<!--       <unpack>true</unpack> -->
+<!--       <outputDirectory>/</outputDirectory> -->
+<!--       <scope>runtime</scope> -->
+<!--     </dependencySet> -->
 
 
   </dependencySets>

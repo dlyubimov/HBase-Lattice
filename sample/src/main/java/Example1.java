@@ -123,8 +123,8 @@ public class Example1 extends Configured implements Tool {
                         inp.setImpCnt(1);
                         inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
                         byte[] b = inp.build().toByteArray();
-                        bw.set(b,0,b.length);
-                        w.append(iw,bw);
+                        bw.set(b, 0, b.length);
+                        w.append(iw, bw);
                     }
                 }
                 start.add(Calendar.HOUR_OF_DAY, 1);
@@ -150,16 +150,18 @@ public class Example1 extends Configured implements Tool {
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
-            // this did not work for me for some reason.
             pc.addJar("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar");
 
             Configuration conf = getConf();
 
-//            FileSystem dfs = FileSystem.get(conf);
+            FileSystem dfs = FileSystem.get(conf);
 
-//            dfs.copyFromLocalFile(false, true, new Path("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar"), new Path(
-//                "hbl-job.jar"));
-//            DistributedCache.addFileToClassPath(new Path("hbl-job.jar"), conf, dfs);
+//            Path jobPath = new Path(dfs.getWorkingDirectory(), "hbl-job.jar");
+//
+//            dfs.copyFromLocalFile(false, true, new Path("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar"), jobPath);
+//            DistributedCache.addArchiveToClassPath(jobPath, conf, dfs);
+//            
+//            conf.set("mapred.job.classpath.archives", jobPath.toString());
 
 //            for (Entry<String, String> entry : conf)
 //                pc.getProperties().put(entry.getKey(), entry.getValue());
