@@ -11,11 +11,12 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TimeZone;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -35,36 +36,45 @@ import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
 
+/**
+ * to run, use hadoop command line
+ * 
+ * @author dmitriy
+ * 
+ */
+
 public class Example1 extends Configured implements Tool {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Throwable {
+
+        // runjarArgs[0]="target/sample-0.1.0-SNAPSHOT-hadoop-job.jar";
+
         ToolRunner.run(new Example1(), args);
+
     }
 
     @Override
     public int run(String[] args) throws Exception {
-        
-        // script resource 
-        Resource cubeModelRsrc = new ClassPathResource ( "example1.yaml");
-        
+
+        // script resource
+        Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
         FileSystem dfs = FileSystem.get(getConf());
         Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
         Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
 
-        // prepare incremental simulated input 
-        
+        // prepare incremental simulated input
+
         simulateInput(dfs, inputPath);
-        
-        // make sure hbase schema is rolled out 
+
+        // make sure hbase schema is rolled out
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
         hblAdmin.dropCube(getConf());
         hblAdmin.deployCube(getConf());
 
-        // run compiler for the model 
+        // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
-            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource(
-                "example1-preambula.pig"), 5);
+            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
 
@@ -99,6 +109,8 @@ public class Example1 extends Configured implements Tool {
             SequenceFile.Writer w =
                 SequenceFile.createWriter(fs, getConf(), inpFile, IntWritable.class, BytesWritable.class);
             closeables.addFirst(w);
+            IntWritable iw = new IntWritable();
+            BytesWritable bw = new BytesWritable();
 
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < i; j++) {
@@ -110,6 +122,9 @@ public class Example1 extends Configured implements Tool {
                         inp.setImpressionTime(start.getTimeInMillis());
                         inp.setImpCnt(1);
                         inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
+                        byte[] b = inp.build().toByteArray();
+                        bw.set(b,0,b.length);
+                        w.append(iw,bw);
                     }
                 }
                 start.add(Calendar.HOUR_OF_DAY, 1);
@@ -130,13 +145,24 @@ public class Example1 extends Configured implements Tool {
              * Pig's way to do this
              */
             PigContext pc = new PigContext();
-            pc.setExecType(ExecType.MAPREDUCE); 
+
+            pc.setExecType(ExecType.MAPREDUCE);
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
-            
-            for (Entry<String, String> entry : getConf())
-                pc.getProperties().put(entry.getKey(), entry.getValue());
+            // this did not work for me for some reason.
+            pc.addJar("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar");
+
+            Configuration conf = getConf();
+
+//            FileSystem dfs = FileSystem.get(conf);
+
+//            dfs.copyFromLocalFile(false, true, new Path("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar"), new Path(
+//                "hbl-job.jar"));
+//            DistributedCache.addFileToClassPath(new Path("hbl-job.jar"), conf, dfs);
+
+//            for (Entry<String, String> entry : conf)
+//                pc.getProperties().put(entry.getKey(), entry.getValue());
 
             // pig-preprocess
             ParameterSubstitutionPreprocessor psp = new ParameterSubstitutionPreprocessor(512);

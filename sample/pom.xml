@@ -73,9 +73,38 @@
   </build>
 
   <dependencies>
+  
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>hbl</artifactId>
+    </dependency>
+
+
+    <!--  sources for eclipse navigation -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <classifier>sources</classifier>
+    </dependency>
+
+
+    <!--  explicitly list provided stuff so it doesn't get into hadoop job jar -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>  
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>  
       <scope>provided</scope>
     </dependency>
 
@@ -83,8 +112,8 @@
     <dependency>
       <groupId>org.apache.pig</groupId>
       <artifactId>pig</artifactId>
+      <scope>provided</scope>
     </dependency>
-
 
   </dependencies>
 
