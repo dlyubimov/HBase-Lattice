@@ -18,8 +18,9 @@
  */
 package com.inadco.hbl.model;
 
-import com.inadco.hbl.api.Range;
-import com.inadco.hbl.client.impl.Slice;
+import org.apache.commons.lang.Validate;
+import org.apache.pig.data.DataByteArray;
+
 import com.inadco.hbl.util.HblUtil;
 
 /**
@@ -54,7 +55,20 @@ public class HexDimension extends AbstractDimension {
     @Override
     public void getKey(Object member, byte[] buff, int offset) {
 
-        byte[] key = (byte[]) member;
+        byte[] key;
+
+        if (member instanceof byte[]) { 
+            key = (byte[]) member;
+            Validate.isTrue(key.length==keylen, "Wrong hex id length");
+        } else if (member instanceof DataByteArray) { 
+            DataByteArray dba = (DataByteArray)member;
+            key = dba.get();
+            Validate.isTrue(dba.size()==keylen,"Wrong hex id length");
+        } else {
+            Validate.isTrue(false, "unsupported type/null for a dimension member");
+            return;
+        }
+
         HblUtil.fillCompositeKeyWithHex(key, 0, keylen, buff, offset);
     }
 

@@ -7,16 +7,14 @@ import java.util.ArrayDeque;
 import java.util.Calendar;
 import java.util.Deque;
 import java.util.GregorianCalendar;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -59,7 +57,7 @@ public class Example1 extends Configured implements Tool {
         // script resource
         Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
-        FileSystem dfs = FileSystem.get(getConf());
+        FileSystem dfs = FileSystem.getLocal(getConf());
         Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
         Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
 
@@ -77,6 +75,20 @@ public class Example1 extends Configured implements Tool {
             new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
+        
+        // debug: dump the script 
+        Path dumpDir = new Path ( inputPath, "__debug");
+        dfs.mkdirs(dumpDir);
+        Path scriptDumpPath = new Path ( dumpDir, "compiler.pig");
+        
+        System.out.printf ("script saved at:%s\n",scriptDumpPath.toString());
+        
+        FSDataOutputStream fsdos= dfs.create(scriptDumpPath);
+        try { 
+            fsdos.writeUTF(script);
+        } finally { 
+            fsdos.close();
+        }
 
         runScript(script, inputPath);
 
@@ -146,7 +158,7 @@ public class Example1 extends Configured implements Tool {
              */
             PigContext pc = new PigContext();
 
-            pc.setExecType(ExecType.MAPREDUCE);
+            pc.setExecType(ExecType.LOCAL);
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
@@ -155,16 +167,6 @@ public class Example1 extends Configured implements Tool {
             Configuration conf = getConf();
 
             FileSystem dfs = FileSystem.get(conf);
-
-//            Path jobPath = new Path(dfs.getWorkingDirectory(), "hbl-job.jar");
-//
-//            dfs.copyFromLocalFile(false, true, new Path("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar"), jobPath);
-//            DistributedCache.addArchiveToClassPath(jobPath, conf, dfs);
-//            
-//            conf.set("mapred.job.classpath.archives", jobPath.toString());
-
-//            for (Entry<String, String> entry : conf)
-//                pc.getProperties().put(entry.getKey(), entry.getValue());
 
             // pig-preprocess
             ParameterSubstitutionPreprocessor psp = new ParameterSubstitutionPreprocessor(512);

@@ -24,7 +24,7 @@
 
 GROUP_$hbl:{cuboidTable} = FOREACH HBLEVAL generate $hbl:{measuresEval},  FLATTEN($hbl:{cuboidKeyEval}) as HKEY ;
 
-GR_$hbl:{cuboidTable}_10 = GROUP GROUP_$hbl:{cuboidTable} by HKEY parallel $hbl:{parallel};
+GR_$hbl:{cuboidTable}_10 = GROUP GROUP_$hbl:{cuboidTable} by HKEY.dimkey parallel $hbl:{parallel};
 
 GR_$hbl:{cuboidTable} = foreach GR_$hbl:{cuboidTable}_10 generate *;
 

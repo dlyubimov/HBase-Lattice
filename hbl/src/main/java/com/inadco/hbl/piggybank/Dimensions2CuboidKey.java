@@ -96,7 +96,7 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
             for (int i = 0; i < depth; i++) {
                 h.getKey(input.get(dimensionIndex + 1), i, keyHolder, keyOffset);
                 if (dimensions.size() == dimensionIndex + 1) {
-                    holder.add(tf.newTuple(new DataByteArray(keyHolder)));
+                    holder.add(tf.newTuple(tf.newTuple(new DataByteArray(keyHolder))));
                     keyHolder = keyHolder.clone();
                 } else
                     walkDimensions(input,
@@ -112,7 +112,7 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
             // non-hierarchy
             d.getKey(input.get(dimensionIndex + 1), keyHolder, keyOffset);
             if (dimensions.size() == dimensionIndex + 1) {
-                holder.add(tf.newTuple(new DataByteArray(keyHolder)));
+                holder.add(tf.newTuple(tf.newTuple(new DataByteArray(keyHolder))));
                 keyHolder = keyHolder.clone();
             } else
                 walkDimensions(input, holder, keyHolder, dimensions, dimensionIndex + 1, keyOffset + d.getKeyLen(), tf);
@@ -125,7 +125,7 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
         try {
             Validate.isTrue(input.size() > 1, "insufficient input size");
             Validate.isTrue(input.getField(0).type == DataType.CHARARRAY, "path must be a string");
-            return SchemaUtil.newBagSchema(new Byte[] { DataType.BYTEARRAY });
+            return SchemaUtil.newBagSchema(new String[] {"dimkey"}, new Byte[] { DataType.BYTEARRAY });
         } catch (FrontendException exc) {
             throw new RuntimeException(exc);
         }
