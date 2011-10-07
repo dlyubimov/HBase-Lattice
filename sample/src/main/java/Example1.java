@@ -10,7 +10,6 @@ import java.util.GregorianCalendar;
 import java.util.Random;
 import java.util.TimeZone;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -29,7 +28,12 @@ import org.springframework.core.io.Resource;
 
 import com.google.protobuf.ByteString;
 import com.inadco.hb.example1.codegen.Example1.CompilerInput;
+import com.inadco.hbl.client.AggregateQuery;
+import com.inadco.hbl.client.AggregateResult;
+import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblAdmin;
+import com.inadco.hbl.client.HblException;
+import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
@@ -51,51 +55,101 @@ public class Example1 extends Configured implements Tool {
 
     }
 
+    // choose ExecType.LOCAL to debug UDFs
+    // private static ExecType EXEC_TYPE = ExecType.LOCAL;
+    private static ExecType EXEC_TYPE = ExecType.MAPREDUCE;
+
     @Override
     public int run(String[] args) throws Exception {
 
         // script resource
         Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
-        FileSystem dfs = FileSystem.getLocal(getConf());
-        Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
-        Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
-
-        // prepare incremental simulated input
-
-        simulateInput(dfs, inputPath);
-
-        // make sure hbase schema is rolled out
+        // deploy cube schema (optionally dropping the existing one)
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
         hblAdmin.dropCube(getConf());
         hblAdmin.deployCube(getConf());
+
+
+        // prepare incremental simulated input
+        // and select work dir for the compiler job
+
+        FileSystem dfs = EXEC_TYPE == ExecType.MAPREDUCE ? FileSystem.get(getConf()) : FileSystem.getLocal(getConf());
+        Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
+        Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
+
+        simulateInput(dfs, inputPath);
+
 
         // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
             new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
-        
-        // debug: dump the script 
-        Path dumpDir = new Path ( inputPath, "__debug");
+
+        // ////////////////////////////////////
+        // ------------- debug: dump the script
+        Path dumpDir = new Path(inputPath, "__debug");
         dfs.mkdirs(dumpDir);
-        Path scriptDumpPath = new Path ( dumpDir, "compiler.pig");
-        
-        System.out.printf ("script saved at:%s\n",scriptDumpPath.toString());
-        
-        FSDataOutputStream fsdos= dfs.create(scriptDumpPath);
-        try { 
+        Path scriptDumpPath = new Path(dumpDir, "compiler.pig");
+        System.out.printf("script saved at:%s\n", scriptDumpPath.toString());
+        FSDataOutputStream fsdos = dfs.create(scriptDumpPath);
+        try {
             fsdos.writeUTF(script);
-        } finally { 
+        } finally {
             fsdos.close();
         }
+        // ------------- debug: dump the script
+        // ////////////////////////////////////
 
-        runScript(script, inputPath);
+//        runScript(script, inputPath);
+
+        testClient(cubeModelRsrc);
 
         return 0;
     }
 
-    private static final int    N         = 100;
+    private void testClient(Resource yamlModel) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            closeables.addFirst(queryClient);
+
+            AggregateQuery query = queryClient.createQuery();
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /*
+             * this should be equivalent to select aggr_func(impCnt),
+             * aggr_func(click) from ... where dim1<=ids[0] and dim1>=ids[0]
+             * group by dim1
+             */
+
+            query.addMeasure("impCnt").addMeasure("click");
+            query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
+            AggregateResultSet rs = query.execute();
+            closeables.addFirst(rs);
+            while (rs.hasNext()) {
+                rs.next();
+                AggregateResult ar = rs.current();
+                System.out.printf("%s sum/cnt: impCnt %d/%d, click %d/%d\n",
+                                  ar.getGroupMember("dim1"),
+                                  ar.getDoubleAggregate("impCnt", "sum"),
+                                  ar.getDoubleAggregate("impCnt", "count"),
+                                  ar.getDoubleAggregate("click", "sum"),
+                                  ar.getDoubleAggregate("click", "count"));
+            }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+
+    }
+
+    private static final int    N         = 24;
     private static final double clickRate = 0.25;
 
     private void simulateInput(FileSystem fs, Path inputDir) throws IOException {
@@ -125,8 +179,8 @@ public class Example1 extends Configured implements Tool {
             BytesWritable bw = new BytesWritable();
 
             for (int i = 0; i < N; i++) {
-                for (int j = 0; j < i; j++) {
-                    for (int k = 0; k < 2; k++) {
+                for (int k = 0; k < 2; k++) {
+                    for (int j = 0; j < i + k; j++) {
                         CompilerInput.Builder inp = CompilerInput.newBuilder();
                         inp.setDim1(id[k]);
                         inp.setDim2(id[k]);
@@ -158,17 +212,16 @@ public class Example1 extends Configured implements Tool {
              */
             PigContext pc = new PigContext();
 
-            pc.setExecType(ExecType.LOCAL);
+            pc.setExecType(EXEC_TYPE);
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
             pc.addJar("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar");
 
-            Configuration conf = getConf();
+            // pig-preprocess. We specified hbl input as $input in the
+            // preambula, so
+            // we now need to substitute it using Grunt's preprocessor.
 
-            FileSystem dfs = FileSystem.get(conf);
-
-            // pig-preprocess
             ParameterSubstitutionPreprocessor psp = new ParameterSubstitutionPreprocessor(512);
             StringWriter sw = new StringWriter();
             BufferedReader br = new BufferedReader(new StringReader(script));
