@@ -111,7 +111,7 @@ public class NWayMergingIterator<T> implements InputIterator<T> {
                             m_unfinished.remove(advanceIndex);
                     } else {
                         m_unfinished.remove(advanceIndex);
-                        m_inputs[advanceIndex] = null;
+//                        m_inputs[advanceIndex] = null;
                     }
                 }
 

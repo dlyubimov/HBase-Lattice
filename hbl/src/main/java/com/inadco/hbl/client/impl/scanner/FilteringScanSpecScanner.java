@@ -127,10 +127,11 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
         for (byte[] measureQualifier : scanSpec.getMeasureQualifiers()) {
             KeyValue kv = r.getColumnLatest(HblAdmin.HBL_METRIC_FAMILY, measureQualifier);
             if (kv == null)
-                holder.getMeasures()[i] = null;
+                holder.getMeasures()[i++] = null;
             else {
                 Aggregation.Builder aggrB = Aggregation.newBuilder();
                 aggrB.mergeFrom(kv.getBuffer(), kv.getValueOffset(), kv.getValueLength());
+                holder.getMeasures()[i++]=aggrB;
             }
         }
 

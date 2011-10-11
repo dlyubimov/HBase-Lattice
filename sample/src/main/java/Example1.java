@@ -135,12 +135,12 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%s sum/cnt: impCnt %d/%d, click %d/%d\n",
+                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
                                   ar.getGroupMember("dim1"),
-                                  ar.getDoubleAggregate("impCnt", "sum"),
-                                  ar.getDoubleAggregate("impCnt", "count"),
-                                  ar.getDoubleAggregate("click", "sum"),
-                                  ar.getDoubleAggregate("click", "count"));
+                                  ar.getDoubleAggregate("impCnt", "SUM"),
+                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+                                  ar.getDoubleAggregate("click", "SUM"),
+                                  ar.getDoubleAggregate("click", "COUNT"));
             }
 
         } finally {
