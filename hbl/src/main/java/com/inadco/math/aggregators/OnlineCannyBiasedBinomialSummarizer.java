@@ -55,9 +55,11 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
         // my chances with exponent. Exponent estimate will reduce bias components, so actual bias behavior will be less 
         // aggressive than needed. So i will reduce default epsilon instead.
         
-        double bposneg = 2 * (epsilon - 1) / Math.log(epsilon);
-        bpos = bposneg * p0;
-        bneg = bposneg * (1 - p0);
+        double unit = (epsilon - 1) / Math.log(epsilon);
+        if (p0 >= 0.5)
+            bpos = (bneg = unit) * (1 - p0) / p0;
+        else
+            bneg = (bpos = unit) * p0 / (1 - p0);
     }
 
     /**
