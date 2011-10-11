@@ -59,7 +59,7 @@ public class GroupingScanSpecScanner implements InputIterator<RawScanResult> {
 
     @Override
     public void next() throws IOException {
-        if (!delegate.hasNext())
+        if (!hasNext())
             throw new IOException("iterator at the end");
 
         if (current == null) {
@@ -77,8 +77,10 @@ public class GroupingScanSpecScanner implements InputIterator<RawScanResult> {
             current.mergeMeasures(nextTuple, afr, applySliceOperation ? nextTuple.getSliceOperation()
                 : SliceOperation.ADD);
 
-            if (!delegate.hasNext())
+            if (!delegate.hasNext()) {
+                nextTuple = null;
                 break;
+            }
             delegate.next();
             nextTuple = delegate.current();
             if (0 != Bytes.BYTES_RAWCOMPARATOR.compare(current.getGroup(),
