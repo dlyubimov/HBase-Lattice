@@ -66,7 +66,7 @@ public class FSum implements AggregateFunction {
 
     @Override
     public double getDoubleValue(Aggregation source) {
-        return source.hasSum() ? 0d : source.getSum();
+        return source.hasSum() ? source.getSum() : 0d;
     }
 
 }

@@ -66,7 +66,7 @@ public class Example1 extends Configured implements Tool {
         Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
         // deploy cube schema (optionally dropping the existing one)
-//        HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
+        HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
 //        hblAdmin.dropCube(getConf());
 //        hblAdmin.deployCube(getConf());
 
