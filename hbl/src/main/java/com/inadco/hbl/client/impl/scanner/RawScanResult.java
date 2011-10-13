@@ -19,6 +19,7 @@ public class RawScanResult implements Cloneable {
         super();
         setGroup(new byte[ss.getGroupKeyLen()]);
         setMeasures(new Aggregation.Builder[ss.getMeasureQualifiers().length]);
+        sliceOperation = ss.getSliceOperation();
 
     }
 
@@ -51,7 +52,7 @@ public class RawScanResult implements Cloneable {
         Arrays.fill(measures, null);
     }
 
-    void mergeMeasures(RawScanResult other, AggregateFunctionRegistry afr, SliceOperation so ) {
+    void mergeMeasures(RawScanResult other, AggregateFunctionRegistry afr, SliceOperation so) {
         for (int i = 0; i < measures.length; i++) {
             if (other.measures[i] != null) {
                 if (measures[i] == null)
@@ -84,7 +85,5 @@ public class RawScanResult implements Cloneable {
     public void setSliceOperation(SliceOperation sliceOperation) {
         this.sliceOperation = sliceOperation;
     }
-    
-    
 
 }

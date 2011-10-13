@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.datastructs.InputIterator;
+import com.inadco.datastructs.adapters.GroupingIterator;
 import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 
@@ -17,6 +18,7 @@ import com.inadco.hbl.client.impl.SliceOperation;
  * could be combined later in the front end.
  * <P>
  * 
+ * @deprecated use {@link GroupingIterator} with {@link GroupingScanStrategy}
  * @author dmitriy
  * 
  */

@@ -105,14 +105,8 @@ public class NWayMergingIterator<T> implements InputIterator<T> {
                     int advanceIndex = m_stepResult.m_advance[i];
                     assert advanceIndex >= 0 && advanceIndex < m_inputs.length;
 
-                    if (m_inputs[advanceIndex].hasNext()) {
+                    if (m_unfinished.contains(advanceIndex)) 
                         m_inputs[advanceIndex].next();
-                        if (!m_inputs[advanceIndex].hasNext())
-                            m_unfinished.remove(advanceIndex);
-                    } else {
-                        m_unfinished.remove(advanceIndex);
-//                        m_inputs[advanceIndex] = null;
-                    }
                 }
 
                 m_mergeStrategy.processStep(m_inputs, m_stepResult);
@@ -124,6 +118,11 @@ public class NWayMergingIterator<T> implements InputIterator<T> {
                 assert m_stepResult.m_outputCount >= 0 && m_stepResult.m_outputCount <= m_inputs.length : "m_stepResult._outputCount out of range:"
                     + m_stepResult.m_outputCount;
 
+                for( int i =0; i < m_stepResult.m_advanceCount; i++ ) { 
+                    int advanceIndex=m_stepResult.m_advance[i];
+                    if ( !m_inputs[advanceIndex].hasNext() )
+                        m_unfinished.remove(advanceIndex);
+                }
                 // for (int i = 0; i < m_stepResult.m_outputCount; i++)
                 // output.add(m_inputs[m_stepResult.m_output[i]].current());
             }

@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.log4j.Logger;
 
 import com.inadco.datastructs.InputIterator;
+import com.inadco.datastructs.adapters.GroupingIterator;
 import com.inadco.datastructs.adapters.NWayMergingIterator;
 import com.inadco.datastructs.util.StatefulHeapSortMergeStrategy;
 import com.inadco.hbl.api.AggregateFunction;
@@ -44,7 +45,7 @@ import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.scanner.FilteringScanSpecScanner;
-import com.inadco.hbl.client.impl.scanner.GroupingScanSpecScanner;
+import com.inadco.hbl.client.impl.scanner.GroupingScanStrategy;
 import com.inadco.hbl.client.impl.scanner.RawScanResult;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
@@ -111,12 +112,16 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
 
         }
 
-        GroupingScanSpecScanner[] inputs = new GroupingScanSpecScanner[filteringScanners.size()];
+        @SuppressWarnings("unchecked")
+        InputIterator<RawScanResult>[] inputs = new InputIterator[filteringScanners.size()];
+
+
         int i = 0;
         for (FilteringScanSpecScanner filteredScanner : filteringScanners) {
-
-            final GroupingScanSpecScanner groupingScanner =
-                new GroupingScanSpecScanner(filteredScanner.getScanSpec(), filteredScanner, afr, false);
+            GroupingScanStrategy gsc = new GroupingScanStrategy(filteredScanner.getScanSpec(), afr, false);
+            final InputIterator<RawScanResult> groupingScanner =
+                new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
+//                new GroupingScanSpecScanner(filteredScanner.getScanSpec(), filteredScanner, afr, false);
             closeables.addFirst(groupingScanner);
             inputs[i] = groupingScanner;
         }
@@ -128,7 +133,10 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
             new NWayMergingIterator<RawScanResult>(inputs, sortMergeStrategy, false);
         closeables.addFirst(mergingIter);
 
-        delegate = new GroupingScanSpecScanner(scanSpecs.get(0), mergingIter, afr, true);
+        
+        GroupingScanStrategy gsc = new GroupingScanStrategy(scanSpecs.get(0), afr, true);
+        delegate = new GroupingIterator<RawScanResult, RawScanResult>(mergingIter,gsc);
+        
         closeables.addFirst(delegate);
 
     }

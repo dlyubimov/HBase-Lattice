@@ -98,11 +98,11 @@ public class StatefulHeapSortMergeStrategy<T> implements MergeStrategy<T> {
         m_heap = new int[inputs.length];
         for (int i = 0; i < inputs.length; i++)
             m_heap[i] = i;
-        _heapify(inputs);
+        heapify(inputs);
 
     }
 
-    private void _heapify(InputIterator<? extends T>[] inputs) throws IOException {
+    private void heapify(InputIterator<? extends T>[] inputs) throws IOException {
         for (int start = (m_heap.length >>> 1) - 1; start >= 0; start--)
             siftThru(start, m_heap.length, inputs);
     }
