@@ -197,6 +197,7 @@ public class CompositeKeyRowFilter extends FilterBase {
         int keyOffset = keyOffsets[dimIndex];
         int keyLen = pathRange[dimIndex].getKeyLen();
 
+        if ( nextKeyHint == null ) nextKeyHint = new byte[compositeKeyLen];
         System.arraycopy(compositeKey, compositeKeyOffset, nextKeyHint, 0, keyOffset);
         if (plus1) {
             if (HblUtil.incrementKey(nextKeyHint, 0, keyOffset))

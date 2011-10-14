@@ -46,7 +46,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
         byte[] tableName = Bytes.toBytes(scanSpec.getCuboid().getCuboidTableName());
         CompositeKeyRowFilter krf = new CompositeKeyRowFilter(scanSpec.getRanges());
         byte[] startRow = krf.getCompositeBound(true);
-        byte[] endRow = krf.getCompositeBound(true);
+        byte[] endRow = krf.getCompositeBound(false);
         if (HblUtil.incrementKey(endRow, 0, endRow.length))
             endRow = null;
 

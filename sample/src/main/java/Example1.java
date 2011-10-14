@@ -115,7 +115,6 @@ public class Example1 extends Configured implements Tool {
             HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
             closeables.addFirst(queryClient);
 
-            AggregateQuery query = queryClient.createQuery();
 
             byte ids[][] = new byte[2][];
             ids[0] = new byte[16];
@@ -128,10 +127,34 @@ public class Example1 extends Configured implements Tool {
              * group by dim1
              */
 
+//            AggregateQuery query = queryClient.createQuery();
+//            query.addMeasure("impCnt").addMeasure("click");
+//            query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
+//            AggregateResultSet rs = query.execute();
+//            closeables.addFirst(rs);
+//            while (rs.hasNext()) {
+//                rs.next();
+//                AggregateResult ar = rs.current();
+//                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+//                                  ar.getGroupMember("dim1"),
+//                                  ar.getDoubleAggregate("impCnt", "SUM"),
+//                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+//                                  ar.getDoubleAggregate("click", "SUM"),
+//                                  ar.getDoubleAggregate("click", "COUNT"));
+//            }
+//            
+//            closeables.remove(rs);
+//            rs.close();
+            
+            /** 
+             * Now, more difficult. try to hit both keys but first hour only. 
+             * 
+             */
+            AggregateQuery query = queryClient.createQuery();
+            
             query.addMeasure("impCnt").addMeasure("click");
-            query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
+            query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
             AggregateResultSet rs = query.execute();
-            closeables.addFirst(rs);
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
@@ -142,6 +165,10 @@ public class Example1 extends Configured implements Tool {
                                   ar.getDoubleAggregate("click", "SUM"),
                                   ar.getDoubleAggregate("click", "COUNT"));
             }
+            
+          closeables.remove(rs);
+          rs.close();
+            
 
         } finally {
             IOUtil.closeAll(closeables);
