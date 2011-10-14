@@ -24,6 +24,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -73,27 +74,48 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
         Validate.notNull(measureName2IndexMap);
         this.measureName2IndexMap = measureName2IndexMap;
         this.afr = afr == null ? new AggregateFunctionRegistry() : afr;
+
         // constructors of FilteringScanSpecScanner are the ones that will be
         // running initial query -- so we probably
-        // want to parallelize them.
+        // want to parallelize them. except for the first one which we want to
+        // run in
+        // the context of the current thread.
 
         List<Future<FilteringScanSpecScanner>> filteringScannerConstructors =
             new ArrayList<Future<FilteringScanSpecScanner>>();
 
-        for (final ScanSpec ss : scanSpecs) {
+        Iterator<ScanSpec> iter = scanSpecs.iterator();
+        ScanSpec firstSpec = iter.next();
 
-            filteringScannerConstructors.add(es.submit(new Callable<FilteringScanSpecScanner>() {
+        for (; iter.hasNext();) {
+            final ScanSpec ss = iter.next();
+
+            Callable<FilteringScanSpecScanner> callable = new Callable<FilteringScanSpecScanner>() {
 
                 @Override
                 public FilteringScanSpecScanner call() throws IOException {
                     return new FilteringScanSpecScanner(ss, tpool);
                 }
-            }));
+            };
+
+            filteringScannerConstructors.add(es.submit(callable));
         }
         List<FilteringScanSpecScanner> filteringScanners = new ArrayList<FilteringScanSpecScanner>();
 
-        IOException lastExc = null;
+        // launch first scanner
+        // in the context of this thread
 
+        IOException lastExc = null;
+        try {
+            FilteringScanSpecScanner fscanner = new FilteringScanSpecScanner(firstSpec, tpool);
+            closeables.addFirst(fscanner);
+            filteringScanners.add(fscanner);
+        } catch (IOException exc) {
+            lastExc = exc;
+            s_log.error(lastExc);
+        }
+
+        // wait for all other parallel dudes to complete.
         for (Future<FilteringScanSpecScanner> fsss : filteringScannerConstructors) {
             try {
                 FilteringScanSpecScanner fscanner = fsss.get();
@@ -115,30 +137,61 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
         @SuppressWarnings("unchecked")
         InputIterator<RawScanResult>[] inputs = new InputIterator[filteringScanners.size()];
 
-
         int i = 0;
         for (FilteringScanSpecScanner filteredScanner : filteringScanners) {
-            GroupingScanStrategy gsc = new GroupingScanStrategy(filteredScanner.getScanSpec(), afr, false);
-            final InputIterator<RawScanResult> groupingScanner =
-                new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
-//                new GroupingScanSpecScanner(filteredScanner.getScanSpec(), filteredScanner, afr, false);
-            closeables.addFirst(groupingScanner);
-            inputs[i] = groupingScanner;
+
+            ScanSpec ss = filteredScanner.getScanSpec();
+            if (ss.getGroupKeyLen() > 0) {
+
+                GroupingScanStrategy gsc = new GroupingScanStrategy(filteredScanner.getScanSpec(), afr, false);
+                final InputIterator<RawScanResult> groupingScanner =
+                    new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
+                closeables.addFirst(groupingScanner);
+                inputs[i] = groupingScanner;
+            } else {
+                // no group
+                inputs[i] = filteredScanner;
+            }
         }
         filteringScanners = null;
 
-        StatefulHeapSortMergeStrategy<RawScanResult> sortMergeStrategy =
-            new StatefulHeapSortMergeStrategy<RawScanResult>(new RawScanResult.GroupComparator());
-        NWayMergingIterator<RawScanResult> mergingIter =
-            new NWayMergingIterator<RawScanResult>(inputs, sortMergeStrategy, false);
-        closeables.addFirst(mergingIter);
+        InputIterator<RawScanResult> mergingIter;
 
-        
-        GroupingScanStrategy gsc = new GroupingScanStrategy(scanSpecs.get(0), afr, true);
-        delegate = new GroupingIterator<RawScanResult, RawScanResult>(mergingIter,gsc);
-        
-        closeables.addFirst(delegate);
+        if (inputs.length > 1) {
 
+            /*
+             * we have more than one input and have to decorate them with N-way
+             * merge in order to proceed.
+             */
+
+            StatefulHeapSortMergeStrategy<RawScanResult> sortMergeStrategy =
+                new StatefulHeapSortMergeStrategy<RawScanResult>(new RawScanResult.GroupComparator());
+            mergingIter = new NWayMergingIterator<RawScanResult>(inputs, sortMergeStrategy, false);
+            closeables.addFirst(mergingIter);
+        } else {
+
+            // no merging
+            mergingIter = inputs[0];
+        }
+
+        // grouping information should be available in any spec.
+        ScanSpec ss = scanSpecs.get(0);
+        
+        /*
+         * final grouping decoration -- we need to add this if we have merging
+         * AND grouping is enabled. The following condition checks just for
+         * that.
+         */
+        if (ss.getGroupKeyLen() > 0 && !(mergingIter instanceof GroupingIterator)) {
+
+            // grouping enabled. Decorate with grouping iterator.
+            GroupingScanStrategy gsc = new GroupingScanStrategy(ss, afr, true);
+            delegate = new GroupingIterator<RawScanResult, RawScanResult>(mergingIter, gsc);
+            closeables.addFirst(delegate);
+        } else {
+            // no grouping. no decoration.
+            delegate = mergingIter;
+        }
     }
 
     @Override

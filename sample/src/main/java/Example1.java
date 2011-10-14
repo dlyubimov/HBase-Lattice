@@ -104,12 +104,14 @@ public class Example1 extends Configured implements Tool {
 
 //        runScript(script, inputPath);
 
-        testClient(cubeModelRsrc);
+//        testClient1(cubeModelRsrc);
+//        testClient2(cubeModelRsrc);
+        testClient3(cubeModelRsrc);
 
         return 0;
     }
 
-    private void testClient(Resource yamlModel) throws IOException, HblException {
+    private void testClient1(Resource yamlModel) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
             HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
@@ -127,27 +129,48 @@ public class Example1 extends Configured implements Tool {
              * group by dim1
              */
 
-//            AggregateQuery query = queryClient.createQuery();
-//            query.addMeasure("impCnt").addMeasure("click");
-//            query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
-//            AggregateResultSet rs = query.execute();
-//            closeables.addFirst(rs);
-//            while (rs.hasNext()) {
-//                rs.next();
-//                AggregateResult ar = rs.current();
-//                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-//                                  ar.getGroupMember("dim1"),
-//                                  ar.getDoubleAggregate("impCnt", "SUM"),
-//                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-//                                  ar.getDoubleAggregate("click", "SUM"),
-//                                  ar.getDoubleAggregate("click", "COUNT"));
-//            }
-//            
-//            closeables.remove(rs);
-//            rs.close();
+            AggregateQuery query = queryClient.createQuery();
+            query.addMeasure("impCnt").addMeasure("click");
+            query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
+            AggregateResultSet rs = query.execute();
+            closeables.addFirst(rs);
+            while (rs.hasNext()) {
+                rs.next();
+                AggregateResult ar = rs.current();
+                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  ar.getGroupMember("dim1"),
+                                  ar.getDoubleAggregate("impCnt", "SUM"),
+                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+                                  ar.getDoubleAggregate("click", "SUM"),
+                                  ar.getDoubleAggregate("click", "COUNT"));
+            }
             
+            closeables.remove(rs);
+            rs.close();
+            
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+
+    }
+
+    private void testClient2(Resource yamlModel) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            closeables.addFirst(queryClient);
+
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
             /** 
-             * Now, more difficult. try to hit both keys but first hour only. 
+             * Now, more difficult. try to hit both keys lifetime.
+             * This will result in composite key filtering with a restart 
+             * (most fundamental composite key filtering capability but only one part of the key).
+             * This now passes too.
              * 
              */
             AggregateQuery query = queryClient.createQuery();
@@ -165,15 +188,51 @@ public class Example1 extends Configured implements Tool {
                                   ar.getDoubleAggregate("click", "SUM"),
                                   ar.getDoubleAggregate("click", "COUNT"));
             }
-            
           closeables.remove(rs);
           rs.close();
-            
 
         } finally {
             IOUtil.closeAll(closeables);
         }
+    }
 
+    private void testClient3(Resource yamlModel) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            closeables.addFirst(queryClient);
+
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /**
+             * same as client2 but print the summaries separately (no grouping). 
+             * 
+             */
+            AggregateQuery query = queryClient.createQuery();
+            
+            query.addMeasure("impCnt").addMeasure("click");
+            query.addClosedSlice("dim1",ids[0],ids[1])/*.addGroupBy("dim1")*/;
+            AggregateResultSet rs = query.execute();
+            while (rs.hasNext()) {
+                rs.next();
+                AggregateResult ar = rs.current();
+                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  ar.getGroupMember("dim1"),
+                                  ar.getDoubleAggregate("impCnt", "SUM"),
+                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+                                  ar.getDoubleAggregate("click", "SUM"),
+                                  ar.getDoubleAggregate("click", "COUNT"));
+            }
+          closeables.remove(rs);
+          rs.close();
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
     }
 
     private static final int    N         = 24;
