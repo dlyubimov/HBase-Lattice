@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.apache.commons.lang.Validate;
 
+import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.util.HblUtil;
@@ -56,6 +57,8 @@ public class SimpleCuboid implements Cuboid {
     protected boolean         hbaseInMemory             = true;
 
     protected int             hbaseMaxVersions       = 1; 
+    
+    protected Cube            parentCube;
 
     
     
@@ -79,6 +82,15 @@ public class SimpleCuboid implements Cuboid {
             dimensions.add(d);
             keyLen += d.getKeyLen();
         }
+    }
+
+    
+    public Cube getParentCube() {
+        return parentCube;
+    }
+
+    public void setParentCube(Cube parentCube) {
+        this.parentCube = parentCube;
     }
 
     public int getHbaseTTL() {

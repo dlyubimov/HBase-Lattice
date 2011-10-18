@@ -41,6 +41,7 @@ public class ScanSpec {
                     Cuboid cuboid,
                     SliceOperation sliceOperation) {
         super();
+        this.groupKeyLen=groupKeyLen;
         this.measureQualifiers = measureQualifiers;
         this.ranges = ranges;
         this.cuboid = cuboid;

@@ -67,6 +67,8 @@ public class SimpleCube implements Cube {
         for (Cuboid c : cuboids) {
             this.cuboids.put(c.getCuboidPath(), c);
             c.setTablePrefix(name + "_");
+            if (c instanceof SimpleCuboid)
+                ((SimpleCuboid) c).setParentCube(this);
         }
         for (Measure m : measures)
             this.measures.put(m.getName(), m);

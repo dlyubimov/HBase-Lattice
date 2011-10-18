@@ -27,6 +27,14 @@ public class GroupingScanStrategy implements GroupingStrategy<RawScanResult,RawS
         return 0 == Bytes.BYTES_RAWCOMPARATOR.compare(group.getGroup(), 0, groupKeyLen, item.getGroup(), 0, groupKeyLen);
     }
 
+    
+    @Override
+    public void initGroup(RawScanResult group, RawScanResult item) {
+        byte[] grBytes=item.getGroup();
+        System.arraycopy(grBytes,0,group.getGroup(),0,grBytes.length);
+        
+    }
+
     @Override
     public void aggregate(RawScanResult groupTo, RawScanResult item) {
         groupTo.mergeMeasures(item, afr, applySliceOperation?item.getSliceOperation():SliceOperation.ADD);

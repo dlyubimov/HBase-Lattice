@@ -9,6 +9,15 @@ import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
+/**
+ * Raw scan result, the stuff that is collected and aggregated from the hbase
+ * but doesn't have enough brains to do proper evaluations to maintain all
+ * actual end-user result contracts.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class RawScanResult implements Cloneable {
 
     private byte[]                group;

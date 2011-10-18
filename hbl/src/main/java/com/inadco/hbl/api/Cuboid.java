@@ -33,6 +33,8 @@ public interface Cuboid {
 
     List<Dimension> getCuboidDimensions();
     
+    Cube getParentCube();
+    
     /**
      * Get cuboids' hbase table name.
      * <P>

@@ -20,6 +20,7 @@ package com.inadco.hbl.api;
 
 import org.apache.hadoop.io.RawComparator;
 
+import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.Slice;
 
 public interface Dimension {
@@ -40,8 +41,21 @@ public interface Dimension {
      */
     void getKey(Object member, byte[] buff, int offset);
 
+    /**
+     * inverse conversion from an hbase represenetation to the member
+     * presentation (whatever it might be).
+     * 
+     * @param buff
+     *            the hbase value buffer
+     * @param offset
+     *            offset of the member int the hbase key
+     * @return the dimension/hierarchy member
+     * @throws HblException 
+     */
+    Object getMember(byte[] buff, int offset) throws HblException;
+
     RawComparator<?> getMemberComparator();
-    
+
     Range[] optimizeSliceScan(Slice slice);
 
 }

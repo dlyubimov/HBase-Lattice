@@ -72,4 +72,12 @@ public class HexDimension extends AbstractDimension {
         HblUtil.fillCompositeKeyWithHex(key, 0, keylen, buff, offset);
     }
 
+    @Override
+    public Object getMember(byte[] buff, int offset) {
+        byte[] id=new byte[keylen];
+        HblUtil.readCompositeKeyHex(buff, offset, id, 0, keylen);
+        return id;
+    }
+    
+
 }

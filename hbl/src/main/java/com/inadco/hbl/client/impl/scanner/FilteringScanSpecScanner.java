@@ -23,7 +23,7 @@ import com.inadco.hbl.util.IOUtil;
 public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
     // caching. TODO: make this configurable.
-    public static final int CACHING      = 128;
+    public static final int  CACHING      = 128;
 
     private ScanSpec         scanSpec;
 
@@ -64,7 +64,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
         scanner = table.getScanner(scan);
         closeables.addFirst(scanner);
-        
+
         closeables.remove(table);
         tablePool.putTable(table);
     }
@@ -106,7 +106,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
     public int getCurrentIndex() throws IOException {
         return currentIndex;
     }
-    
+
     public ScanSpec getScanSpec() {
         return scanSpec;
     }
@@ -131,11 +131,11 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
             else {
                 Aggregation.Builder aggrB = Aggregation.newBuilder();
                 aggrB.mergeFrom(kv.getBuffer(), kv.getValueOffset(), kv.getValueLength());
-                holder.getMeasures()[i++]=aggrB;
+                holder.getMeasures()[i++] = aggrB;
             }
         }
 
         return holder;
     }
-    
+
 }

@@ -27,6 +27,7 @@ import org.apache.commons.lang.Validate;
 
 import com.inadco.hbl.api.HierarchyMember;
 import com.inadco.hbl.api.Range;
+import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.Slice;
 import com.inadco.hbl.util.HblUtil;
 
@@ -135,14 +136,51 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
         HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.YEAR), 4, buff, offset);
         offset += 4;
         /* month field is 0-11 in GC */
-        HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.MONTH) + 1, 2, buff, offset);
+        HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.MONTH) - Calendar.JANUARY + 1, 2, buff, offset);
         offset += 2;
         HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.DATE), 2, buff, offset);
         offset += 2;
         HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.HOUR_OF_DAY), 2, buff, offset);
     }
 
+    @Override
+    public Object getMember(byte[] buff, int offset) throws HblException {
+        int depth = keyDepth(buff, offset);
+        int year = 0;
+        int month = 0;
+        int date = 0;
+        int hour = 0;
+
+        switch (depth) {
+        case 0:
+            throw new HblException(
+                "Unable to make a presentation of an [ALL] hierarchy member in terms of concrete calendar.");
+        case 2:
+            date = HblUtil.readCompositeKeyDec(buff, offset + 6, 2);
+            hour = HblUtil.readCompositeKeyDec(buff, offset + 8, 2);
+        case 1:
+            year = HblUtil.readCompositeKeyDec(buff, offset, 4);
+            month = HblUtil.readCompositeKeyDec(buff, offset + 4, 2) - Calendar.JANUARY + 1;
+            break;
+        default:
+            throw new HblException("unexpected hierarchy depth in the key.");
+        }
+        // we return stuff as calendar objects here.
+        GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        gc.set(Calendar.YEAR, year);
+        gc.set(Calendar.MONTH, month);
+        gc.set(Calendar.DATE,date);
+        gc.set(Calendar.HOUR_OF_DAY, hour);
+        gc.set(Calendar.MINUTE, 0);
+        gc.set(Calendar.SECOND,0);
+        gc.set(Calendar.MILLISECOND,0);
+        return gc;
+
+    }
+
     private static GregorianCalendar toGCal(Object member) {
+        if (member instanceof GregorianCalendar)
+            return (GregorianCalendar) member;
         GregorianCalendar gcal = new GregorianCalendar();
         gcal.setTimeInMillis((Long) member);
         // flush
@@ -156,7 +194,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     public Range[] optimizeSliceScan(Slice slice) {
         // todo: optimize this better using complement scans.
         Range[] ranges = super.optimizeSliceScan(slice);
-        ranges[0].setSubkeyLen(DH_KEYLEN);
+        ranges[0].setSubkeyLen(KEYLEN);
         return ranges;
     }
 

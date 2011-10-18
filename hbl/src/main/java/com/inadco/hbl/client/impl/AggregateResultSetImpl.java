@@ -41,6 +41,8 @@ import com.inadco.datastructs.adapters.GroupingIterator;
 import com.inadco.datastructs.adapters.NWayMergingIterator;
 import com.inadco.datastructs.util.StatefulHeapSortMergeStrategy;
 import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.api.Cuboid;
+import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.client.AggregateResultSet;
@@ -54,26 +56,36 @@ import com.inadco.hbl.util.IOUtil;
 
 public class AggregateResultSetImpl implements AggregateResultSet, AggregateResult {
 
-    private Deque<Closeable>             closeables = new ArrayDeque<Closeable>();
-    private static Logger                s_log      = Logger.getLogger(AggregateResultSetImpl.class);
+    private Deque<Closeable>                 closeables = new ArrayDeque<Closeable>();
+    private static Logger                    s_log      = Logger.getLogger(AggregateResultSetImpl.class);
 
-    private InputIterator<RawScanResult> delegate;
-    private Map<String, Integer>         measureName2IndexMap;
-    private AggregateFunctionRegistry    afr;
-    private Aggregation[]                result;
+    private InputIterator<RawScanResult>     delegate;
+    private Map<String, Integer>             measureName2IndexMap;
+    private AggregateFunctionRegistry        afr;
+    private Aggregation[]                    result;
+    private Map<String, Integer>             dim2GroupKeyOffsetMap;
+    private Map<String, ? extends Dimension> groupDimName2Dimension;
+    private Cuboid                           cuboid;
 
     AggregateResultSetImpl(final List<ScanSpec> scanSpecs,
                            final ExecutorService es,
                            final HTablePool tpool,
                            final AggregateFunctionRegistry afr,
-                           final Map<String, Integer> measureName2IndexMap) throws IOException {
+                           final Map<String, Integer> measureName2IndexMap,
+                           final Map<String, Integer> dimName2GroupKeyOffsetMap) throws IOException {
         super();
 
         Validate.notNull(scanSpecs);
         Validate.notEmpty(scanSpecs);
         Validate.notNull(measureName2IndexMap);
+
         this.measureName2IndexMap = measureName2IndexMap;
+        this.dim2GroupKeyOffsetMap = dimName2GroupKeyOffsetMap;
         this.afr = afr == null ? new AggregateFunctionRegistry() : afr;
+
+        ScanSpec spec = scanSpecs.get(0);
+        this.cuboid = spec.getCuboid();
+        this.groupDimName2Dimension = cuboid.getParentCube().getDimensions();
 
         // constructors of FilteringScanSpecScanner are the ones that will be
         // running initial query -- so we probably
@@ -140,18 +152,11 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
         int i = 0;
         for (FilteringScanSpecScanner filteredScanner : filteringScanners) {
 
-            ScanSpec ss = filteredScanner.getScanSpec();
-            if (ss.getGroupKeyLen() > 0) {
-
-                GroupingScanStrategy gsc = new GroupingScanStrategy(filteredScanner.getScanSpec(), afr, false);
-                final InputIterator<RawScanResult> groupingScanner =
-                    new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
-                closeables.addFirst(groupingScanner);
-                inputs[i] = groupingScanner;
-            } else {
-                // no group
-                inputs[i] = filteredScanner;
-            }
+            GroupingScanStrategy gsc = new GroupingScanStrategy(filteredScanner.getScanSpec(), afr, false);
+            final InputIterator<RawScanResult> groupingScanner =
+                new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
+            closeables.addFirst(groupingScanner);
+            inputs[i] = groupingScanner;
         }
         filteringScanners = null;
 
@@ -174,18 +179,15 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
             mergingIter = inputs[0];
         }
 
-        // grouping information should be available in any spec.
-        ScanSpec ss = scanSpecs.get(0);
-        
         /*
          * final grouping decoration -- we need to add this if we have merging
          * AND grouping is enabled. The following condition checks just for
          * that.
          */
-        if (ss.getGroupKeyLen() > 0 && !(mergingIter instanceof GroupingIterator)) {
+        if (!(mergingIter instanceof GroupingIterator)) {
 
             // grouping enabled. Decorate with grouping iterator.
-            GroupingScanStrategy gsc = new GroupingScanStrategy(ss, afr, true);
+            GroupingScanStrategy gsc = new GroupingScanStrategy(spec, afr, true);
             delegate = new GroupingIterator<RawScanResult, RawScanResult>(mergingIter, gsc);
             closeables.addFirst(delegate);
         } else {
@@ -249,9 +251,23 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
     }
 
     @Override
-    public Object getGroupMember(String dimensionName) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object getGroupMember(String dimensionName) throws HblException {
+        if (result == null)
+            throw new HblException("no current result");
+        try {
+            Integer offset = dim2GroupKeyOffsetMap.get(dimensionName);
+            if (offset == null)
+                throw new HblException(String.format("Dimension '%s' is not part of the group.", dimensionName));
+
+            byte[] group = delegate.current().getGroup();
+            Dimension dim = groupDimName2Dimension.get(dimensionName);
+            Validate.notNull(dim);
+
+            return dim.getMember(group, offset);
+        } catch (IOException exc) {
+            throw new HblException(exc.getMessage(), exc);
+        }
+
     }
 
 }

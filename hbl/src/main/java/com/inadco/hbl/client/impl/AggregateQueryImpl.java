@@ -142,8 +142,13 @@ public class AggregateQueryImpl implements AggregateQuery {
             int numGroupKeys = groupDimensions.size();
             int groupKeyLen = 0;
 
-            for (int i = 0; i < numGroupKeys; i++)
-                groupKeyLen += cuboid.getCuboidDimensions().get(i).getKeyLen();
+            Map<String,Integer> dimName2GroupKeyOffsetMap=new HashMap<String, Integer>();
+            
+            for (int i = 0; i < numGroupKeys; i++) { 
+                Dimension dim=cuboid.getCuboidDimensions().get(i);
+                dimName2GroupKeyOffsetMap.put(dim.getName(),groupKeyLen);
+                groupKeyLen += dim.getKeyLen();
+            }
 
             byte[][] measureQualifiers = new byte[measures.size()][];
             Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
@@ -163,7 +168,7 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 
-            return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2indexMap);
+            return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap );
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

@@ -3,6 +3,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Calendar;
 import java.util.Deque;
@@ -104,9 +105,10 @@ public class Example1 extends Configured implements Tool {
 
 //        runScript(script, inputPath);
 
-//        testClient1(cubeModelRsrc);
-//        testClient2(cubeModelRsrc);
+        testClient1(cubeModelRsrc);
+        testClient2(cubeModelRsrc);
         testClient3(cubeModelRsrc);
+        testClient4(cubeModelRsrc);
 
         return 0;
     }
@@ -137,8 +139,8 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-                                  ar.getGroupMember("dim1"),
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
                                   ar.getDoubleAggregate("impCnt", "SUM"),
                                   ar.getDoubleAggregate("impCnt", "COUNT"),
                                   ar.getDoubleAggregate("click", "SUM"),
@@ -181,8 +183,8 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-                                  ar.getGroupMember("dim1"),
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
                                   ar.getDoubleAggregate("impCnt", "SUM"),
                                   ar.getDoubleAggregate("impCnt", "COUNT"),
                                   ar.getDoubleAggregate("click", "SUM"),
@@ -210,7 +212,8 @@ public class Example1 extends Configured implements Tool {
 
             /**
              * same as client2 but print the summaries separately (no grouping). 
-             * 
+             * This is obviously not terribly useful, the queries have got to have group specification -- 
+             * -- unless we group up all of it. 
              */
             AggregateQuery query = queryClient.createQuery();
             
@@ -221,7 +224,61 @@ public class Example1 extends Configured implements Tool {
                 rs.next();
                 AggregateResult ar = rs.current();
                 System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-                                  ar.getGroupMember("dim1"),
+//                                  new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
+                                  "no-group",
+                                  ar.getDoubleAggregate("impCnt", "SUM"),
+                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+                                  ar.getDoubleAggregate("click", "SUM"),
+                                  ar.getDoubleAggregate("click", "COUNT"));
+            }
+          closeables.remove(rs);
+          rs.close();
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
+    private void testClient4(Resource yamlModel) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            closeables.addFirst(queryClient);
+
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /**
+             * will try to also constrain for half-open [1:00am,3:00am)
+             */
+
+            GregorianCalendar startTime=IOUtil.tryClone(START_BASE);
+            GregorianCalendar endTime=IOUtil.tryClone(START_BASE);
+            startTime.add(Calendar.HOUR_OF_DAY, 1);
+            endTime.add(Calendar.HOUR_OF_DAY,3);
+            // recalculate the calendars
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+            
+            /**
+             * same as client2 but print the summaries separately (no grouping). 
+             * 
+             */
+            AggregateQuery query = queryClient.createQuery();
+            
+            query.addMeasure("impCnt").addMeasure("click");
+            query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
+            query.addHalfOpenSlice("impressionTime", startTime, endTime);
+            
+            AggregateResultSet rs = query.execute();
+            while (rs.hasNext()) {
+                rs.next();
+                AggregateResult ar = rs.current();
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
                                   ar.getDoubleAggregate("impCnt", "SUM"),
                                   ar.getDoubleAggregate("impCnt", "COUNT"),
                                   ar.getDoubleAggregate("click", "SUM"),
@@ -237,6 +294,7 @@ public class Example1 extends Configured implements Tool {
 
     private static final int    N         = 24;
     private static final double clickRate = 0.25;
+    private static final GregorianCalendar START_BASE = new GregorianCalendar(2011, 8, 1);
 
     private void simulateInput(FileSystem fs, Path inputDir) throws IOException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
@@ -251,7 +309,7 @@ public class Example1 extends Configured implements Tool {
         Random rnd = new Random();
 
         try {
-            GregorianCalendar start = new GregorianCalendar(2011, 8, 1);
+            GregorianCalendar start = IOUtil.tryClone(START_BASE);
             start.setTimeZone(TimeZone.getTimeZone("UTC"));
             // flush the cal
             start.getTimeInMillis();

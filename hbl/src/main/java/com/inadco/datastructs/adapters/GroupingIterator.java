@@ -54,12 +54,13 @@ public class GroupingIterator<G, T> implements InputIterator<G> {
 
         /*
          * bootstrap first tuple into the group if were not bootstrapped earlier
-         * 
          */
         if (group == null) {
             // special case: startup
             group = groupingStrategy.newGroupHolder(null);
             sortedDelegate.next();
+            T item = sortedDelegate.current();
+            groupingStrategy.initGroup(group, item);
             groupingStrategy.aggregate(group, sortedDelegate.current());
         }
 
@@ -71,15 +72,17 @@ public class GroupingIterator<G, T> implements InputIterator<G> {
                 groupingStrategy.aggregate(group, sortedDelegate.current());
             } else {
                 G nextGroup = groupingStrategy.newGroupHolder(current);
-                groupingStrategy.aggregate(nextGroup, sortedDelegate.current());
+                T item = sortedDelegate.current();
+                groupingStrategy.initGroup(nextGroup, item);
+                groupingStrategy.aggregate(nextGroup, item);
                 current = group;
                 group = nextGroup;
                 atEnd = false;
                 break;
             }
         }
-        if (atEnd) { 
-            current=group;
+        if (atEnd) {
+            current = group;
             group = null;
         }
     }

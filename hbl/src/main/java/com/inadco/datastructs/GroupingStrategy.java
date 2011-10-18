@@ -6,14 +6,17 @@ package com.inadco.datastructs;
  * 
  * @author dmitriy
  * 
- * @param <G> group type
- * @param <T> tuple(item) type
+ * @param <G>
+ *            group type
+ * @param <T>
+ *            tuple(item) type
  */
 
-public interface GroupingStrategy<G,T> {
+public interface GroupingStrategy<G, T> {
 
     /**
      * Test if next item belongs to a group group.
+     * 
      * @param group
      * @param item
      * @return true if item is in the group.
@@ -21,7 +24,15 @@ public interface GroupingStrategy<G,T> {
     boolean isItemInGroup(G group, T item);
 
     /**
-     * aggregate data part of the item into the group tuple data. 
+     * init group attributes from new group item
+     * 
+     * @param group
+     * @param item
+     */
+    void initGroup(G group, T item);
+
+    /**
+     * aggregate data part of the item into the group tuple data.
      * 
      * @param group
      * @param next
