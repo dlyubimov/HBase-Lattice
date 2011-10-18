@@ -175,6 +175,13 @@ public class AggregateQueryImpl implements AggregateQuery {
 
     }
 
+    @Override
+    public void reset() {
+        dimSlices.clear();
+        measures.clear();
+        groupDimensions.clear();
+    }
+
     /**
      * Generate cartesian product of all individual dimension scans and also
      * flip scan operation between ADD and COMPLEMENT types
@@ -272,13 +279,6 @@ public class AggregateQueryImpl implements AggregateQuery {
             }
 
         }
-    }
-
-    @Override
-    public void reset() {
-        dimSlices.clear();
-        measures.clear();
-        groupDimensions.clear();
     }
 
     private Cuboid findCuboid() {

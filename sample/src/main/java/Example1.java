@@ -68,8 +68,8 @@ public class Example1 extends Configured implements Tool {
 
         // deploy cube schema (optionally dropping the existing one)
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-//        hblAdmin.dropCube(getConf());
-//        hblAdmin.deployCube(getConf());
+        hblAdmin.dropCube(getConf());
+        hblAdmin.deployCube(getConf());
 
 
         // prepare incremental simulated input
@@ -103,7 +103,7 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-//        runScript(script, inputPath);
+        runScript(script, inputPath);
 
         testClient1(cubeModelRsrc);
         testClient2(cubeModelRsrc);
