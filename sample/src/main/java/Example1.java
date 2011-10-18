@@ -72,6 +72,8 @@ public class Example1 extends Configured implements Tool {
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
         // hblAdmin.dropCube(getConf());
         // hblAdmin.deployCube(getConf());
+        
+        String cubeName = hblAdmin.getCube().getName();
 
         // prepare incremental simulated input
         // and select work dir for the compiler job
@@ -84,7 +86,12 @@ public class Example1 extends Configured implements Tool {
 
         // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
-            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
+            new Pig8CubeIncrementalCompilerBean(getConf(),cubeName, new ClassPathResource("example1-preambula.pig"), 5);
+        
+        /*
+         * this is the version that uses model from resource instead of hbl system table.
+         */
+//            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
 
@@ -105,10 +112,10 @@ public class Example1 extends Configured implements Tool {
 
         // runScript(script, inputPath);
 
-        testClient1(cubeModelRsrc);
-        testClient2(cubeModelRsrc);
-        testClient3(cubeModelRsrc);
-        testClient4(cubeModelRsrc);
+        testClient1(cubeName);
+        testClient2(cubeName);
+        testClient3(cubeName);
+        testClient4(cubeName);
 
         // query based tests
         testClient5(cubeModelRsrc);
@@ -116,10 +123,10 @@ public class Example1 extends Configured implements Tool {
         return 0;
     }
 
-    private void testClient1(Resource yamlModel) throws IOException, HblException {
+    private void testClient1(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -158,10 +165,10 @@ public class Example1 extends Configured implements Tool {
 
     }
 
-    private void testClient2(Resource yamlModel) throws IOException, HblException {
+    private void testClient2(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -199,10 +206,10 @@ public class Example1 extends Configured implements Tool {
         }
     }
 
-    private void testClient3(Resource yamlModel) throws IOException, HblException {
+    private void testClient3(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -239,10 +246,10 @@ public class Example1 extends Configured implements Tool {
         }
     }
 
-    private void testClient4(Resource yamlModel) throws IOException, HblException {
+    private void testClient4(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
             AggregateQuery query = queryClient.createQuery();

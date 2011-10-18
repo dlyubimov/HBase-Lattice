@@ -64,6 +64,24 @@ public class HblQueryClient implements Closeable {
     private Cube                      cube;
     private Deque<Closeable>          closeables          = new ArrayDeque<Closeable>();
 
+    public HblQueryClient(Configuration conf, String cubeName) throws IOException {
+        this(conf, cubeName, null);
+    }
+
+    public HblQueryClient(Configuration conf, String cubeName, int maxThreads ) throws IOException {
+        ThreadPoolExecutor tpe =
+            new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
+                DEFAULT_QUEUE_SIZE));
+        tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        Resource yamlModel = HblAdmin.readModelFromHBase(conf, cubeName, HblAdmin.HBL_DEFAULT_SYSTEM_TABLE);
+        init(conf, yamlModel, tpe);
+    }
+
+    public HblQueryClient(Configuration conf, String cubeName, ExecutorService es ) throws IOException { 
+        Resource yamlModel = HblAdmin.readModelFromHBase(conf, cubeName, HblAdmin.HBL_DEFAULT_SYSTEM_TABLE);
+        init(conf, yamlModel, es);
+    }
+
     public HblQueryClient(Configuration conf, Resource yamlModel) throws IOException {
         this(conf, yamlModel, DEFAULT_MAX_THREADS);
     }
@@ -94,6 +112,21 @@ public class HblQueryClient implements Closeable {
     private void init(Configuration conf, Resource yamlModel, ExecutorService es) throws IOException {
         Validate.notNull(conf);
         Validate.notNull(yamlModel);
+
+        // Hight queue size not only doesn't help but would actually harm, since
+        // if we can't allocate all tasks
+        // into threads, we will be screwed since we can't finish the tasks
+        // unless we consume all the pipes from them.
+        // In fact, this is going to be a big problem until we enable some
+        // hierarchical scan advised as batches, not scans.
+        if (es == null) {
+            ThreadPoolExecutor tpe =
+                new ThreadPoolExecutor(3, DEFAULT_MAX_THREADS, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
+                    DEFAULT_QUEUE_SIZE));
+            tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+            es = tpe;
+        }
+
         Validate.notNull(es);
 
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -64,18 +65,20 @@ import com.inadco.hbl.util.IOUtil;
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class Pig8CubeIncrementalCompilerBean {
 
-    public static final String PROP_CUBEMODEL = "com.inadco.hbl.cubemodel";
+    public static final String PROP_CUBEMODEL                  = "com.inadco.hbl.cubemodel";
 
     /*
      * regex, not verbatim
      */
-    public static final String SUBS_OPEN      = "$hbl:{";
-    public static final String SUBS_CLOSE     = "}";
+    public static final String SUBS_OPEN                       = "$hbl:{";
+    public static final String SUBS_CLOSE                      = "}";
+
+    public static final String DEFAULT_PIG_INPUT_RELATION_NAME = "HBL_INPUT";
 
     protected Resource         cubeModel;
     protected Resource         pigPreambula;
     protected String           inputRelationName;
-    protected int              parallel       = 2;
+    protected int              parallel                        = 2;
 
     protected Cube             cube;
     protected String           cubeModelYamlStr;
@@ -91,7 +94,32 @@ public class Pig8CubeIncrementalCompilerBean {
      * @throws IOException
      */
     public Pig8CubeIncrementalCompilerBean(Resource cubeModel, Resource pigPreambula, int parallel) throws IOException {
-        this(cubeModel, pigPreambula, parallel, "HBL_INPUT");
+        this(cubeModel, pigPreambula, parallel, DEFAULT_PIG_INPUT_RELATION_NAME);
+    }
+
+    /**
+     * A version of constructor that takes cube name and loads model from the hbase system table.
+     * 
+     * @param conf hbase configuration 
+     * @param cubeName cube model name
+     * @param pigPreambula the resource defining pig preambula (Pig fragment defining compilation input)
+     * @param parallel number of reducers for parallelizable Pig steps 
+     * @throws IOException when I/O condition occurs.
+     */
+    public Pig8CubeIncrementalCompilerBean(Configuration conf, String cubeName, Resource pigPreambula, int parallel)
+        throws IOException {
+        this(conf, cubeName, pigPreambula, parallel, DEFAULT_PIG_INPUT_RELATION_NAME);
+    }
+
+    public Pig8CubeIncrementalCompilerBean(Configuration conf,
+                                           String cubeName,
+                                           Resource pigPreambula,
+                                           int parallel,
+                                           String inputRelationName) throws IOException {
+        this.cubeModel = HblAdmin.readModelFromHBase(conf, cubeName, HblAdmin.HBL_DEFAULT_SYSTEM_TABLE);
+        this.pigPreambula = pigPreambula;
+        this.inputRelationName = inputRelationName;
+        init();
     }
 
     /**

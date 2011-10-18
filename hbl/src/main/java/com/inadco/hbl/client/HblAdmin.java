@@ -30,12 +30,16 @@ import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -44,18 +48,46 @@ import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.compiler.YamlModelParser;
 import com.inadco.hbl.util.IOUtil;
 
+/**
+ * Hbl Admin utility
+ * 
+ * @author dmitriy
+ * 
+ */
 @Component("HblAdmin")
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class HblAdmin {
 
-    private static final Logger s_log                 = Logger.getLogger(HblAdmin.class);
+    private static final Logger s_log                        = Logger.getLogger(HblAdmin.class);
 
-    public static final String  HBL_METRIC_FAMILY_STR = "hbl";
-    public static final byte[]  HBL_METRIC_FAMILY     = Bytes.toBytes(HBL_METRIC_FAMILY_STR);
+    public static final String  HBL_METRIC_FAMILY_STR        = "hbl";
+    public static final byte[]  HBL_METRIC_FAMILY            = Bytes.toBytes(HBL_METRIC_FAMILY_STR);
 
+    public static final String  HBL_DEFAULT_SYSTEM_TABLE_STR = "HBL_SYSTEM";
+    public static final byte[]  HBL_DEFAULT_SYSTEM_TABLE     = Bytes.toBytes(HBL_DEFAULT_SYSTEM_TABLE_STR);
+
+    public static final String  HBL_SYSTEM_FAMILY_STR        = "hbl_system";
+    public static final byte[]  HBL_SYSTEM_FAMILY            = Bytes.toBytes(HBL_SYSTEM_FAMILY_STR);
+
+    public static final String  HBL_MODEL_KEY_STR            = "MODEL";
+    public static final byte[]  HBL_MODEL_KEY                = Bytes.toBytes(HBL_MODEL_KEY_STR);
+
+    private byte[]              systemTable                  = HBL_DEFAULT_SYSTEM_TABLE;
     private Resource            cubeModel;
     private String              cubeModelYamlStr;
     private Cube                cube;
+
+    /**
+     * non-spring constructor Setup cube model by name of the model saved in HBL
+     * system table.
+     * 
+     * @param modelName
+     */
+    public HblAdmin(String modelName, Configuration conf) throws IOException {
+        this.cubeModel=readModelFromHBase(conf, modelName,systemTable);
+        init();
+
+    }
 
     /**
      * Non-spring constructor
@@ -67,15 +99,22 @@ public class HblAdmin {
         init();
     }
 
+    /**
+     * Spring constructor: look at what is @Required.
+     */
+    public HblAdmin() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
     public Resource getCubeModel() {
         return cubeModel;
     }
 
-    @Required
     public void setCubeModel(Resource cubeModel) {
         this.cubeModel = cubeModel;
     }
-    
+
     public String getCubeModelYamlStr() {
         return cubeModelYamlStr;
     }
@@ -122,8 +161,14 @@ public class HblAdmin {
      */
     public void deployCube(Configuration conf) throws IOException {
         HBaseAdmin hba = new HBaseAdmin(conf);
+        saveModel(hba, conf);
         for (Cuboid c : cube.getCuboids())
             initCuboid(hba, c);
+    }
+
+    public void saveModel(Configuration conf) throws IOException {
+        HBaseAdmin hba = new HBaseAdmin(conf);
+        saveModel(hba, conf);
     }
 
     private void initCuboid(HBaseAdmin admin, Cuboid c) throws IOException {
@@ -146,7 +191,28 @@ public class HblAdmin {
         htd.addFamily(hcd);
 
         admin.createTable(htd);
+    }
 
+    private void saveModel(HBaseAdmin admin, Configuration conf) throws IOException {
+        if (!admin.tableExists(systemTable)) {
+            HTableDescriptor htd = new HTableDescriptor(systemTable);
+            HColumnDescriptor hcd = new HColumnDescriptor(HBL_SYSTEM_FAMILY);
+            /*
+             * put in reasonable defaults, although admins can adjust it all
+             * manually later if needed
+             */
+            hcd.setMaxVersions(10);
+            hcd.setInMemory(true); // this is really tiny one
+            hcd.setTimeToLive(Integer.MAX_VALUE); // indefinite
+            htd.addFamily(hcd);
+            admin.createTable(htd);
+        }
+        HTable stable = new HTable(systemTable);
+        Put put =
+            new Put(HBL_MODEL_KEY).add(HBL_SYSTEM_FAMILY,
+                                       Bytes.toBytes(cube.getName()),
+                                       Bytes.toBytes(cubeModelYamlStr));
+        stable.put(put);
     }
 
     private void dropCuboid(HBaseAdmin admin, Cuboid c) throws IOException {
@@ -156,6 +222,16 @@ public class HblAdmin {
             admin.disableTable(tablename);
             admin.deleteTable(tablename);
         }
+    }
 
+    public static Resource readModelFromHBase(Configuration conf, String modelName, byte[] systemTable) throws IOException {
+        Validate.notNull(modelName);
+
+        HTable htable = new HTable(conf, systemTable);
+        Result r = htable.get(new Get(HBL_MODEL_KEY).addColumn(HBL_SYSTEM_FAMILY, Bytes.toBytes(modelName)));
+        byte[] rbytes;
+        if (r == null || (rbytes = r.getValue(HBL_SYSTEM_FAMILY, Bytes.toBytes(modelName))) == null)
+            throw new IOException(String.format("Model '%s' was not found in the system table.", modelName));
+        return new ByteArrayResource(rbytes);
     }
 }
