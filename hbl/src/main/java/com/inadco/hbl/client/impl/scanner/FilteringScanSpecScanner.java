@@ -1,3 +1,21 @@
+/*
+ * 
+ *  Copyright © 2010, 2011 Inadco, Inc. All rights reserved.
+ *  
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *  
+ *  
+ */
 package com.inadco.hbl.client.impl.scanner;
 
 import java.io.Closeable;
@@ -20,6 +38,17 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
 
+/**
+ * Filtered scan.
+ * <P>
+ * The idea is to have a custom filter that allows to put ranges on _each_ of
+ * the composite keys. Then this scan figures out that filter's metadata and
+ * runs it for the given scan spec.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
     // caching. TODO: make this configurable.

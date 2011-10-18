@@ -17,7 +17,12 @@
  *  
  */
 package com.inadco.hbl.client;
-
+/**
+ * Hbl specific checked exceptions.
+ * 
+ * @author dmitriy
+ *
+ */
 public class HblException extends Exception {
 
     private static final long serialVersionUID = 1L;

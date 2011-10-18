@@ -22,6 +22,13 @@ import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.impl.SliceOperation;
 
+/**
+ * Scan specification (fairly low level).
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class ScanSpec {
     private Range[]        ranges;
 
@@ -41,7 +48,7 @@ public class ScanSpec {
                     Cuboid cuboid,
                     SliceOperation sliceOperation) {
         super();
-        this.groupKeyLen=groupKeyLen;
+        this.groupKeyLen = groupKeyLen;
         this.measureQualifiers = measureQualifiers;
         this.ranges = ranges;
         this.cuboid = cuboid;

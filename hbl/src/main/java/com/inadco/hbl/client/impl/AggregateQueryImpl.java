@@ -45,6 +45,13 @@ import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 
+/**
+ * Projection query implementation.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class AggregateQueryImpl implements AggregateQuery {
 
     protected Cube                      cube;
@@ -169,6 +176,12 @@ public class AggregateQueryImpl implements AggregateQuery {
             generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 
             return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
+                scanSpecs,
+                es,
+                tpool,
+                afr,
+                measureName2indexMap,
+                dimName2GroupKeyOffsetMap);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

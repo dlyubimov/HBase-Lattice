@@ -29,6 +29,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.hbl.api.Cuboid;
 
+/**
+ * Various hbl helpers .
+ * 
+ * @author dmitriy
+ *
+ */
 public class HblUtil {
 
     static char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };

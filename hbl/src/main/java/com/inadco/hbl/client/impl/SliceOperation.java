@@ -18,8 +18,17 @@
  */
 package com.inadco.hbl.client.impl;
 
+/**
+ * Slice operation enumeration.
+ * <P>
+ * 
+ * Major things that one can do with slices are to sum up, or to find a
+ * complement aggregate of S1\S2.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public enum SliceOperation {
-    ADD,
-    COMPLEMENT,
-    IGNORE
+    ADD, COMPLEMENT, IGNORE
 }

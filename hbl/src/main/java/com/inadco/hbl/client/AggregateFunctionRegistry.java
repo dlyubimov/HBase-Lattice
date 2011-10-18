@@ -28,24 +28,30 @@ import com.inadco.hbl.client.impl.functions.FCount;
 import com.inadco.hbl.client.impl.functions.FSum;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
+/**
+ * Registry of all supported aggregate functions that we can compute during scan
+ * or compilation.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class AggregateFunctionRegistry {
 
     private final Map<String, AggregateFunction> functions = new HashMap<String, AggregateFunction>();
 
     public AggregateFunctionRegistry() {
         super();
-        // standard aggregates 
+        // standard aggregates
         addFunction(new FCount());
         addFunction(new FSum());
     }
 
-    public void applyAll(Aggregation.Builder accumulator, Double measure ) { 
-        for (AggregateFunction af:functions.values()) 
+    public void applyAll(Aggregation.Builder accumulator, Double measure) {
+        for (AggregateFunction af : functions.values())
             af.apply(accumulator, measure);
     }
-    
-    
-    
+
     public void mergeFunctions(Collection<String> funcNames,
                                Aggregation.Builder accumulator,
                                Aggregation source,
@@ -60,9 +66,9 @@ public class AggregateFunctionRegistry {
         }
 
     }
-    
-    public void mergeAll(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation) { 
-        for ( AggregateFunction af:functions.values()) 
+
+    public void mergeAll(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation) {
+        for (AggregateFunction af : functions.values())
             af.merge(accumulator, source, operation);
     }
 
@@ -70,7 +76,7 @@ public class AggregateFunctionRegistry {
         functions.put(function.getName().toUpperCase(), function);
     }
 
-    public AggregateFunction findFunction ( String name ) { 
+    public AggregateFunction findFunction(String name) {
         return functions.get(name);
     }
 }

@@ -18,12 +18,19 @@
  */
 package com.inadco.hbl.client.impl;
 
+/**
+ * Formal slice specification (high level.)
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
 public class Slice {
-    private Object leftBound;
-    private Object rightBound;
+    private Object  leftBound;
+    private Object  rightBound;
     private boolean leftOpen;
     private boolean rightOpen;
-    
+
     public Slice(Object leftBound, boolean leftOpen, Object rightBound, boolean rightOpen) {
         super();
         this.leftBound = leftBound;
@@ -63,9 +70,5 @@ public class Slice {
     public void setRightOpen(boolean rightOpen) {
         this.rightOpen = rightOpen;
     }
-    
-    
-    
-    
 
 }

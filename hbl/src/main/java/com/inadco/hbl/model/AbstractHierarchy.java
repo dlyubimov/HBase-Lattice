@@ -19,7 +19,12 @@
 package com.inadco.hbl.model;
 
 import com.inadco.hbl.api.Hierarchy;
-
+/**
+ * Abstract Hierarchy support. 
+ * 
+ * @author dmitriy
+ *
+ */
 public abstract class AbstractHierarchy extends AbstractDimension implements Hierarchy {
 
     public AbstractHierarchy(String name, String[] hierarchyPath ) {

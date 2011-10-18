@@ -33,6 +33,7 @@ import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Measure;
 
 /**
+ * Simple cube model implementation. 
  * 
  * @author dmitriy
  * 

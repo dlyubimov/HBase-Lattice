@@ -25,7 +25,12 @@ import org.apache.pig.EvalFunc;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.compiler.YamlModelParser;
-
+/**
+ * Common udf functionality
+ * @author dmitriy
+ *
+ * @param <T>
+ */
 public abstract class BaseFunc<T> extends EvalFunc<T> {
 
     protected Cube cube;

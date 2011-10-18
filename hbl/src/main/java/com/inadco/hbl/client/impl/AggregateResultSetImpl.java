@@ -54,6 +54,12 @@ import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.util.IOUtil;
 
+/**
+ * Aggregated result set implementation .
+ * 
+ * @author dmitriy
+ * 
+ */
 public class AggregateResultSetImpl implements AggregateResultSet, AggregateResult {
 
     private Deque<Closeable>                 closeables = new ArrayDeque<Closeable>();
