@@ -30,7 +30,14 @@ package com.inadco.hbl.client;
  * and open intervals. Closed boundary means the boundary value is included into
  * the result. Open boundary beans it is not included. Unbounded queries are
  * implicitly supported thru putting closed boundary with maximum value possible
- * for that particular data type.
+ * for that particular data type. <B>IMPORTANT</B> at this time of this writing,
+ * only one range per dimension is supported. If another range is added for the
+ * same dimension, it would just simply overwrite the previous one. There's no
+ * technical reason not to support multiple slices on the same query except that
+ * it is just did not happen to be common case enough to have immediate support
+ * for. If multiple slices are needed, they could always be obtained by running
+ * a query per slice and then aggregating the results manuallly at this pont.
+ * 
  * 
  * <LI>define projection ({@link #addGroupBy(String)}. Note that unlike with
  * RDBMS, there's never a query without projections. If you don't specify any
@@ -94,6 +101,14 @@ public interface AggregateQuery {
      */
     AggregateQuery addClosedSlice(String dimension, Object leftBound, Object rightBound);
 
+    /**
+     * add open slice based on dimension.
+     * 
+     * @param dimension
+     * @param leftBound
+     * @param rightBound
+     * @return
+     */
     AggregateQuery addOpenSlice(String dimension, Object leftBound, Object rightBound);
 
     AggregateQuery addHalfOpenSlice(String dimension, Object leftBound, Object rightBound);

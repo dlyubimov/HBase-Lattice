@@ -28,6 +28,12 @@ import com.inadco.hbl.client.impl.Slice;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
+/**
+ * Abstract dimension -- common defautl stuff for all dimensions.
+ * 
+ * @author dmitriy
+ * 
+ */
 public abstract class AbstractDimension implements Dimension {
 
     protected String name;
