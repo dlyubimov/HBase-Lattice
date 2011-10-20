@@ -159,6 +159,29 @@
           </executions>
         </plugin>
 
+        <plugin>
+          <!-- <groupId>org.codehaus.mojo</groupId> -->
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr3-maven-plugin</artifactId>
+          <version>3.4</version>
+          <executions>
+            <execution>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>antlr</goal>
+              </goals>
+            </execution>
+          </executions>
+<!--           <dependencies> -->
+<!--             <dependency> -->
+<!--               <groupId>org.antlr</groupId> -->
+<!--               <artifactId>antlr</artifactId> -->
+<!--               <version>3.4</version> -->
+<!--             </dependency> -->
+
+<!--           </dependencies> -->
+        </plugin>
+
 
       </plugins>
     </pluginManagement>
@@ -208,6 +231,32 @@
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
         <version>[1.8,)</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>3.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>3.4</version>
+        <classifier>sources</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr-runtime</artifactId>
+        <version>3.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr-runtime</artifactId>
+        <version>3.4</version>
+        <classifier>sources</classifier>
       </dependency>
 
     </dependencies>

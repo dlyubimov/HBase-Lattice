@@ -34,10 +34,10 @@
             <phase>generate-sources</phase>
             <configuration>
               <tasks>
-                <mkdir dir="target/generated-sources" />
+                <mkdir dir="target/generated-sources/proto" />
 
                 <exec executable="protoc" failonerror="true">
-                  <arg value="--java_out=target/generated-sources" />
+                  <arg value="--java_out=target/generated-sources/proto" />
                   <arg value="--proto_path=${basedir}/src/main/proto" />
                   <arg
                     value="--descriptor_set_out=target/generated-sources/hbl-cells.protodesc" />
@@ -47,7 +47,7 @@
 
 
               </tasks>
-              <sourceRoot>target/generated-sources</sourceRoot>
+              <sourceRoot>target/generated-sources/proto</sourceRoot>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -64,6 +64,10 @@
         <artifactId>maven-javadoc-plugin</artifactId>
       </plugin>
 
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr3-maven-plugin</artifactId>
+      </plugin>
 
     </plugins>
 
@@ -155,6 +159,17 @@
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
     </dependency>
+
+  <dependency>
+    <groupId>org.antlr</groupId>
+    <artifactId>antlr-runtime</artifactId>
+  </dependency>
+
+  <dependency>
+    <groupId>org.antlr</groupId>
+    <artifactId>antlr-runtime</artifactId>
+    <classifier>sources</classifier>
+  </dependency>
 
 
     <!-- test -->
