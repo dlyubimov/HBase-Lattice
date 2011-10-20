@@ -35,6 +35,7 @@ import org.springframework.core.io.Resource;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.client.impl.AggregateQueryImpl;
+import com.inadco.hbl.client.impl.PreparedAggregateQueryImpl;
 import com.inadco.hbl.compiler.YamlModelParser;
 import com.inadco.hbl.util.IOUtil;
 
@@ -120,5 +121,9 @@ public class HblQueryClient implements Closeable {
 
     public AggregateQuery createQuery() {
         return new AggregateQueryImpl(cube, es, tpool, afr);
+    }
+    
+    public PreparedAggregateQuery createPreparedQuery() { 
+        return new PreparedAggregateQueryImpl(cube, es, tpool, afr);
     }
 }
