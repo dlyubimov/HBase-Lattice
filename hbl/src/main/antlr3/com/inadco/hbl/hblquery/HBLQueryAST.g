@@ -16,7 +16,6 @@ tokens {
   IN = 'in';
   INF = 'inf';
   FUNC;
-  
   SELECTION_LIST;
 }
 
@@ -38,11 +37,11 @@ tokens {
 }
 
 select 
-	: 	SELECT^ exprList fromClause whereClause? groupClause?  
+	: 	SELECT^ selectExpr fromClause whereClause? groupClause?  
 	;
 	
-exprList 
-	: 	expr (',' expr )* -> expr+	
+selectExpr 
+	: 	expr (',' expr )* -> ^(SELECTION_LIST expr+)	
 	;
 	
 fromClause
@@ -98,14 +97,19 @@ id
 ID  :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
     ;
 
-INT :	'0'..'9'+
+INT returns [Integer val] 
+	:	'0'..'9'+ { $val= Integer.parseInt($text); }
     ;
 
-FLOAT
-    :   ('0'..'9')+ '.' ('0'..'9')* EXPONENT?
-    |   '.' ('0'..'9')+ EXPONENT?
-    |   ('0'..'9')+ EXPONENT
-    |	INF
+FLOAT returns [Double val]
+@after{
+	if ( $val == null ) 
+		$val=Double.parseDouble($text);
+}
+    :   ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 
+    |   '.' ('0'..'9')+ EXPONENT? 
+    |   ('0'..'9')+ EXPONENT 
+    |	INF { $val=Double.POSITIVE_INFINITY; } 
     ;
 
 COMMENT
@@ -120,9 +124,14 @@ WS  :   ( ' '
         ) {$channel=HIDDEN;}
     ;
 
-STRING
-    :  '\'' ( ESC_SEQ | ~('\\'|'\'') )* '\''
+STRING returns [String val]
+    :  '\'' ESCAPED_STR '\''
+    	{ $val= $ESCAPED_STR.text; }
     ;
+    
+ESCAPED_STR 
+	:    ( ESC_SEQ | ~('\\'|'\'') )*
+	;
 
 fragment
 EXPONENT : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;

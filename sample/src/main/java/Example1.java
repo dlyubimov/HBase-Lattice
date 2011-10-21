@@ -35,6 +35,7 @@ import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblAdmin;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.HblQueryClient;
+import com.inadco.hbl.client.PreparedAggregateQuery;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
@@ -68,8 +69,8 @@ public class Example1 extends Configured implements Tool {
 
         // deploy cube schema (optionally dropping the existing one)
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-        hblAdmin.dropCube(getConf());
-        hblAdmin.deployCube(getConf());
+//        hblAdmin.dropCube(getConf());
+//        hblAdmin.deployCube(getConf());
 
 
         // prepare incremental simulated input
@@ -103,12 +104,15 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-        runScript(script, inputPath);
+//        runScript(script, inputPath);
 
         testClient1(cubeModelRsrc);
         testClient2(cubeModelRsrc);
         testClient3(cubeModelRsrc);
         testClient4(cubeModelRsrc);
+        
+        // query based tests 
+        testClient5(cubeModelRsrc);
 
         return 0;
     }
@@ -272,6 +276,65 @@ public class Example1 extends Configured implements Tool {
             query.addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
             query.addHalfOpenSlice("impressionTime", startTime, endTime);
+            
+            AggregateResultSet rs = query.execute();
+            while (rs.hasNext()) {
+                rs.next();
+                AggregateResult ar = rs.current();
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                  new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
+                                  ar.getDoubleAggregate("impCnt", "SUM"),
+                                  ar.getDoubleAggregate("impCnt", "COUNT"),
+                                  ar.getDoubleAggregate("click", "SUM"),
+                                  ar.getDoubleAggregate("click", "COUNT"));
+            }
+          closeables.remove(rs);
+          rs.close();
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
+    private void testClient5(Resource yamlModel) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            closeables.addFirst(queryClient);
+
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /**
+             * will try to also constrain for half-open [1:00am,3:00am)
+             */
+
+            GregorianCalendar startTime=IOUtil.tryClone(START_BASE);
+            GregorianCalendar endTime=IOUtil.tryClone(START_BASE);
+            startTime.add(Calendar.HOUR_OF_DAY, 1);
+            endTime.add(Calendar.HOUR_OF_DAY,3);
+            // recalculate the calendars
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+            
+            /**
+             * same as client2 but print the summaries separately (no grouping). 
+             * 
+             */
+            PreparedAggregateQuery query = queryClient.createPreparedQuery();
+            query.prepare("select dim1, aggr(impCnt), aggr(click)" +
+            		"from Example1 " +
+            		"where dim1=[?], impressionTime=[?,?) " +
+            		"group by dim1");
+            
+//            query.addMeasure("impCnt").addMeasure("click");
+//            query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
+//            query.addHalfOpenSlice("impressionTime", startTime, endTime);
+            
+            
             
             AggregateResultSet rs = query.execute();
             while (rs.hasNext()) {
