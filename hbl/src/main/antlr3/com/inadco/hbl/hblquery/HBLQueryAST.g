@@ -79,9 +79,17 @@ whereClause
    
 */	
 sliceSpec
-	:	sliceId=id IN leftClosed=('[' | '(') left=value (',' right=value)? rightClosed=(']' | ')') -> 
-		^( SLICE $sliceId $leftClosed $left $rightClosed $right )
+	:	sliceId=id IN leftClosed left=value (',' right=value)? rightClosed -> 
+		^( SLICE $sliceId leftClosed $left rightClosed $right? )
 	; 
+	
+leftClosed 
+	:	'[' | '('
+	;
+	
+rightClosed 
+	:	']' | ')'
+	;
 	
 value 
 	: 	param | INT | FLOAT | STRING 
@@ -94,12 +102,15 @@ id
 	|	param
 	;		  		
 
-ID  :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
+
+
+ID :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
     ;
 
 INT returns [Integer val] 
 	:	'0'..'9'+ { $val= Integer.parseInt($text); }
     ;
+
 
 FLOAT returns [Double val]
 @after{
@@ -124,17 +135,23 @@ WS  :   ( ' '
         ) {$channel=HIDDEN;}
     ;
 
-STRING returns [String val]
-    :  '\'' ESCAPED_STR '\''
-    	{ $val= $ESCAPED_STR.text; }
-    ;
-    
-ESCAPED_STR 
-	:    ( ESC_SEQ | ~('\\'|'\'') )*
+
+/* TODO: work on string definitions. 
+   for some reason original string lexema 
+   did not work. 
+   */
+STRING
+	:	'\'' SC '\''
 	;
 
 fragment
+SC 	:	( options { greedy=true;}: ~'\'' )*
+	;	
+	
+
+fragment
 EXPONENT : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+
 
 fragment
 HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;

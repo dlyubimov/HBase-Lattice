@@ -327,7 +327,7 @@ public class Example1 extends Configured implements Tool {
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
             query.prepare("select dim1, aggr(impCnt), aggr(click)" +
             		"from Example1 " +
-            		"where dim1=[?], impressionTime=[?,?) " +
+            		"where dim1 in [?], impressionTime in [?,?) " +
             		"group by dim1");
             
 //            query.addMeasure("impCnt").addMeasure("click");

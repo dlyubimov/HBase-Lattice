@@ -39,11 +39,20 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
     @Override
     public void prepare(String statement) throws HblException {
         Validate.notNull(statement);
+        lexer.reset();
         lexer.setCharStream(new ANTLRStringStream(statement));
+        parser.reset();
         parser.setTokenStream(new CommonTokenStream(lexer));
         try { 
             HBLQueryASTParser.select_return r = parser.select();
             selectAST=(Tree)r.getTree();
+            if ( parser.getNumberOfSyntaxErrors()>0 )
+                throw new HblException ( "Syntax errors present in hbl query.:");
+            
+            
+            // DEBUG 
+            System.out.println(selectAST.toString());
+            
         } catch ( RecognitionException exc ) { 
             throw new HblException ( exc.getMessage());
         }
