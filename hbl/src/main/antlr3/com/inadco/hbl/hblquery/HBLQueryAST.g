@@ -17,6 +17,10 @@ tokens {
   INF = 'inf';
   FUNC;
   SELECTION_LIST;
+  LEFTOPEN;
+  LEFTCLOSED;
+  RIGHTOPEN;
+  RIGHTCLOSED;
 }
 
 @header { 
@@ -58,9 +62,8 @@ unaryFunc
 	;	
 		
 expr 	
-	:	ID
+	:	id
 	| 	unaryFunc
-	| 	param
 	;		
 	
 param 
@@ -79,20 +82,23 @@ whereClause
    
 */	
 sliceSpec
-	:	sliceId=id IN leftClosed left=value (',' right=value)? rightClosed -> 
-		^( SLICE $sliceId leftClosed $left rightClosed $right? )
+	:	sliceId=id IN leftBoundType left=value (',' right=value)? rightBoundType -> 
+		^( SLICE $sliceId leftBoundType $left rightBoundType $right? )
 	; 
 	
-leftClosed 
-	:	'[' | '('
+leftBoundType 
+	:	'[' -> LEFTCLOSED 
+	|	'(' -> LEFTOPEN
 	;
 	
-rightClosed 
-	:	']' | ')'
+rightBoundType 
+	:	']' -> RIGHTCLOSED 
+	|  ')' -> RIGHTOPEN
 	;
 	
 value 
-	: 	param | INT | FLOAT | STRING 
+	: 	param | INT | FLOAT
+	|	STRING 
 	| 	'-' INT
 	|	'-' FLOAT
 	;
@@ -140,8 +146,8 @@ WS  :   ( ' '
    for some reason original string lexema 
    did not work. 
    */
-STRING
-	:	'\'' SC '\''
+STRING returns [ String s ]
+	:	'\'' SC '\'' { $s= $SC.text; }
 	;
 
 fragment

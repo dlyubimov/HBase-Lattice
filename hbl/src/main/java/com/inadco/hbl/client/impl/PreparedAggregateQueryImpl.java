@@ -23,17 +23,15 @@ import com.inadco.hbl.hblquery.HBLQueryPrep;
 
 public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements PreparedAggregateQuery {
 
-    private HBLQueryASTParser parser = new HBLQueryASTParser(null);
-    private HBLQueryASTLexer lexer = new HBLQueryASTLexer();
-    private HBLQueryPrep prepper = new HBLQueryPrep(null);
-    
-    private Tree selectAST;
-    private Map<Integer,String> parameters = new HashMap<Integer, String>();
-    
+    private HBLQueryASTParser    parser     = new HBLQueryASTParser(null);
+    private HBLQueryASTLexer     lexer      = new HBLQueryASTLexer();
+    private HBLQueryPrep         prepper    = null;
+
+    private Tree                 selectAST;
+    private Map<Integer, Object> parameters = new HashMap<Integer, Object>();
+
     public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
         super(cube, es, tpool, afr);
-        prepper.setAggregateQuery(this);
-        prepper.setHblParams(parameters);
     }
 
     @Override
@@ -43,24 +41,23 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         lexer.setCharStream(new ANTLRStringStream(statement));
         parser.reset();
         parser.setTokenStream(new CommonTokenStream(lexer));
-        try { 
+        try {
             HBLQueryASTParser.select_return r = parser.select();
-            selectAST=(Tree)r.getTree();
-            if ( parser.getNumberOfSyntaxErrors()>0 )
-                throw new HblException ( "Syntax errors present in hbl query.:");
-            
-            
-            // DEBUG 
+            selectAST = (Tree) r.getTree();
+            if (parser.getNumberOfSyntaxErrors() > 0)
+                throw new HblException("Syntax errors present in hbl query.:");
+
+            // DEBUG
             System.out.println(selectAST.toString());
-            
-        } catch ( RecognitionException exc ) { 
-            throw new HblException ( exc.getMessage());
+
+        } catch (RecognitionException exc) {
+            throw new HblException(exc.getMessage());
         }
 
     }
 
     @Override
-    public void setHblParameter(int param, String value) throws HblException {
+    public void setHblParameter(int param, Object value) throws HblException {
         parameters.put(param, value);
     }
 
@@ -74,20 +71,25 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
     @Override
     public AggregateResultSet execute() throws HblException {
 
-        Validate.notNull(selectAST,"statement not prepared");
-        prepper.reset();
-        prepper.setTreeNodeStream(new CommonTreeNodeStream(selectAST));
-        try { 
-            prepper.select();
-        } catch ( RecognitionException exc ) { 
-            throw new HblException ( exc.getMessage(),exc);
+        Validate.notNull(selectAST, "statement not prepared");
+        if (prepper == null) {
+            prepper = new HBLQueryPrep(new CommonTreeNodeStream(selectAST));
+            prepper.setHblParams(parameters);
+            prepper.setQueryVisitor(new QueryPrepVisitor(this));
+        } else {
+            prepper.reset();
+            prepper.setTreeNodeStream(new CommonTreeNodeStream(selectAST));
         }
-        
+
+        try {
+            prepper.select();
+        } catch (RecognitionException exc) {
+            throw new HblException(exc.getMessage(), exc);
+        }
+
         // TODO
-        
+
         return super.execute();
     }
-    
-    
 
 }

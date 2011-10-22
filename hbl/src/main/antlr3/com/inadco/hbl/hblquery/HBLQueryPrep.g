@@ -5,83 +5,138 @@ options {
 	ASTLabelType=CommonTree; 
 }
 
+tokens{
+    DIM;
+}
+
+scope Visitor {
+    boolean selectionExpr;
+    boolean visitMeasures; 
+    boolean visitDimensions;
+    boolean groupBy;
+    
+}
+
+
 @header { 
   package com.inadco.hbl.hblquery;
   import java.util.Map;
   import java.util.HashMap;
-  import com.inadco.hbl.client.AggregateQuery;
+  import com.inadco.hbl.client.impl.QueryVisitor;
 }
 
 @members {
 	
-	private Map<Integer,String> hblParams;
-	private AggregateQuery aggregateQuery;
+	private Map<Integer,Object> hblParams;
+	private QueryVisitor qVisitor;
 	private int hblParamCnt;
 	
-	public void setHblParams ( Map<Integer,String> params ) {
+	public void setHblParams ( Map<Integer,Object> params ) {
 		hblParams = params; 
 		hblParamCnt =0;
 	}
-	public void setAggregateQuery ( AggregateQuery query ) { 
-		aggregateQuery = query;
+	public void setQueryVisitor ( QueryVisitor qVisitor ) { 
+		this.qVisitor = qVisitor;
 	}
 }
 
 select
-	: 	^( SELECT exprList fromClause whereClause? groupClause? )
+scope Visitor; 
+	: 	^( SELECT exprList fromClause=. whereClause? groupClause? ) 
+	{ qVisitor.visitSelect ( $exprList.start, $fromClause, $whereClause.start, $groupClause.start ); }
 	; 
 
-exprList 
-	: ^( SELECTION_LIST expr+ )	
-	;
-	
-fromClause
-	: 	^( FROM id )
-	; 
-	
-groupClause 	     
-	:	^( GROUP  id+ ) 
-	;
-		
-	
-unaryFunc 
-	:	^( FUNC id ) 
-	;	
-		
-expr 	
-	:	ID
-	| 	unaryFunc
-	| 	param
-	;		
-	
-param returns [String val]
-	: 	'?' { val = hblParams.get(hblParamCnt++); }
-	;	
+
+exprList
+scope Visitor;
+@init {
+	$Visitor::selectionExpr = true; 
+	$Visitor::visitDimensions=true;
+}
+    :   ^(SELECTION_LIST expr+)      
+    ;
 
 whereClause
-	: 	^( WHERE sliceSpec+ )
-	;
-	
+    :   ^( WHERE sliceSpec+ )
+    ;
 
-/**
-  this rule is to specify dimension slices. 
-  the syntax is like "WHERE dim1=[0,2)"
-  or, for exact hyperplane cut, something like "WHERE dim1=['123AEBCD'].
-   
-*/	
 sliceSpec
-	:	^( SLICE sliceId=id leftClosed=('[' | '(') left=value rightClosed=(']' | ')') right=value? )
-	; 
-	
-value 
-	: 	param | INT | FLOAT | STRING 
-	| 	'-' INT
-	|	'-' FLOAT
-	;
-	
-id	
-	: 	ID
-	|	param
-	;		  		
-	
+    :  ^( SLICE id leftBoundType left=value rightBoundType right=value? ) 
+    {
+    	qVisitor.visitSlice ($id.nameVal, 
+    	   $leftBoundType.open, 
+    	   $left.val,
+    	   $rightBoundType.open, 
+    	   $right.val); 
+    }
+    ; 
+
+leftBoundType returns [boolean open]
+    :   LEFTCLOSED { open=false; }
+    |   LEFTOPEN {open=true; }
+    ;
+    
+rightBoundType returns [boolean open]
+    :  RIGHTCLOSED {open=false; }
+    |  RIGHTOPEN {open=true; }
+    ;
+
+groupClause 
+scope Visitor;
+@init {
+	$Visitor::groupBy=true; 
+}
+    :   ^( GROUP id+ )
+    ;    
+    
+aggrFunc 
+scope Visitor;
+@init {
+	if ( $Visitor[-1]::selectionExpr ) {  
+	   $Visitor::visitMeasures = true;
+	   $Visitor::selectionExpr=true; 
+	}
+}
+    :   ^( FUNC id ) 
+    ;   
+        
+expr 
+    :   id 
+    |   aggrFunc 
+    ;   
+
+id  returns [String nameVal ]
+@after {
+	if ( $Visitor::visitDimensions ) 
+	   qVisitor.visitDim($nameVal);
+	if ( $Visitor::visitMeasures ) 
+	   qVisitor.visitMeasure($nameVal);
+	if ( $Visitor::groupBy ) 
+	   qVisitor.visitGroupDimension($nameVal); 
+}
+    :   ID { 
+    	   $nameVal = $ID.text;
+    	}
+    |   param {
+    	   $nameVal = (String) $param.val;
+        }
+    ;               
+        
+    
+param returns [Object val]
+    :   '?'
+        { $val=hblParams.get(hblParamCnt++); }
+    ;   
+    
+value returns [Object val] 
+    :   param { $val= $param.val; } 
+    | INT { $val= Integer.parseInt($text); }
+    | FLOAT { $val= Double.parseDouble($text); } 
+    | STRING { $val= $STRING.text.substring(1,$STRING.text.length()-1); }
+    |   '-' INT { $val= Integer.parseInt ($text); }
+    |   '-' FLOAT { $val= Double.parseDouble($text); }
+    ;
+
+     
+		
 	 
