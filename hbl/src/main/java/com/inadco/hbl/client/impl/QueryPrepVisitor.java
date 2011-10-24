@@ -2,15 +2,20 @@ package com.inadco.hbl.client.impl;
 
 import org.antlr.runtime.tree.CommonTree;
 
-import com.inadco.hbl.client.PreparedAggregateQuery;
-
 public class QueryPrepVisitor implements QueryVisitor {
 
-    private PreparedAggregateQuery query;
-
-    public QueryPrepVisitor(PreparedAggregateQuery query) {
+    private PreparedAggregateQueryImpl query;
+    private int selectExprIndex;
+    
+    public QueryPrepVisitor(PreparedAggregateQueryImpl query) {
         super();
         this.query = query;
+    }
+
+    @Override
+    public void reset() { 
+        selectExprIndex=0;
+        query.reset();
     }
 
     @Override
@@ -21,23 +26,10 @@ public class QueryPrepVisitor implements QueryVisitor {
 
     }
 
-    @Override
-    public void visitMeasure(String measure) {
-
-        // DEBUG
-        System.out.printf("adding measure %s.\n", measure);
-
-        query.addMeasure(measure);
-    }
-
-    @Override
-    public void visitDim(String dim) {
-        // DEBUG
-        System.out.printf("Dimension %s will be requested\n", dim);
-    }
 
     @Override
     public void visitGroupDimension(String dim) {
+        // DEBUG
         System.out.printf("Adding group dimension %s.\n", dim);
 
         query.addGroupBy(dim);
@@ -46,6 +38,7 @@ public class QueryPrepVisitor implements QueryVisitor {
     @Override
     public void visitSlice(String dimension, boolean leftOpen, Object left, boolean rightOpen, Object right) {
 
+        // DEBUG 
         System.out.printf("Adding slice for %s, left-open:%s, right-open:%s, %s,%s.\n",
                           dimension,
                           leftOpen,
@@ -59,4 +52,25 @@ public class QueryPrepVisitor implements QueryVisitor {
             query.addSlice(dimension, left, leftOpen, right, rightOpen);
 
     }
+
+    @Override
+    public void visitSelectExpressionAsID(String id, String alias) {
+        // DEBUG
+        System.out.printf("adding dim member %s aliased as %s.\n", id,alias);
+        
+        query.addAggregateResultDef(selectExprIndex++, alias, id);
+        
+    }
+
+    @Override
+    public void visitSelectExpressionAsAggrFunc(String func, String measure, String alias) {
+        // DEBUG
+        System.out.printf("adding aggr func %s for measure %s aliased as %s.\n", func, measure, alias);
+        query.addMeasure(measure);
+        query.addAggregateResultDef(selectExprIndex++,alias, func, measure);
+        
+    }
+
+    
+    
 }

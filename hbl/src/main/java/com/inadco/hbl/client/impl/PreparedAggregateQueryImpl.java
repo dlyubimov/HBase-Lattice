@@ -1,6 +1,8 @@
 package com.inadco.hbl.client.impl;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -17,18 +19,21 @@ import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.PreparedAggregateQuery;
+import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.hblquery.HBLQueryASTLexer;
 import com.inadco.hbl.hblquery.HBLQueryASTParser;
 import com.inadco.hbl.hblquery.HBLQueryPrep;
 
 public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements PreparedAggregateQuery {
 
-    private HBLQueryASTParser    parser     = new HBLQueryASTParser(null);
-    private HBLQueryASTLexer     lexer      = new HBLQueryASTLexer();
-    private HBLQueryPrep         prepper    = null;
+    private HBLQueryASTParser    parser            = new HBLQueryASTParser(null);
+    private HBLQueryASTLexer     lexer             = new HBLQueryASTLexer();
+    private HBLQueryPrep         prepper           = null;
 
     private Tree                 selectAST;
-    private Map<Integer, Object> parameters = new HashMap<Integer, Object>();
+    private Map<Integer, Object> parameters        = new HashMap<Integer, Object>();
+    private Map<Integer, Object> resultDefsByIndex = new HashMap<Integer, Object>();
+    private Map<String, Object>  resultDefsByAlias = new HashMap<String, Object>();
 
     public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
         super(cube, es, tpool, afr);
@@ -66,6 +71,8 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         super.reset();
         selectAST = null;
         parameters.clear();
+        resultDefsByAlias.clear();
+        resultDefsByIndex.clear();
     }
 
     @Override
@@ -87,9 +94,50 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
             throw new HblException(exc.getMessage(), exc);
         }
 
-        // TODO
-
         return super.execute();
+    }
+
+    @Override
+    protected AggregateResultSetImpl createResultSet(List<ScanSpec> scanSpecs,
+                                                     ExecutorService es,
+                                                     HTablePool tpool,
+                                                     AggregateFunctionRegistry afr,
+                                                     Map<String, Integer> measureName2IndexMap,
+                                                     Map<String, Integer> dimName2GroupKeyOffsetMap) throws IOException {
+        return new PreparedAggregateResultSetImpl(
+            scanSpecs,
+            es,
+            tpool,
+            afr,
+            measureName2IndexMap,
+            dimName2GroupKeyOffsetMap,
+            resultDefsByIndex,
+            resultDefsByAlias);
+    }
+
+    void addAggregateResultDef(int index, String alias, String funcName, String measure) {
+        
+        if (afr.findFunction(funcName) == null)
+            throw new IllegalArgumentException(String.format("Unknown function name '%s'.", funcName));
+        if ( cube.getMeasures().containsKey(measure)) 
+            throw new IllegalArgumentException ( String.format("Unknown measure %s.",measure));
+        if ( resultDefsByAlias.containsKey(alias)) 
+            throw new IllegalArgumentException  (String.format("Alias %s already exists.",alias));
+        
+        String[] def = new String[2];
+        def[0] = measure;
+        def[1] = funcName;
+        resultDefsByIndex.put(index, def);
+        resultDefsByAlias.put(alias, def);
+    }
+
+    void addAggregateResultDef(int index, String alias, String dim) {
+        if ( ! cube.getDimensions().containsKey(dim) ) 
+            throw new IllegalArgumentException ( String.format ("Unknown dimension %s.",dim));
+        if ( resultDefsByAlias.containsKey(alias)) 
+            throw new IllegalArgumentException  (String.format("Alias %s already exists.",alias));
+        resultDefsByIndex.put(index, dim);
+        resultDefsByAlias.put(alias, dim);
     }
 
 }

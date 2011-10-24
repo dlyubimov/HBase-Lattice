@@ -47,17 +47,17 @@ import com.inadco.hbl.client.impl.scanner.ScanSpec;
 
 public class AggregateQueryImpl implements AggregateQuery {
 
-    private Cube                      cube;
-    private ExecutorService           es;
+    protected Cube                      cube;
+    private ExecutorService             es;
     /**
      * dim name -> range slice requested
      */
-    private Map<String, Set<Slice>>   dimSlices       = new HashMap<String, Set<Slice>>();
-    private Set<String>               measures        = new HashSet<String>();
+    private Map<String, Set<Slice>>     dimSlices       = new HashMap<String, Set<Slice>>();
+    private Set<String>                 measures        = new HashSet<String>();
 
-    private List<String>              groupDimensions = new ArrayList<String>();
-    private HTablePool                tpool;
-    private AggregateFunctionRegistry afr;
+    protected List<String>              groupDimensions = new ArrayList<String>();
+    private HTablePool                  tpool;
+    protected AggregateFunctionRegistry afr;
 
     public AggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
         super();
@@ -142,11 +142,11 @@ public class AggregateQueryImpl implements AggregateQuery {
             int numGroupKeys = groupDimensions.size();
             int groupKeyLen = 0;
 
-            Map<String,Integer> dimName2GroupKeyOffsetMap=new HashMap<String, Integer>();
-            
-            for (int i = 0; i < numGroupKeys; i++) { 
-                Dimension dim=cuboid.getCuboidDimensions().get(i);
-                dimName2GroupKeyOffsetMap.put(dim.getName(),groupKeyLen);
+            Map<String, Integer> dimName2GroupKeyOffsetMap = new HashMap<String, Integer>();
+
+            for (int i = 0; i < numGroupKeys; i++) {
+                Dimension dim = cuboid.getCuboidDimensions().get(i);
+                dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
                 groupKeyLen += dim.getKeyLen();
             }
 
@@ -168,11 +168,21 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 
-            return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap );
+            return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }
 
+    }
+
+    protected AggregateResultSetImpl createResultSet(final List<ScanSpec> scanSpecs,
+                                                     final ExecutorService es,
+                                                     final HTablePool tpool,
+                                                     final AggregateFunctionRegistry afr,
+                                                     final Map<String, Integer> measureName2IndexMap,
+                                                     final Map<String, Integer> dimName2GroupKeyOffsetMap)
+        throws IOException {
+        return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2IndexMap, dimName2GroupKeyOffsetMap);
     }
 
     @Override
@@ -226,7 +236,6 @@ public class AggregateQueryImpl implements AggregateQuery {
                     partialSpec.add(allpoint);
                 else
                     partialSpec.set(dimIndex, allpoint);
-
 
             } else {
                 // total range for a dimension: perhaps subefficient!

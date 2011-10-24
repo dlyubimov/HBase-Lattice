@@ -36,6 +36,7 @@ import com.inadco.hbl.client.HblAdmin;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.PreparedAggregateQuery;
+import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
@@ -318,10 +319,15 @@ public class Example1 extends Configured implements Tool {
              * 
              */
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
-            query.prepare("select dim1, sum(?), count(click)" + "from Example1 "
-                + "where dim1 in [?,?], impressionTime in [?,?) " + "group by dim1");
+            query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
+                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
+                + "group by dim1");
 
-            query.setHblParameter(0, "impCnt" );
+            // demo: can parameterize aliases
+            // or measure names in the select expression.
+            query.setHblParameter(0, "impSum");
+            query.setHblParameter(1, "impCnt");
+
             query.setHblParameter(1, ids[0]);
             query.setHblParameter(2, ids[1]);
             query.setHblParameter(3, startTime);
@@ -334,13 +340,15 @@ public class Example1 extends Configured implements Tool {
             AggregateResultSet rs = query.execute();
             while (rs.hasNext()) {
                 rs.next();
-                AggregateResult ar = rs.current();
+                PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
                 System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-                                  new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                  ar.getDoubleAggregate("impCnt", "SUM"),
-                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-                                  ar.getDoubleAggregate("click", "SUM"),
-                                  ar.getDoubleAggregate("click", "COUNT"));
+
+                // new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
+                                  ar.getObject(0),
+                                  ar.getObject("impSum"),
+                                  ar.getObject("impCnt"),
+                                  ar.getObject("clickSum"),
+                                  ar.getObject("clickCnt"));
             }
             closeables.remove(rs);
             rs.close();

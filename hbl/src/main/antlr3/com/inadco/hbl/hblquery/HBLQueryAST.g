@@ -7,6 +7,7 @@ options {
 
 
 tokens {
+  AS = 'as';
   SELECT = 'select';
   FROM = 'from';
   GROUP = 'group';
@@ -17,6 +18,7 @@ tokens {
   INF = 'inf';
   FUNC;
   SELECTION_LIST;
+  SEL_EXPR;
   LEFTOPEN;
   LEFTCLOSED;
   RIGHTOPEN;
@@ -41,11 +43,11 @@ tokens {
 }
 
 select 
-	: 	SELECT^ selectExpr fromClause whereClause? groupClause?  
+	: 	SELECT^ selectExprList fromClause whereClause? groupClause?  
 	;
 	
-selectExpr 
-	: 	expr (',' expr )* -> ^(SELECTION_LIST expr+)	
+selectExprList 
+	: 	selectExpr (',' selectExpr )* -> ^(SELECTION_LIST selectExpr+)	
 	;
 	
 fromClause
@@ -58,12 +60,12 @@ groupClause
 		
 	
 unaryFunc 
-	:	ID '(' id ')' -> ^( FUNC id ) 
+	:	func=id '(' fparam=id ')' -> ^( FUNC $func $fparam ) 
 	;	
 		
-expr 	
-	:	id
-	| 	unaryFunc
+selectExpr 	
+	:	measure=id ( AS alias=id )? -> ^( SEL_EXPR $measure $alias? )   
+	| 	unaryFunc ( AS id)? -> ^( SEL_EXPR unaryFunc id? )
 	;		
 	
 param 

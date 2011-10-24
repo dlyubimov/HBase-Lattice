@@ -11,8 +11,6 @@ tokens{
 
 scope Visitor {
     boolean selectionExpr;
-    boolean visitMeasures; 
-    boolean visitDimensions;
     boolean groupBy;
     
 }
@@ -42,6 +40,9 @@ scope Visitor {
 
 select
 scope Visitor; 
+@init {
+	qVisitor.reset(); 
+}
 	: 	^( SELECT exprList fromClause=. whereClause? groupClause? ) 
 	{ qVisitor.visitSelect ( $exprList.start, $fromClause, $whereClause.start, $groupClause.start ); }
 	; 
@@ -51,9 +52,8 @@ exprList
 scope Visitor;
 @init {
 	$Visitor::selectionExpr = true; 
-	$Visitor::visitDimensions=true;
 }
-    :   ^(SELECTION_LIST expr+)      
+    :   ^(SELECTION_LIST selectExpr+)      
     ;
 
 whereClause
@@ -89,28 +89,34 @@ scope Visitor;
     :   ^( GROUP id+ )
     ;    
     
-aggrFunc 
+aggrFunc returns [String measure, String funcName]
 scope Visitor;
 @init {
 	if ( $Visitor[-1]::selectionExpr ) {  
-	   $Visitor::visitMeasures = true;
 	   $Visitor::selectionExpr=true; 
 	}
 }
-    :   ^( FUNC id ) 
+    :   ^( FUNC func=id fparam=id ) { 
+    	$measure=$fparam.nameVal;
+    	$funcName=$func.nameVal; 
+    	}
     ;   
         
-expr 
-    :   id 
-    |   aggrFunc 
+selectExpr 
+    :   ^( SEL_EXPR dim=id alias=id? ) { 
+    	String dimAlias = $alias.nameVal;
+    	if ( dimAlias == null ) dimAlias = $dim.nameVal;
+    	qVisitor.visitSelectExpressionAsID($dim.nameVal, dimAlias); }
+    	
+    |   ^( SEL_EXPR aggrFunc alias=id? ) { 
+    	String aggrAlias = $alias.nameVal;
+    	if ( aggrAlias == null ) 
+    	   aggrAlias = $aggrFunc.funcName + "_" + $aggrFunc.measure;
+    	qVisitor.visitSelectExpressionAsAggrFunc($aggrFunc.funcName, $aggrFunc.measure, aggrAlias); }
     ;   
 
-id  returns [String nameVal ]
+id  returns [ String nameVal ]
 @after {
-	if ( $Visitor::visitDimensions ) 
-	   qVisitor.visitDim($nameVal);
-	if ( $Visitor::visitMeasures ) 
-	   qVisitor.visitMeasure($nameVal);
 	if ( $Visitor::groupBy ) 
 	   qVisitor.visitGroupDimension($nameVal); 
 }
