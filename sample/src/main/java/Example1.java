@@ -52,8 +52,6 @@ public class Example1 extends Configured implements Tool {
 
     public static void main(String[] args) throws Throwable {
 
-        // runjarArgs[0]="target/sample-0.1.0-SNAPSHOT-hadoop-job.jar";
-
         ToolRunner.run(new Example1(), args);
 
     }
@@ -69,10 +67,11 @@ public class Example1 extends Configured implements Tool {
         Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
         // deploy cube schema (optionally dropping the existing one)
+        // WARNING: would drop existing cube!!
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-        // hblAdmin.dropCube(getConf());
-        // hblAdmin.deployCube(getConf());
-        
+        hblAdmin.dropCube(getConf());
+        hblAdmin.deployCube(getConf());
+
         String cubeName = hblAdmin.getCube().getName();
 
         // prepare incremental simulated input
@@ -86,12 +85,14 @@ public class Example1 extends Configured implements Tool {
 
         // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
-            new Pig8CubeIncrementalCompilerBean(getConf(),cubeName, new ClassPathResource("example1-preambula.pig"), 5);
-        
+            new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
+
         /*
-         * this is the version that uses model from resource instead of hbl system table.
+         * this is the version that uses model from resource instead of hbl
+         * system table.
          */
-//            new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new ClassPathResource("example1-preambula.pig"), 5);
+        // new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new
+        // ClassPathResource("example1-preambula.pig"), 5);
 
         String script = compiler.preparePigSource(workPath.toString());
 
@@ -110,7 +111,7 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-        // runScript(script, inputPath);
+        runScript(script, inputPath);
 
         testClient1(cubeName);
         testClient2(cubeName);
@@ -118,7 +119,7 @@ public class Example1 extends Configured implements Tool {
         testClient4(cubeName);
 
         // query based tests
-        testClient5(cubeModelRsrc);
+        testClient5(cubeName);
 
         return 0;
     }
@@ -303,10 +304,10 @@ public class Example1 extends Configured implements Tool {
         }
     }
 
-    private void testClient5(Resource yamlModel) throws IOException, HblException {
+    private void testClient5(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -326,43 +327,49 @@ public class Example1 extends Configured implements Tool {
             startTime.getTimeInMillis();
             endTime.getTimeInMillis();
 
-            /**
-             * same as client2 but print the summaries separately (no grouping).
-             * 
-             */
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
-            query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
-                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
-                + "group by dim1");
 
-            // demo: can parameterize aliases
-            // or measure names in the select expression.
-            query.setHblParameter(0, "impSum");
-            query.setHblParameter(1, "impCnt");
+            for (int i = 0; i < 5; i++) {
 
-            query.setHblParameter(2, ids[0]);
-            query.setHblParameter(3, ids[1]);
-            query.setHblParameter(4, startTime);
-            query.setHblParameter(5, endTime);
+                /**
+                 * same as client2 but print the summaries separately (no
+                 * grouping).
+                 * 
+                 */
+                query.reset();
+                query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
+                    + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
+                    + "group by dim1");
 
-            // query.addMeasure("impCnt").addMeasure("click");
-            // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
-            // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+                // demo: can parameterize aliases
+                // or measure names in the select expression.
+                query.setHblParameter(0, "impSum");
+                query.setHblParameter(1, "impCnt");
 
-            AggregateResultSet rs = query.execute();
-            while (rs.hasNext()) {
-                rs.next();
-                PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                query.setHblParameter(2, ids[0]);
+                query.setHblParameter(3, ids[1]);
+                query.setHblParameter(4, startTime);
+                query.setHblParameter(5, endTime);
 
-                                  new BigInteger(1, (byte[]) ar.getObject(0)),
-                                  ar.getObject("impSum"),
-                                  ar.getObject("impCnt"),
-                                  ar.getObject("clickSum"),
-                                  ar.getObject("clickCnt"));
+                // query.addMeasure("impCnt").addMeasure("click");
+                // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
+                // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+
+                AggregateResultSet rs = query.execute();
+                while (rs.hasNext()) {
+                    rs.next();
+                    PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+
+                                      new BigInteger(1, (byte[]) ar.getObject(0)),
+                                      ar.getObject("impSum"),
+                                      ar.getObject("impCnt"),
+                                      ar.getObject("clickSum"),
+                                      ar.getObject("clickCnt"));
+                }
+                closeables.remove(rs);
+                rs.close();
             }
-            closeables.remove(rs);
-            rs.close();
 
         } finally {
             IOUtil.closeAll(closeables);

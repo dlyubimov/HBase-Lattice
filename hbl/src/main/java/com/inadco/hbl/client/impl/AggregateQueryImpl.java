@@ -175,7 +175,7 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 
-            return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
+            return createResultSet(
                 scanSpecs,
                 es,
                 tpool,
