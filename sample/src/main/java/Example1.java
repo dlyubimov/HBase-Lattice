@@ -329,6 +329,20 @@ public class Example1 extends Configured implements Tool {
 
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
 
+            /*
+             * test reuse of the prepared query. Should speedup stuff exactly as
+             * prepared query is supposed to do. we also have an option of
+             * re-preparing query at any time, but we still need to run reset()
+             * to clean out stuff like parameters initialized and execution.
+             * reset() does not necesserily cancel previously existing AST tree
+             * of the query, only prepare() updates that. but prepare does
+             * reset() implicitly, so if we re-prepared the query, the previous
+             * parameter set cannot be used.
+             */
+            query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
+                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
+                + "group by dim1");
+
             for (int i = 0; i < 5; i++) {
 
                 /**
@@ -337,9 +351,6 @@ public class Example1 extends Configured implements Tool {
                  * 
                  */
                 query.reset();
-                query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
-                    + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
-                    + "group by dim1");
 
                 // demo: can parameterize aliases
                 // or measure names in the select expression.
