@@ -24,8 +24,9 @@
     - !SimpleCuboid [[*dim1, *dim2]]
   
   - # measures 
-    - !SimpleMeasure [ measure1 ]
-    - !SimpleMeasure [ measure2 ]
+    - !SimpleMeasure [ impCnt ]
+    - !SimpleMeasure [ click ]
+
   
   
   

@@ -36,6 +36,25 @@ scope Visitor {
 	public void setQueryVisitor ( QueryVisitor qVisitor ) { 
 		this.qVisitor = qVisitor;
 	}
+	protected void mismatch(IntStream input, int ttype, BitSet follow)
+    throws RecognitionException {
+        throw new MismatchedTokenException(ttype, input);
+    }
+    public Object recoverFromMismatchedSet(IntStream input,
+                                           RecognitionException e,
+                                           BitSet follow)
+                                               throws RecognitionException    {
+        throw e;
+    }
+}
+// Alter code generation so catch-clauses get replace with
+// this action.
+@rulecatch {
+catch (RecognitionException e) {
+throw e;
+}
+
+	
 }
 
 select
@@ -123,7 +142,7 @@ id  returns [ String nameVal ]
     :   ID { 
     	   $nameVal = $ID.text;
     	}
-    |   param {
+    |   param { $param.val instanceof String}? {
     	   $nameVal = (String) $param.val;
         }
     ;               

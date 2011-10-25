@@ -15,7 +15,6 @@ public class QueryPrepVisitor implements QueryVisitor {
     @Override
     public void reset() { 
         selectExprIndex=0;
-        query.reset();
     }
 
     @Override

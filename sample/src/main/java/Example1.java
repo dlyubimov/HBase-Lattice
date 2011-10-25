@@ -245,46 +245,51 @@ public class Example1 extends Configured implements Tool {
             HblQueryClient queryClient = new HblQueryClient(getConf(), yamlModel);
             closeables.addFirst(queryClient);
 
-            byte ids[][] = new byte[2][];
-            ids[0] = new byte[16];
-            ids[1] = new byte[16];
-            HblUtil.incrementKey(ids[1], 0, 16);
-
-            /**
-             * will try to also constrain for half-open [1:00am,3:00am)
-             */
-
-            GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
-            GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
-            startTime.add(Calendar.HOUR_OF_DAY, 1);
-            endTime.add(Calendar.HOUR_OF_DAY, 3);
-            // recalculate the calendars
-            startTime.getTimeInMillis();
-            endTime.getTimeInMillis();
-
-            /**
-             * same as client2 but print the summaries separately (no grouping).
-             * 
-             */
             AggregateQuery query = queryClient.createQuery();
+            for (int i = 0; i < 5; i++) {
 
-            query.addMeasure("impCnt").addMeasure("click");
-            query.addClosedSlice("dim1", ids[0], ids[1]).addGroupBy("dim1");
-            query.addHalfOpenSlice("impressionTime", startTime, endTime);
+                query.reset();
+                byte ids[][] = new byte[2][];
+                ids[0] = new byte[16];
+                ids[1] = new byte[16];
+                HblUtil.incrementKey(ids[1], 0, 16);
 
-            AggregateResultSet rs = query.execute();
-            while (rs.hasNext()) {
-                rs.next();
-                AggregateResult ar = rs.current();
-                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
-                                  new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                  ar.getDoubleAggregate("impCnt", "SUM"),
-                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-                                  ar.getDoubleAggregate("click", "SUM"),
-                                  ar.getDoubleAggregate("click", "COUNT"));
+                /**
+                 * will try to also constrain for half-open [1:00am,3:00am)
+                 */
+
+                GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
+                GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
+                startTime.add(Calendar.HOUR_OF_DAY, 1);
+                endTime.add(Calendar.HOUR_OF_DAY, 3);
+                // recalculate the calendars
+                startTime.getTimeInMillis();
+                endTime.getTimeInMillis();
+
+                /**
+                 * same as client2 but print the summaries separately (no
+                 * grouping).
+                 * 
+                 */
+
+                query.addMeasure("impCnt").addMeasure("click");
+                query.addClosedSlice("dim1", ids[0], ids[1]).addGroupBy("dim1");
+                query.addHalfOpenSlice("impressionTime", startTime, endTime);
+
+                AggregateResultSet rs = query.execute();
+                while (rs.hasNext()) {
+                    rs.next();
+                    AggregateResult ar = rs.current();
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                                      new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
+                                      ar.getDoubleAggregate("impCnt", "SUM"),
+                                      ar.getDoubleAggregate("impCnt", "COUNT"),
+                                      ar.getDoubleAggregate("click", "SUM"),
+                                      ar.getDoubleAggregate("click", "COUNT"));
+                }
+                closeables.remove(rs);
+                rs.close();
             }
-            closeables.remove(rs);
-            rs.close();
 
         } finally {
             IOUtil.closeAll(closeables);
@@ -328,10 +333,10 @@ public class Example1 extends Configured implements Tool {
             query.setHblParameter(0, "impSum");
             query.setHblParameter(1, "impCnt");
 
-            query.setHblParameter(1, ids[0]);
-            query.setHblParameter(2, ids[1]);
-            query.setHblParameter(3, startTime);
-            query.setHblParameter(4, endTime);
+            query.setHblParameter(2, ids[0]);
+            query.setHblParameter(3, ids[1]);
+            query.setHblParameter(4, startTime);
+            query.setHblParameter(5, endTime);
 
             // query.addMeasure("impCnt").addMeasure("click");
             // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
@@ -343,8 +348,7 @@ public class Example1 extends Configured implements Tool {
                 PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
                 System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
 
-                // new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                  ar.getObject(0),
+                                  new BigInteger(1, (byte[]) ar.getObject(0)),
                                   ar.getObject("impSum"),
                                   ar.getObject("impCnt"),
                                   ar.getObject("clickSum"),

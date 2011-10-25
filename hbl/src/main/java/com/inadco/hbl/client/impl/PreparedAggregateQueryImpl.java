@@ -119,7 +119,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         
         if (afr.findFunction(funcName) == null)
             throw new IllegalArgumentException(String.format("Unknown function name '%s'.", funcName));
-        if ( cube.getMeasures().containsKey(measure)) 
+        if ( ! cube.getMeasures().containsKey(measure)) 
             throw new IllegalArgumentException ( String.format("Unknown measure %s.",measure));
         if ( resultDefsByAlias.containsKey(alias)) 
             throw new IllegalArgumentException  (String.format("Alias %s already exists.",alias));
