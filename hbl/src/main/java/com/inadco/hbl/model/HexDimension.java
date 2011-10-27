@@ -23,6 +23,8 @@ import org.apache.pig.data.DataByteArray;
 
 import com.inadco.hbl.util.HblUtil;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
+
 /**
  * This is a dimension implementation for stuff like byte array ids or hashcodes
  * which is a recommended technique for hbase keys.
@@ -57,13 +59,38 @@ public class HexDimension extends AbstractDimension {
 
         byte[] key;
 
-        if (member instanceof byte[]) { 
+        if (member instanceof byte[]) {
             key = (byte[]) member;
-            Validate.isTrue(key.length==keylen, "Wrong hex id length");
-        } else if (member instanceof DataByteArray) { 
-            DataByteArray dba = (DataByteArray)member;
+            Validate.isTrue(key.length == keylen, "Wrong hex id length");
+        } else if (member instanceof DataByteArray) {
+            DataByteArray dba = (DataByteArray) member;
             key = dba.get();
-            Validate.isTrue(dba.size()==keylen,"Wrong hex id length");
+            Validate.isTrue(dba.size() == keylen, "Wrong hex id length");
+        } else if (member instanceof String) {
+            // ok we assume hex representation in the string
+            String keyStr = (String) member;
+            int diff = keylen - keyStr.length();
+            if (diff < 0)
+                throw new IllegalArgumentException("supplied string too long");
+
+            /*
+             * just copy every character of the string, while validating and
+             * canonizing
+             */
+
+            // left-pad
+            if (diff > 0)
+                Arrays.fill(buff, offset, diff, (byte) '0');
+            offset += diff;
+            // copy with validation and canonization
+            for (int i = 0; i < keyStr.length(); i++) {
+                char ch = Character.toUpperCase(keyStr.charAt(i));
+                if (!(ch <= '9' && ch >= '0') && !(ch <= 'F' && ch >= 'A'))
+                    throw new IllegalArgumentException(String.format("not a valid hex string: %s.", keyStr));
+                buff[i + offset] = (byte) ch;
+            }
+            return; // return because we are already in hex form
+
         } else {
             Validate.isTrue(false, "unsupported type/null for a dimension member");
             return;
@@ -74,10 +101,9 @@ public class HexDimension extends AbstractDimension {
 
     @Override
     public Object getMember(byte[] buff, int offset) {
-        byte[] id=new byte[keylen];
+        byte[] id = new byte[keylen];
         HblUtil.readCompositeKeyHex(buff, offset, id, 0, keylen);
         return id;
     }
-    
 
 }

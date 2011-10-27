@@ -128,7 +128,7 @@ public class HblUtil {
 
         return holder;
     }
-
+    
     public static String encodeCuboidPath(Cuboid cuboid) {
         String r = null;
         for (String dim : cuboid.getCuboidPath())
