@@ -120,6 +120,7 @@ public class Example1 extends Configured implements Tool {
 
         // query based tests
         testClient5(cubeName);
+        testClient6(cubeName);
 
         return 0;
     }
@@ -377,6 +378,58 @@ public class Example1 extends Configured implements Tool {
                                       ar.getObject("impCnt"),
                                       ar.getObject("clickSum"),
                                       ar.getObject("clickCnt"));
+                }
+                closeables.remove(rs);
+                rs.close();
+            }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
+    private void testClient6(String cubeName) throws IOException, HblException {
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
+            closeables.addFirst(queryClient);
+
+            /**
+             * will try to also constrain for half-open [1:00am,3:00am)
+             */
+
+            PreparedAggregateQuery query = queryClient.createPreparedQuery();
+
+            /*
+             * test reuse of the prepared query. Should speedup stuff exactly as
+             * prepared query is supposed to do. we also have an option of
+             * re-preparing query at any time, but we still need to run reset()
+             * to clean out stuff like parameters initialized and execution.
+             * reset() does not necesserily cancel previously existing AST tree
+             * of the query, only prepare() updates that. but prepare does
+             * reset() implicitly, so if we re-prepared the query, the previous
+             * parameter set cannot be used.
+             */
+            query.prepare("select SUM(impCnt) as impCnt from Example1 group by dim1");
+
+            for (int i = 0; i < 5; i++) {
+
+                /**
+                 * same as client2 but print the summaries separately (no
+                 * grouping).
+                 * 
+                 */
+                query.reset();
+
+                // query.addMeasure("impCnt").addMeasure("click");
+                // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
+                // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+
+                AggregateResultSet rs = query.execute();
+                while (rs.hasNext()) {
+                    rs.next();
+                    PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+                    System.out.printf("impCnt %.4f\n", ar.getObject("impCnt"));
                 }
                 closeables.remove(rs);
                 rs.close();
