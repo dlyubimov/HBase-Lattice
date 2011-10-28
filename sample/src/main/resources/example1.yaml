@@ -23,8 +23,10 @@
     - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
   
   - # measures 
+    - !SimpleMeasure [ measure1 ]
     - !SimpleMeasure [ impCnt ]
     - !SimpleMeasure [ click ]
+    - !SimpleMeasure [ excludedMeasure ]
   
   
   

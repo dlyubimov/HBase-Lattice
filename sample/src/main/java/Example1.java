@@ -5,9 +5,11 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Deque;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.TimeZone;
 
@@ -86,6 +88,9 @@ public class Example1 extends Configured implements Tool {
         // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
             new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
+        // test fact compile time exclusion to allow merging different fact stream sources 
+        compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt","click")));
+//        compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
 
         /*
          * this is the version that uses model from resource instead of hbl

@@ -25,6 +25,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,6 +83,8 @@ public class Pig8CubeIncrementalCompilerBean {
 
     protected Cube             cube;
     protected String           cubeModelYamlStr;
+    protected Set<String>      measureInclude;
+    protected Set<String>      measureExclude;
 
     /**
      * non-spring version
@@ -98,13 +101,20 @@ public class Pig8CubeIncrementalCompilerBean {
     }
 
     /**
-     * A version of constructor that takes cube name and loads model from the hbase system table.
+     * A version of constructor that takes cube name and loads model from the
+     * hbase system table.
      * 
-     * @param conf hbase configuration 
-     * @param cubeName cube model name
-     * @param pigPreambula the resource defining pig preambula (Pig fragment defining compilation input)
-     * @param parallel number of reducers for parallelizable Pig steps 
-     * @throws IOException when I/O condition occurs.
+     * @param conf
+     *            hbase configuration
+     * @param cubeName
+     *            cube model name
+     * @param pigPreambula
+     *            the resource defining pig preambula (Pig fragment defining
+     *            compilation input)
+     * @param parallel
+     *            number of reducers for parallelizable Pig steps
+     * @throws IOException
+     *             when I/O condition occurs.
      */
     public Pig8CubeIncrementalCompilerBean(Configuration conf, String cubeName, Resource pigPreambula, int parallel)
         throws IOException {
@@ -185,6 +195,31 @@ public class Pig8CubeIncrementalCompilerBean {
     public void setInputRelationName(String inputRelationName) {
         this.inputRelationName = inputRelationName;
     }
+    
+    public Set<String> getMeasureInclude() {
+        return measureInclude;
+    }
+
+    /**
+     * measures to include. If this property is set, the script 
+     * created will only expect those measures and assume 
+     * all other measures at 0.
+     * 
+     * @param measureInclude
+     */
+    public void setMeasureInclude(Set<String> measureInclude) {
+        this.measureInclude = measureInclude;
+    }
+
+    public Set<String> getMeasureExclude() {
+        return measureExclude;
+    }
+
+    public void setMeasureExclude(Set<String> measureExclude) {
+        this.measureExclude = measureExclude;
+    }
+    
+    
 
     @PostConstruct
     public void init() throws IOException {
@@ -252,6 +287,12 @@ public class Pig8CubeIncrementalCompilerBean {
         }
 
     }
+    
+    private boolean measureNotIncluded ( String measureName ) { 
+        return  ( measureInclude!= null && ! measureInclude.contains(measureName)) ||
+            ( measureExclude != null && measureExclude.contains(measureName)); 
+
+    }
 
     private void generatePreambula(Map<String, String> substitutes, Deque<Closeable> closeables) throws IOException {
         InputStream is = pigPreambula.getInputStream();
@@ -277,11 +318,16 @@ public class Pig8CubeIncrementalCompilerBean {
 
         StringBuffer sb = new StringBuffer();
         for (Map.Entry<String, ? extends Measure> me : cube.getMeasures().entrySet()) {
+            String measureName = me.getValue().getName();
+            
+            if ( measureNotIncluded(measureName))
+                continue; 
+            
             String def =
                 String.format("DEFINE %s %s('%s','$cubeModel');\n",
                               getMeasureAggregateFuncName(me.getValue()),
                               AggregationFromMeasureBag.class.getName(),
-                              me.getValue().getName());
+                              measureName);
             sb.append(def);
         }
         substitutes.put("measureDefs", sb.toString());
@@ -306,9 +352,11 @@ public class Pig8CubeIncrementalCompilerBean {
         StringBuffer hbaseSpecs = new StringBuffer();
 
         for (Measure m : cube.getMeasures().values()) {
+            if ( measureNotIncluded(m.getName())) continue;
             hbaseSpecs.append(generateHbaseByteArrayStorageSpec(m));
             hbaseSpecs.append(' ');
         }
+        
         sb.append(String.format("DEFINE store_%s com.inadco.ecoadapters.pig.HBaseProtobufStorage ('%s');\n",
                                 cuboid.getCuboidTableName(),
                                 hbaseSpecs.toString()));
@@ -353,6 +401,10 @@ public class Pig8CubeIncrementalCompilerBean {
         // this time.
         StringBuffer sb = new StringBuffer();
         for (Measure m : cube.getMeasures().values()) {
+            
+            if ( measureNotIncluded(m.getName()))
+                continue;
+            
             if (sb.length() != 0)
                 sb.append(", ");
             sb.append(m.getName());
@@ -361,6 +413,10 @@ public class Pig8CubeIncrementalCompilerBean {
 
         sb.setLength(0);
         for (Measure m : cube.getMeasures().values()) {
+
+            if ( measureNotIncluded(m.getName()))
+                continue;
+
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
@@ -370,6 +426,10 @@ public class Pig8CubeIncrementalCompilerBean {
 
         sb.setLength(0);
         for (Measure m : cube.getMeasures().values()) {
+            
+            if ( measureNotIncluded(m.getName()))
+                continue;
+
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
@@ -379,6 +439,10 @@ public class Pig8CubeIncrementalCompilerBean {
 
         sb.setLength(0);
         for (Measure m : cube.getMeasures().values()) {
+            
+            if ( measureNotIncluded(m.getName()))
+                continue;
+
             if (sb.length() != 0)
                 sb.append(",");
             sb.append("\n  ");
