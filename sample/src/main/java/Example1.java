@@ -90,6 +90,8 @@ public class Example1 extends Configured implements Tool {
             new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
         // test fact compile time exclusion to allow merging different fact stream sources 
         compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt","click")));
+        
+        // or: 
 //        compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
 
         /*
