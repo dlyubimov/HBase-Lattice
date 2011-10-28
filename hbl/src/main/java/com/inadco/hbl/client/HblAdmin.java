@@ -207,7 +207,7 @@ public class HblAdmin {
             htd.addFamily(hcd);
             admin.createTable(htd);
         }
-        HTable stable = new HTable(systemTable);
+        HTable stable = new HTable(conf, systemTable);
         Put put =
             new Put(HBL_MODEL_KEY).add(HBL_SYSTEM_FAMILY,
                                        Bytes.toBytes(cube.getName()),
