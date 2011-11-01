@@ -314,7 +314,8 @@ Typically,
 \family typewriter
 HexDimension
 \family default
- is suitable to represent uniformly-distributed hash IDs.
+ is suitable to represent uniformly-distributed hash IDs or otherwise hash-refer
+enced data.
  
 \end_layout
 
@@ -497,12 +498,12 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
 \family typewriter
-select dim1 as d1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
+select d1 as dim1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
  group by d1
 \end_layout
 
@@ -512,25 +513,34 @@ select dim1 as d1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
 \end_layout
 
 \begin_layout Standard
-W
+
 \emph on
-here-clause 
+Where-clause 
 \emph default
-is essentially slice specification.
- Slice specification is imposed on a dimension using opened or closed interval
+is essentially a slice specification.
+ Hence specification is imposed on a dimension using opened or closed interval
  syntax.
  E.g.
- [1,3) is a so-called half-open interval which includes between 1 (including)
- and 3 (excluding).
+ [1,3) is a so-called half-open interval which includes between values of
+ 1 (including) and 3 (excluding).
  The limitation of the 
 \emph on
 where-clause 
 \emph default
 is that currently one cannot specify more than one slice specification for
  the same dimension.
- Semantic result of attempt to specify multiple slices for the same dimension
+ Semantic result of an attempt to specify multiple slices for the same dimension
  is currently undefined.
  
+\end_layout
+
+\begin_layout Standard
+The dimensional hyperplane specification (a plane going thru a given point)
+ is hence equivalent to specifying '
+\family typewriter
+where dimension in [?]
+\family default
+'.
 \end_layout
 
 \begin_layout Paragraph
@@ -554,7 +564,7 @@ There's currently no way to run some useful analytic queries like 'select
 \end_layout
 
 \begin_layout Section
-TODOs and FIXME
+TODOs and FIXMEs
 \end_layout
 
 \begin_layout Standard
