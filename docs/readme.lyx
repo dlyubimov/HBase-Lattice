@@ -49,7 +49,7 @@
 \use_bibtopic false
 \use_indices false
 \paperorientation portrait
-\suppress_date false
+\suppress_date true
 \use_refstyle 1
 \index Index
 \shortcut idx
@@ -81,6 +81,9 @@ Dmitriy Lyubimov
 \begin_inset Newline newline
 \end_inset
 
+
+\size small
+\emph on
 dlyubimov@apache.org
 \end_layout
 
@@ -101,8 +104,8 @@ I scanned surroundings and noticed at least 2 such attempts which for various
 \end_layout
 
 \begin_layout Standard
-Like MOLAP solutions, HBase-Lattice copes with aggregate queries by prebuilding
- certain cuboids in a cube lattice models.
+Like some MOLAP solutions, HBase-Lattice copes with aggregate queries by
+ prebuilding certain cuboids in a cube lattice models.
  
 \end_layout
 
@@ -148,9 +151,9 @@ Big underlying fact stream
 Low query TTLB
 \series default
  (especially on Time Series data).
- Our goal was to answer queries for any period of time and whatever other
- slice specifications we can make, in a very short period of time over single
- hbase table with a very short scan(s).
+ Our goal was to answer queries over any period of time and whatever other
+ slice specifications we can make very quickly with a single hbase table
+ and a very limited amount of iterations in a scan.
  (TTLB <~ 1ms on hbase side, assuming the tablet data is in memory, + whatever
  network overhead).
 \end_layout
@@ -161,15 +164,31 @@ Low query TTLB
 Next to realtime data availability for querying
 \series default
 .
- Use of incremental updates to cuboid projections in the lattice.
- No need to recompile the whole cube for the past 90 days or whatever.
+ Use of incremental updates to cuboid projections in the lattice means there's
+ no need to recompile the whole cube for the past 90 days or whatever.
  New fact data becomes available within single number of minutes after the
- fact actually happened.
+ fact actually happened, as soon as incremental compiler iteration is complete.
+ Once compiled, the data remains continuously available unless thrown out
+ by HBase during compaction given specified projection TTL parameter.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Keep stuff within same ecosystem.
+ 
+\series default
+Another motivation is being able to do things within the same resource space
+ of HDFS and HBASE one already invested to.
+ While it is definitely try to use other tools out there with same, if not
+ greater, success, (MongoDB comes to mind), those tools would perhaps require
+ their own distinct environment (resources) and perhaps bulk data transfer
+ and import.
 \end_layout
 
 \begin_layout Section
 Differentiating aspects of HBL vs.
- MOLAP, ROLAP and cube lattice model
+ MOLAP, ROLAP and cube lattice model in general
 \end_layout
 
 \begin_layout Paragraph
@@ -179,15 +198,15 @@ No fact table, no facts kept around.
 \begin_layout Standard
 We don't keep individual facts around.
  Unlike perhaps with some other approaches, there's no level of indirection
- to query the fact table for actual numbers.
+ to query the fact table.
  All projection data is right there, in a cuboid table.
  This provides 2 major benefits: 
 \end_layout
 
 \begin_layout Itemize
 Low query TTLBs.
- If we are hitting preaggregated cuboid in the same data, we only need to
- scan perhaps a handful of items in a scan.
+ If we are hitting cuboid with precompiled aggregate results, we only need
+ to scan a handful of items per request.
  
 \end_layout
 
@@ -206,7 +225,7 @@ The tradeoff is obviously in that one cannot query individual fact datum.
 \end_layout
 
 \begin_layout Paragraph
-What cuboids are to compile is specified manually.
+What cuboids are to be compiled is specified manually.
 \end_layout
 
 \begin_layout Standard
@@ -229,7 +248,7 @@ New projectsions can be added dynamically to the system.
 \end_layout
 
 \begin_layout Paragraph
-Compiler is Pig codegen.
+Compiler is a Pig codegen.
 \end_layout
 
 \begin_layout Standard
@@ -268,6 +287,12 @@ a simplistic query language that translates into that api calls to setup
  
 \end_layout
 
+\begin_layout Standard
+In either case, a special custom hbase filter is used to allow to skip over
+ the rows we are not really interested in, so the scan iterations are kept
+ going over mostly relevant facts only.
+\end_layout
+
 \begin_layout Section
 Quick Howto
 \end_layout
@@ -277,9 +302,10 @@ Specifying a model.
 \end_layout
 
 \begin_layout Standard
-Model is specified by compositing a bunch of java classes representing cube,
+Model is specified by composing a bunch of java classes representing cube,
  cuboids, hierarchies, dimensions and measures.
- Of course one may not want to deal writing java code wiring this up.
+ Instead of writing some java code wiring this composition up, it is also
+ to use a declarative approach for model definition.
  We use YAML for declarative model definition (see file 
 \family typewriter
 example.yaml
@@ -288,7 +314,7 @@ example.yaml
 \emph on
 sample
 \emph default
- module of the project).
+ module of the project for an example of a declarative model defintion).
  
 \end_layout
 
@@ -316,7 +342,11 @@ HexDimension
 \family default
  is suitable to represent uniformly-distributed hash IDs or otherwise hash-refer
 enced data.
- 
+ It accepts java type 
+\family typewriter
+byte[]
+\family default
+ and its Pig equivalent (in context of compilation).
 \end_layout
 
 \begin_layout Itemize
@@ -333,6 +363,17 @@ GregorianCalendar
 l descrete type [ALL].[YEAR-MONTH].[DATE-HOUR].
  I.e.
  the lowest bucket granularity for time series data is 1 hour.
+ The continuous member data type for this dimension (when not expressed
+ with a hierarchy member) is 
+\family typewriter
+GregorianCalendar
+\family default
+, or 
+\family typewriter
+Long
+\family default
+ expressing number of milliseconds since epoch (in context of projection
+ compilation in pig).
 \end_layout
 
 \begin_layout Subsubsection
@@ -350,7 +391,60 @@ Incremental cube compilation
 \end_layout
 
 \begin_layout Standard
-TODO
+Cube compilation is done via incremental Pig script dynamically generated
+ by compilter component (see sample module for example of the compilation).
+ With the current approach, compiler doesn't support any input adapters,
+ so it cannot read any standard fact stream sources on its own.
+ Instead, it relies on a fragment of the script that reads input into a
+ predefined Pig relation, to be supplied.
+ This Pig-scripted fragment is called 
+\begin_inset Quotes eld
+\end_inset
+
+preambula
+\begin_inset Quotes erd
+\end_inset
+
+ and expected to be supplied via Spring Resource specification.
+ 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Perhaps this only dependency on Spring is bad and it is worth considering
+ getting rid of this abstraction; but developing a project-specific resource
+ abstraction is probably just as equally bad.
+\end_layout
+
+\end_inset
+
+ The compiler expects fact stream to be put in a predefined Pig relation
+ (HBL_INPUT by default).
+ 
+\end_layout
+
+\begin_layout Standard
+The requirements for HBL_INPUT relation produced by preambula is as follows:
+ 
+\end_layout
+
+\begin_layout Itemize
+It must have all defined dimensions.
+ Dimension names used must be the same as in model description.
+ Dimension Pig types depend on the dimension class.
+\end_layout
+
+\begin_layout Itemize
+It must have at least one measure fact (currently, of either long or double
+ type only).
+ The measure is recognized by having the same name as in model description.
+ The scope of measures may be reduced by using exclude/include api on the
+ compiler bean (see sample module for an example).
+ By default, all measures are expected.
+ Using measure scope reduction allows to easily compile in multiple fact
+ streams containing different measures and potentially originating in different
+ sources (for as long as all dimensions can be inferred for each of them).
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -470,6 +564,56 @@ group-clause = 'group by' dimension-name *(, dimension-name)
 \begin_layout Plain Layout
 
 \family typewriter
+measure-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+cube-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+alias-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+function-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+dimension-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
 value = ( '
 \backslash
 '' LITERAL '
@@ -535,8 +679,9 @@ is that currently one cannot specify more than one slice specification for
 \end_layout
 
 \begin_layout Standard
-The dimensional hyperplane specification (a plane going thru a given point)
- is hence equivalent to specifying '
+Aggregating over multidimensional hyperplane (a plane perpendicular to an
+ axis and going thru a specific point on that axis) is hence equivalent
+ to specifying '
 \family typewriter
 where dimension in [?]
 \family default
@@ -576,8 +721,8 @@ At this point there's no JDBC provider available (we don't use jdbc; we
 \end_layout
 
 \begin_layout Standard
-Complement scan optimizatinos for hierarchies are not in yet.
- (but we prototyped them).
+Complement scan optimizations for hierarchies are not in yet.
+ (but there's a working prototype).
  
 \end_layout
 
@@ -591,6 +736,10 @@ Poor selection of hierarchy and dimension types
 
 \begin_layout Standard
 Poor selection of measure types
+\end_layout
+
+\begin_layout Standard
+Is there a clever way of supporting some of HAVING conditions?
 \end_layout
 
 \end_body
