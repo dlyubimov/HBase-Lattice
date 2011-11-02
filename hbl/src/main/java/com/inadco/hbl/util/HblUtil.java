@@ -120,8 +120,8 @@ public class HblUtil {
 
         for (int i = 0; i < holderLen; i++) {
             int c1 = composite[offset++] & 0xff, c2 = composite[offset++] & 0xff;
-            c1 = (c1 - '0' < 10) ? c1 - '0' : c1 - 'A';
-            c2 = (c2 - '0' < 10) ? c2 - '0' : c2 - 'A';
+            c1 = (c1 - '0' < 10) ? c1 - '0' : c1 - 'A' + 10;
+            c2 = (c2 - '0' < 10) ? c2 - '0' : c2 - 'A' + 10;
 
             holder[holderOffset++] = (byte) ((c1 << 4) + c2);
         }
