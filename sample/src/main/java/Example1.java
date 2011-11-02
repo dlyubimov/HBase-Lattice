@@ -515,7 +515,7 @@ public class Example1 extends Configured implements Tool {
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
-            pc.addJar("target/sample-0.1.0-SNAPSHOT-hadoop-job.jar");
+            pc.addJar("target/sample-0.1.1-SNAPSHOT-hadoop-job.jar");
 
             // pig-preprocess. We specified hbl input as $input in the
             // preambula, so
