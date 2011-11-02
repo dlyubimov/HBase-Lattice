@@ -42,6 +42,9 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
  * Takes bag of measure objects and returns {@link Aggregation} serialized into
  * {@link DataByteArray}.
  * 
+ * Measures are members (if combine != 'y' ), otherwise, it is a serialized
+ * protobuff {@link Aggregation} (if combine='y').
+ * 
  * @author dmitriy
  * 
  */
@@ -53,8 +56,8 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         super();
     }
 
-    public AggregationFromMeasureBag(String measureName, String encodedModel) {
-        delegate = new Initial(measureName, encodedModel);
+    public AggregationFromMeasureBag(String measureName, String bCombine, String encodedModel) {
+        delegate = new Initial(measureName, bCombine, encodedModel);
     }
 
     /**
@@ -176,19 +179,24 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
         protected AggregateFunctionRegistry afr         = new AggregateFunctionRegistry();
+        protected boolean                   combine;
 
         public Initial() {
             super();
         }
 
-        public Initial(String measureName, String encodedModel) {
+        public Initial(String measureName, String combine, String encodedModel) {
             super(encodedModel);
             this.measureName = measureName;
+            this.combine = (combine != null && "y".equals(combine));
         }
 
         @Override
         public void accumulate(Tuple b) throws IOException {
-            accumulateFromBag(cube, measureName, afr, b, accumulator);
+            if (!combine)
+                accumulateFromBag(cube, measureName, afr, b, accumulator);
+            else
+                combineFromBag(cube, measureName, afr, b, accumulator);
         }
 
         @Override

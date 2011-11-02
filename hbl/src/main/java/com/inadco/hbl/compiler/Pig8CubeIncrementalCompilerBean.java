@@ -324,8 +324,14 @@ public class Pig8CubeIncrementalCompilerBean {
                 continue; 
             
             String def =
-                String.format("DEFINE %s %s('%s','$cubeModel');\n",
+                String.format("DEFINE %s %s('%s','n','$cubeModel');\n",
                               getMeasureAggregateFuncName(me.getValue()),
+                              AggregationFromMeasureBag.class.getName(),
+                              measureName);
+            sb.append(def);
+            def =
+                String.format("DEFINE %s %s('%s','y','$cubeModel');\n",
+                              getMeasureCombineFuncName(me.getValue()),
                               AggregationFromMeasureBag.class.getName(),
                               measureName);
             sb.append(def);
@@ -335,6 +341,11 @@ public class Pig8CubeIncrementalCompilerBean {
 
     private static String getMeasureAggregateFuncName(Measure m) {
         return String.format("hbl_aggr_%s", m.getName());
+    }
+    
+    private static String  getMeasureCombineFuncName (Measure m ) { 
+        return String.format("hbl_comb_%s", m.getName());
+        
     }
 
     private void generateCuboidStoreDefs(Map<String, String> substitutes, Deque<Closeable> closeables)
@@ -514,7 +525,7 @@ public class Pig8CubeIncrementalCompilerBean {
         // generateMeasureMetricSchema(metricName));
         return String.format("(hbl_old.%1$s is null?%1$s:%2$s(TOBAG(hbl_old.%1$s,%1$s))) as %1$s",
                              m.getName(),
-                             getMeasureAggregateFuncName(m));
+                             getMeasureCombineFuncName(m));
     }
 
     public static String generateMeasureMetricSchema(Measure m) {
