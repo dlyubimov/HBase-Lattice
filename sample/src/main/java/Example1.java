@@ -71,8 +71,8 @@ public class Example1 extends Configured implements Tool {
         // deploy cube schema (optionally dropping the existing one)
         // WARNING: would drop existing cube!!
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-//        hblAdmin.dropCube(getConf());
-//        hblAdmin.deployCube(getConf());
+        hblAdmin.dropCube(getConf());
+        hblAdmin.deployCube(getConf());
 
         String cubeName = hblAdmin.getCube().getName();
 
@@ -120,7 +120,7 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-//        runScript(script, inputPath);
+        runScript(script, inputPath);
 
         testClient1(cubeName);
         testClient2(cubeName);
