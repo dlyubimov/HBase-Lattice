@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.rest.protobuf.generated.CellMessage.Cell;
 import org.apache.log4j.Logger;
 
 import com.inadco.datastructs.InputIterator;
@@ -233,7 +234,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
     }
 
     @Override
-    public double getDoubleAggregate(String measure, String functionName) throws HblException {
+    public Double getDoubleAggregate(String measure, String functionName) throws HblException {
         try {
             Integer index = measureName2IndexMap.get(measure);
             if (index == null)
@@ -245,11 +246,11 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                 throw new HblException("no current result");
             Aggregation measureAggr = result[index];
             if (measureAggr == null) {
-                measureAggr = delegate.current().getMeasures()[index].build();
-                result[index] = measureAggr; // cache
+                Aggregation.Builder b = delegate.current().getMeasures()[index];
+                result[index] = b == null ? null : (measureAggr = b.build()); // cache
             }
 
-            return af.getDoubleValue(measureAggr);
+            return measureAggr==null?null:af.getDoubleValue(measureAggr);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

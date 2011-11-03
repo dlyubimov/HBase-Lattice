@@ -71,8 +71,8 @@ public class Example1 extends Configured implements Tool {
         // deploy cube schema (optionally dropping the existing one)
         // WARNING: would drop existing cube!!
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-        hblAdmin.dropCube(getConf());
-        hblAdmin.deployCube(getConf());
+//        hblAdmin.dropCube(getConf());
+//        hblAdmin.deployCube(getConf());
 
         String cubeName = hblAdmin.getCube().getName();
 
@@ -120,7 +120,7 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-        runScript(script, inputPath);
+//        runScript(script, inputPath);
 
         testClient1(cubeName);
         testClient2(cubeName);
@@ -421,9 +421,11 @@ public class Example1 extends Configured implements Tool {
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
              */
-            query.prepare("select SUM(impCnt) as impCnt from Example1 group by dim1");
+            query.prepare("select " + 
+             "SUM(impCnt) as impCnt, " + 
+             " dim1 " + "from Example1 group by dim1");
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 2; i++) {
 
                 /**
                  * same as client2 but print the summaries separately (no
@@ -440,7 +442,10 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    System.out.printf("impCnt %.4f\n", ar.getObject("impCnt"));
+                    System.out.printf("dim1: %032X impCnt %%.4f\n",
+                                      new BigInteger(1,(byte[])ar.getObject("dim1"))
+//                                      ,ar.getObject("impCnt")
+                                      );
                 }
                 closeables.remove(rs);
                 rs.close();
