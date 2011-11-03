@@ -90,11 +90,17 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
                                 TupleFactory tf) throws ExecException {
 
         Dimension d = dimensions.get(dimensionIndex);
+        Object member= input.get(dimensionIndex+1);
+        
+        // resolve pig byte arrays to java arrays
+        if ( member instanceof DataByteArray )
+            member = ((DataByteArray)member).get();
+        
         if (d instanceof Hierarchy) {
             Hierarchy h = (Hierarchy) d;
             int depth = h.getDepth();
             for (int i = 0; i < depth; i++) {
-                h.getKey(input.get(dimensionIndex + 1), i, keyHolder, keyOffset);
+                h.getKey(member, i, keyHolder, keyOffset);
                 if (dimensions.size() == dimensionIndex + 1) {
                     holder.add(tf.newTuple(tf.newTuple(new DataByteArray(keyHolder))));
                     keyHolder = keyHolder.clone();
@@ -110,7 +116,7 @@ public class Dimensions2CuboidKey extends BaseFunc<DataBag> {
             }
         } else {
             // non-hierarchy
-            d.getKey(input.get(dimensionIndex + 1), keyHolder, keyOffset);
+            d.getKey(member, keyHolder, keyOffset);
             if (dimensions.size() == dimensionIndex + 1) {
                 holder.add(tf.newTuple(tf.newTuple(new DataByteArray(keyHolder))));
                 keyHolder = keyHolder.clone();

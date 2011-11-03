@@ -18,12 +18,12 @@
  */
 package com.inadco.hbl.model;
 
+import java.util.Arrays;
+
 import org.apache.commons.lang.Validate;
-import org.apache.pig.data.DataByteArray;
 
 import com.inadco.hbl.util.HblUtil;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * This is a dimension implementation for stuff like byte array ids or hashcodes
@@ -62,10 +62,6 @@ public class HexDimension extends AbstractDimension {
         if (member instanceof byte[]) {
             key = (byte[]) member;
             Validate.isTrue(key.length == keylen, "Wrong hex id length");
-        } else if (member instanceof DataByteArray) {
-            DataByteArray dba = (DataByteArray) member;
-            key = dba.get();
-            Validate.isTrue(dba.size() == keylen, "Wrong hex id length");
         } else if (member instanceof String) {
             // ok we assume hex representation in the string
             String keyStr = (String) member;
