@@ -88,11 +88,13 @@ public class Example1 extends Configured implements Tool {
         // run compiler for the model
         Pig8CubeIncrementalCompilerBean compiler =
             new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
-        // test fact compile time exclusion to allow merging different fact stream sources 
-        compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt","click")));
-        
-        // or: 
-//        compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
+        // test fact compile time exclusion to allow merging different fact
+        // stream sources
+        compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt", "click")));
+
+        // or:
+        // compiler.setMeasureExclude(new
+        // HashSet<String>(Arrays.asList("excludedMeasure")));
 
         /*
          * this is the version that uses model from resource instead of hbl
@@ -348,8 +350,10 @@ public class Example1 extends Configured implements Tool {
              * parameter set cannot be used.
              */
             query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
-                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?,?], impressionTime in [?,?) "
-                + "group by dim1");
+                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?] " + ", impressionTime in [?,?) "
+                + ", dim2 in [ '1' ]" + "group by dim1");
+
+            System.out.println("Test5:\n\n");
 
             for (int i = 0; i < 5; i++) {
 
@@ -365,10 +369,10 @@ public class Example1 extends Configured implements Tool {
                 query.setHblParameter(0, "impSum");
                 query.setHblParameter(1, "impCnt");
 
-                query.setHblParameter(2, ids[0]);
-                query.setHblParameter(3, ids[1]);
-                query.setHblParameter(4, startTime);
-                query.setHblParameter(5, endTime);
+                query.setHblParameter(2, ids[1]);
+                // query.setHblParameter(3, ids[1]);
+                query.setHblParameter(3, startTime);
+                query.setHblParameter(4, endTime);
 
                 // query.addMeasure("impCnt").addMeasure("click");
                 // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
@@ -515,7 +519,16 @@ public class Example1 extends Configured implements Tool {
             pc.getProperties().setProperty("pig.logfile", "pig.log");
             pc.getProperties().setProperty(PigContext.JOB_NAME, "sample1-compiler-run");
 
-            pc.addJar("target/sample-0.1.1-SNAPSHOT-hadoop-job.jar");
+            /*
+             * HACK! we probably should get the location of the job jar thru
+             * some other way in this example. Since this is just an sample
+             * (meaning one's real pipeline framework should figure its own way
+             * to configure job jars and kick off pig scripts) and not really
+             * part of the real deal, we probably can afford not to go out of
+             * our way with this right now.
+             */
+
+            pc.addJar("target/sample-0.1.3-SNAPSHOT-hadoop-job.jar");
 
             // pig-preprocess. We specified hbl input as $input in the
             // preambula, so

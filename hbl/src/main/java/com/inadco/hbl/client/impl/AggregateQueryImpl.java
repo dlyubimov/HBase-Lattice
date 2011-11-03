@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang.Validate;
@@ -59,7 +58,7 @@ public class AggregateQueryImpl implements AggregateQuery {
     /**
      * dim name -> range slice requested
      */
-    private Map<String, Set<Slice>>     dimSlices       = new HashMap<String, Set<Slice>>();
+    private Map<String, List<Slice>>     dimSlices       = new HashMap<String, List<Slice>>();
     private Set<String>                 measures        = new HashSet<String>();
 
     protected List<String>              groupDimensions = new ArrayList<String>();
@@ -119,9 +118,9 @@ public class AggregateQueryImpl implements AggregateQuery {
             dimSlices.remove(dimension);
             return this;
         }
-        Set<Slice> sliceSet = dimSlices.get(dimension);
+        List<Slice> sliceSet = dimSlices.get(dimension);
         if (sliceSet == null)
-            dimSlices.put(dimension, sliceSet = new TreeSet<Slice>());
+            dimSlices.put(dimension, sliceSet = new ArrayList<Slice>(4));
         sliceSet.add(new Slice(leftBound, leftOpen, rightBound, rightOpen));
 
         return this;
@@ -235,7 +234,7 @@ public class AggregateQueryImpl implements AggregateQuery {
             return;
         }
         Dimension dim = dimensions.get(dimIndex);
-        Set<Slice> slices = dimSlices.get(dim.getName());
+        List<Slice> slices = dimSlices.get(dim.getName());
         if (slices == null) {
             // generate 'total' slice
 

@@ -73,7 +73,7 @@ param
 	;	
 
 whereClause
-	: 	WHERE^ sliceSpec (','! sliceSpec*)
+	: 	WHERE^ sliceSpec (','! sliceSpec)*
 	;
 	
 

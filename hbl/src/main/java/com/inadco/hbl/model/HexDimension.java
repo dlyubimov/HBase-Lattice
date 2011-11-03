@@ -69,7 +69,7 @@ public class HexDimension extends AbstractDimension {
         } else if (member instanceof String) {
             // ok we assume hex representation in the string
             String keyStr = (String) member;
-            int diff = keylen - keyStr.length();
+            int diff = 2 * keylen - keyStr.length();
             if (diff < 0)
                 throw new IllegalArgumentException("supplied string too long");
 
