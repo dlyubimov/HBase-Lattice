@@ -87,6 +87,19 @@ Dmitriy Lyubimov
 dlyubimov@apache.org
 \end_layout
 
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\begin_inset Newpage cleardoublepage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 What it is 
 \end_layout
@@ -315,7 +328,23 @@ example.yaml
 sample
 \emph default
  module of the project for an example of a declarative model defintion).
- 
+ We employ 
+\emph on
+
+\begin_inset CommandInset href
+LatexCommand href
+name "SnakeYaml"
+target "http://code.google.com/p/snakeyaml/"
+
+\end_inset
+
+
+\emph default
+ project for the purposes of constructing java model objects, see how 
+\emph on
+SnakeYaml
+\emph default
+ works with classes and constructors for details of what's going on there.
 \end_layout
 
 \begin_layout Subsubsection
@@ -374,6 +403,24 @@ Long
 \family default
  expressing number of milliseconds since epoch (in context of projection
  compilation in pig).
+\end_layout
+
+\begin_layout Standard
+Dimension types are assumed to be discrete.
+ If dimension is computed over a continuous value in the fact stream (such
+ as time), it has to be mapped into a discrete one perhaps by means of using
+ a hierarchy (e.g.
+ current 
+\family typewriter
+SimpleTimeHourHierarchy 
+\family default
+copes with continous nature of time by setting up discrete member values
+ as hour-long buckets and thus implicitly converts every fact from the fact
+ stream into [YEAR-MONTH].[DATE-HOUR] form.
+ Obviously, we can make granularity finer and finer so that eventually it
+ may go all the way down to a millisecond, and still be able to optimize
+ queries with additive and complement scans.
+ 
 \end_layout
 
 \begin_layout Subsubsection
@@ -493,11 +540,11 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "100col%"
+width "95col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
@@ -638,7 +685,7 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "100col%"
+width "95col%"
 special "none"
 height "1in"
 height_special "totalheight"
@@ -688,6 +735,31 @@ where dimension in [?]
 '.
 \end_layout
 
+\begin_layout Standard
+Aggregate functions may return 
+\family typewriter
+NULL
+\family default
+ if a measure group had been empty (or consisted only of 
+\family typewriter
+NULL
+\family default
+ measure values).
+ This semantics is consistent with 
+\family typewriter
+SUM()
+\family default
+ and some other aggregate functions semantics in SQL and Pig.
+ As a corner case, a measure group might have been empty if reduced measure
+ scope was applied during compilation.
+ Reduced scope fact stream basically is equivalent to a full fact stream
+ having all facts for the excluded measures as 
+\family typewriter
+NULL
+\family default
+.
+\end_layout
+
 \begin_layout Paragraph
 Query limitations.
 \end_layout
@@ -695,6 +767,8 @@ Query limitations.
 \begin_layout Itemize
 There has to be a cuboid specifying all dimensions in a group clause in
  the leftmost positions.
+ Hence, plan optimizer may complain if certain grouping is not possible
+ due to lack of suitable cuboid.
 \end_layout
 
 \begin_layout Itemize
@@ -705,6 +779,197 @@ Complement scan optimizations for hierarchies is not implemented in this
 \begin_layout Itemize
 There's currently no way to run some useful analytic queries like 'select
  COUNT(fact), ip group by ip having COUNT(fact) > 10000'.
+ 
+\end_layout
+
+\begin_layout Itemize
+One has to select at least one measure aggregate in the query.
+ Technically, there should be no reason why not support a request for dimension
+ members satisfying 
+\emph on
+where-clause
+\emph default
+ conditions only, but the way it is currently designed, it need a least
+ one measure to sum up in an aggregate (even if one doesn't use it).
+\end_layout
+
+\begin_layout Subsection
+Complement and additive scan query optimizations.
+ 
+\end_layout
+
+\begin_layout Standard
+Scanning a point slice of either dimension or hierarchy is trivial.
+\end_layout
+
+\begin_layout Standard
+Scanning a range of slices of a dimension is trivial as well (assuming that's
+ the last dimension in cuboid spec).
+\end_layout
+
+\begin_layout Standard
+Scanning a range over a hierarchy is less trivial.
+ Hierarchy must support notion of 
+\family typewriter
+[ALL]
+\family default
+ member aggregates to be able to produce batch.
+ Additionally, hierarchy needs to support optimizing for complement vs.
+ union scans.
+ (time hierarchies come to mind as a particularly good example of benefiting
+ from complement scans).
+\end_layout
+
+\begin_layout Standard
+Here I'll develop a very simple bit of theory behind additive and complement
+ scans.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Definition - additive scan-capable aggregate functions.
+\end_layout
+
+\begin_layout Standard
+Suppose we have a bunch of metrics (facts) 
+\begin_inset Formula $\mathbf{M}=\left\{ m_{1},m_{2},...,m_{n}\right\} $
+\end_inset
+
+.
+ We also consider and aggregate function defined over a fact set, 
+\begin_inset Formula $\mbox{aggr}\left(\mathbf{M}\right)$
+\end_inset
+
+, which returns a single variable.
+ If for any two disjoint subsets 
+\begin_inset Formula $\mathbf{M}_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{M}_{2}$
+\end_inset
+
+:
+\begin_inset Formula $\mathbf{M}_{1}\cap\mathbf{M}_{2}=\emptyset$
+\end_inset
+
+ also satisfying 
+\begin_inset Formula $\mathbf{M}_{1}\cup\mathbf{M}_{2}=\mathbf{M}$
+\end_inset
+
+ exists a function 
+\begin_inset Formula $\mathbf{add}\left(r_{1},r_{2}\right)$
+\end_inset
+
+ such that 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mbox{aggr}\left(\mathbf{M}\right)=\mbox{add}\left(\mbox{aggr}\left(\mathbf{M}_{1}\right),\mbox{aggr}\left(\mathbf{M}_{2}\right)\right),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+then we call function 
+\begin_inset Formula $\mbox{aggr}\left(\cdot\right)$
+\end_inset
+
+ 
+\emph on
+additive scan-capable.
+\end_layout
+
+\begin_layout Paragraph
+Definition - complement scan-capable aggregate functions.
+\end_layout
+
+\begin_layout Standard
+Similarly, every request can be devised into summing scan over metrict fact
+ set 
+\begin_inset Formula $\mathbf{M}_{1}$
+\end_inset
+
+ and a complement scan over another dataset 
+\begin_inset Formula $\mathbf{M}_{2}:\mathbf{M}_{2}\subseteq\mathbf{M}_{1}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Suppose there's an existing aggregating function over metric set 
+\begin_inset Formula $\mathrm{aggr}\left(\cdot\right)$
+\end_inset
+
+ If there exists a function of two variables 
+\begin_inset Formula $\mathbf{complement}\left(r_{1},r_{2}\right)$
+\end_inset
+
+ such that for any two fact sets 
+\series bold
+
+\begin_inset Formula $\mathbf{M}_{1}$
+\end_inset
+
+ 
+\series default
+and 
+\begin_inset Formula $\mathbf{M}_{2}$
+\end_inset
+
+ satisfying 
+\begin_inset Formula $\mathbf{M}_{2}\subseteq\mathbf{M}_{1}$
+\end_inset
+
+ the following is true 
+\begin_inset Formula 
+\begin{eqnarray*}
+r & = & \mathrm{aggr}\left(\mathbf{M}_{1}\backslash\mathbf{M}_{2}\right)\\
+ & = & \mathrm{\mathbf{complement}}\left(\mathrm{aggr}\left(\mathbf{M}_{1}\right),\mathrm{aggr}\left(\mathbf{M}_{2}\right)\right),
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+then we say that 
+\begin_inset Formula $\mathrm{aggr}\left(\cdot\right)$
+\end_inset
+
+ is 
+\emph on
+complement scan-capable.
+\end_layout
+
+\begin_layout Standard
+Obviously, sum(), count() and avg() could be represented in a way that makes
+ them complement scan-capable.
+\end_layout
+
+\begin_layout Standard
+Complement optimization specifically comes in light for time series scans
+ that involve timezone corrections, e.g.
+ timezone correction for a month hierarchy with additional complement scan
+ on an hour hierarchy.
+\end_layout
+
+\begin_layout Standard
+Hence, it follows that we should model a hierarchy in a way so that its
+ implementation would be able to opimize using complement scans.
+ We will require scan additivity of all aggregate functions, but it seems
+ that we cannot request complement scan capability of any given aggregate
+ function.
+ Hence, future complement scan optmization should interrogate functions
+ as to whether complement scan optimization is possible.
  
 \end_layout
 
@@ -727,7 +992,27 @@ Complement scan optimizations for hierarchies are not in yet.
 \end_layout
 
 \begin_layout Standard
-Poor selection of aggregate functions
+Access to model elements is rudimental.
+ Model is exchanged as yaml-serialized string within compiler, which may
+ overload pig communication to backend wastefully if model becomes sizeable
+ (thousands of measures or dimensions).
+ System tables containing model is rudimental as well.
+ We seem to employ several dozens of measures in production without noticeable
+ problems, but obviously this is a somewhat severe limitation for a 
+\begin_inset Quotes eld
+\end_inset
+
+big data
+\begin_inset Quotes erd
+\end_inset
+
+ system.
+\end_layout
+
+\begin_layout Standard
+Poor selection of aggregate functions.
+ Modelling for aggregation functions and supported member types needs more
+ thought, it is not flexible enough right now.
 \end_layout
 
 \begin_layout Standard
