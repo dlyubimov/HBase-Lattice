@@ -140,7 +140,7 @@ Cassandra is OLTP, HBase is OLAP
  mantra
 \series default
 .
- Except HBase is not really OLAP out of the door.
+ HBase is not really an OLAP service out of the door.
  It doesn't support cube models directly.
  There's no query language to use.
  There's no predefined way to update a cube.
@@ -153,8 +153,8 @@ Cassandra is OLTP, HBase is OLAP
 Big underlying fact stream
 \series default
 .
- (billions, perhaps trillions of facts to process) which we wont to cope
- with by parallelizing the compilation with the help of MapReduce.
+ Billions, perhaps trillions of facts to process which we want to cope with
+ by parallelizing the compilation with the help of MapReduce.
  
 \end_layout
 
@@ -165,8 +165,8 @@ Low query TTLB
 \series default
  (especially on Time Series data).
  Our goal was to answer queries over any period of time and whatever other
- slice specifications we can make very quickly with a single hbase table
- and a very limited amount of iterations in a scan.
+ slice specifications very quickly with a single hbase table access and
+ a very limited amount of iterations in a scan.
  (TTLB <~ 1ms on hbase side, assuming the tablet data is in memory, + whatever
  network overhead).
 \end_layout
@@ -191,12 +191,12 @@ Next to realtime data availability for querying
 Keep stuff within same ecosystem.
  
 \series default
-Another motivation is being able to do things within the same resource space
- of HDFS and HBASE one already invested to.
- While it is definitely try to use other tools out there with same, if not
- greater, success, (MongoDB comes to mind), those tools would perhaps require
- their own distinct environment (resources) and perhaps bulk data transfer
- and import.
+Another motivation is to be able to do things within the same resource space
+ of HDFS and HBASE one has already invested in.
+ While there are definitely other tools out there to try with the same,
+ if not greater, capabilities (MongoDB comes to mind), those tools would
+ perhaps require their own distinct environment (resources) and perhaps
+ bulk data transfer and import.
 \end_layout
 
 \begin_layout Section
@@ -278,6 +278,12 @@ sample
 One of the somewhat stale projects on github used similar approach but instead
  of using Apache Pig, that project used python streaming MR.
  But the idea is very similar.
+ 
+\end_layout
+
+\begin_layout Standard
+MapReduce compiler allows to do distributed aggregation of the data before
+ making updates to hbased-stored cuboids.
  
 \end_layout
 
@@ -492,6 +498,20 @@ It must have at least one measure fact (currently, of either long or double
  streams containing different measures and potentially originating in different
  sources (for as long as all dimensions can be inferred for each of them).
  
+\end_layout
+
+\begin_layout Subsection
+Deploying querying capabilities
+\end_layout
+
+\begin_layout Standard
+Since custom filters are used, one jar (hbl-0.1.2.jar as of the time of this
+ writing) should be deployed to region servers (perhaps with a rolling restart
+ afterwards).
+ With CDH distribution it turns out it is enought just to drop hbl.jar into
+ $HBASE_HOME/lib folder at the region servers.
+ Only querying part depends on this, incremental compiler does not depend
+ on this.
 \end_layout
 
 \begin_layout Subsection
@@ -710,7 +730,7 @@ Where-clause
 \emph default
 is essentially a slice specification.
  Hence specification is imposed on a dimension using opened or closed interval
- syntax.
+ semantics.
  E.g.
  [1,3) is a so-called half-open interval which includes between values of
  1 (including) and 3 (excluding).
@@ -772,7 +792,7 @@ There has to be a cuboid specifying all dimensions in a group clause in
 \end_layout
 
 \begin_layout Itemize
-Complement scan optimizations for hierarchies is not implemented in this
+Complement scan optimizations for hierarchies are not implemented in this
  release (only in our prototype).
 \end_layout
 
@@ -1020,11 +1040,23 @@ Poor selection of hierarchy and dimension types
 \end_layout
 
 \begin_layout Standard
-Poor selection of measure types
+Poor selection of measure types.
+ Currently, we are limited to numeric facts in fact stream only.
 \end_layout
 
 \begin_layout Standard
-Is there a clever way of supporting some of HAVING conditions?
+Support for explicitly unbounded intervals in queries.
+ (I think i provisioned some code for this in optimizer and custom hbase
+ filter, but client doesn't support these constructions per se).
+\end_layout
+
+\begin_layout Standard
+Is there a clever way of supporting some of HAVING conditions without running
+ a full table scan?
+\end_layout
+
+\begin_layout Standard
+Parallel querying with region server-side preprocessors?
 \end_layout
 
 \end_body
