@@ -22,6 +22,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.commons.lang.Validate;
+
 /**
  * Canny summarizer's version of biased binomial estimator.
  * 
@@ -42,24 +44,35 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      * 
      * @param state
      * @param p0
-     *            initial bias
+     *            initial bias. it has to be full-opened interval of (0,1). Note
+     *            that the extreme cases 0 and 1 cannot be accepted for the
+     *            prior, so we throw an invalid argument (see working notes
+     *            document as to why).
      * @param epsilon
      *            epsilon (amt of most recent significant history, exponentially
      *            weighted) 0..1
      */
     public OnlineCannyBiasedBinomialSummarizer(OnlineCannyAvgSummarizer state, double p0, double epsilon) {
         super(state);
-        
-        // TODO: this estimate is still based on an exponent behavior, not on Canny's difference of exponents, so it will 
-        // overestimate bposneg. It looks like it is hard to actually estimate CannyFunction^-1(epsilon), so i'll take 
-        // my chances with exponent. Exponent estimate will reduce bias components, so actual bias behavior will be less 
-        // aggressive than needed. So i will reduce default epsilon instead.
-        
+
+        Validate.isTrue(p0 < 1 && p0 > 0);
+
+        /*
+         * TODO: this estimate is still based on an exponent behavior, not on
+         * Canny's difference of exponents, so it will overestimate bposneg. It
+         * looks like it is hard to actually estimate CannyFunction^-1(epsilon),
+         * so i'll take my chances with exponent.
+         * 
+         * Exponent estimate will reduce bias components, so actual bias
+         * behavior will be less aggressive than needed. So i will reduce
+         * default epsilon instead.
+         */
+
         double unit = (epsilon - 1) / Math.log(epsilon);
         if (p0 >= 0.5)
-            bpos = (bneg = unit) * (1 - p0) / p0;
+            bpos = (bneg = unit) * p0 / (1 - p0);
         else
-            bneg = (bpos = unit) * p0 / (1 - p0);
+            bneg = (bpos = unit) * (1 - p0) / p0;
     }
 
     /**

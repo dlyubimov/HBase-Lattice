@@ -22,6 +22,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.commons.lang.Validate;
+
 /**
  * see section 2.2.0 of FAS 2.0 Sale expectaiton.pdf for math details of
  * exponentially weighted biased probability estimator with irregular sampling
@@ -48,20 +50,24 @@ public class OnlineExpBiasedBinomialSummarizer extends OnlineExpAvgSummarizer {
      * 
      * @param state
      * @param p0
-     *            initial bias
+     *            initial bias. it has to be full-opened interval of (0,1). Note
+     *            that the extreme cases 0 and 1 cannot be accepted for the
+     *            prior, so we throw an invalid argument (see working notes
+     *            document as to why).
      * @param epsilon
      *            epsilon (amt of most recent significant history, exponentially
      *            weighted) 0..1
      */
-    public OnlineExpBiasedBinomialSummarizer(OnlineExpAvgSummarizer state,
-                                                              double p0,
-                                                              double epsilon) {
+    public OnlineExpBiasedBinomialSummarizer(OnlineExpAvgSummarizer state, double p0, double epsilon) {
         super(state);
+
+        Validate.isTrue(p0 < 1 && p0 > 0);
+
         double unit = (epsilon - 1) / Math.log(epsilon);
         if (p0 >= 0.5)
-            bpos = (bneg = unit) * (1 - p0) / p0;
+            bpos = (bneg = unit) * p0 / (1 - p0);
         else
-            bneg = (bpos = unit) * p0 / (1 - p0);
+            bneg = (bpos = unit) * (1 - p0) / p0;
     }
 
     /**
@@ -154,8 +160,7 @@ public class OnlineExpBiasedBinomialSummarizer extends OnlineExpAvgSummarizer {
     public void combine(IrregularSamplingSummarizer other) {
         if (!(other instanceof OnlineExpBiasedBinomialSummarizer))
             throw new IllegalArgumentException("attempt to combine an incompatible summarizer");
-        OnlineExpBiasedBinomialSummarizer oth =
-            (OnlineExpBiasedBinomialSummarizer) other;
+        OnlineExpBiasedBinomialSummarizer oth = (OnlineExpBiasedBinomialSummarizer) other;
         if (bneg != oth.bneg || bpos != oth.bpos)
             throw new IllegalArgumentException(
                 "attempt to combine an incompatible summarizer with a differently preset bias");
