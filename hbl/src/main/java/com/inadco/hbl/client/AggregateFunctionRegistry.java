@@ -47,7 +47,7 @@ public class AggregateFunctionRegistry {
         addFunction(new FSum());
     }
 
-    public void applyAll(Aggregation.Builder accumulator, Double measure) {
+    public void applyAll(Aggregation.Builder accumulator, Object measure) {
         for (AggregateFunction af : functions.values())
             af.apply(accumulator, measure);
     }

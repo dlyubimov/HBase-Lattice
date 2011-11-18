@@ -28,8 +28,9 @@ public class FCount implements AggregateFunction {
     
     
     @Override
-    public void apply(Builder result, Double measure) {
-        if ( measure == null)  return;
+    public void apply(Builder result, Object measure) {
+        if ( ! (measure instanceof Double))  return;
+        
         long cnt=result.hasCnt()?result.getCnt():0;
         result.setCnt(cnt+1);
     }

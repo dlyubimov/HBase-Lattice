@@ -60,7 +60,7 @@ public class AggregationFromMeasure extends BaseFunc<DataByteArray> {
         Object measureKey = input.get(0);
         Measure m = measureKey == null ? null : cube.getMeasures().get(measureName);
         Validate.notNull(m, "no measure passed/found");
-        Double d = m.asDouble(input.get(1));
+        Object d = m.compilerFact2Measure(input.get(1));
         // we don't measures to evaluate to nulls to simplify null issues .
         if (d == null)
             return null;

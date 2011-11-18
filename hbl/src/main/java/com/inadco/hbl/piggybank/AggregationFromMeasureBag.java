@@ -68,7 +68,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
      * @param bag
      *            -- of original measures, usually Double or Integer per
      *            whatever is acceptable by particular measure's conversion by
-     *            {@link Measure#asDouble(Object)}.
+     *            {@link Measure#compilerFact2Measure(Object)}.
      * @param accumulator
      * @throws ExecException
      */
@@ -85,7 +85,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         Aggregation.Builder source;
 
         for (Tuple tup : db) {
-            Double d = measure2Double(cube, measureName, tup);
+            Object d = measure2Double(cube, measureName, tup);
             afr.applyAll(source = Aggregation.newBuilder(), d);
             afr.mergeAll(accumulator, source.build(), SliceOperation.ADD);
         }
@@ -124,12 +124,12 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
     }
 
-    private static Double measure2Double(Cube cube, String measureName, Tuple input) throws ExecException {
+    private static Object measure2Double(Cube cube, String measureName, Tuple input) throws ExecException {
         Measure m = cube.getMeasures().get(measureName);
         Validate.notNull(m, "no measure passed/found");
-        Double d = m.asDouble(input.get(0));
-        // we don't measures to evaluate to nulls to simplify null issues.
-        return d == null ? 0.0 : d;
+        Object d = m.compilerFact2Measure(input.get(0));
+        
+        return d; 
     }
 
     @Override

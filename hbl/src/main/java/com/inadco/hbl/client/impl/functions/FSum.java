@@ -56,11 +56,11 @@ public class FSum implements AggregateFunction {
     }
 
     @Override
-    public void apply(Builder result, Double measure) {
-        if (measure == null)
+    public void apply(Builder result, Object measure) {
+        if (!(measure instanceof Double))
             return;
         double sum = result.hasSum() ? 0d : result.getSum();
-        sum += measure;
+        sum += (Double) measure;
         result.setSum(sum);
     }
 

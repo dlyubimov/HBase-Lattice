@@ -23,7 +23,7 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
 public interface AggregateFunction {
     
-   void apply(Aggregation.Builder result, Double measure ); 
+   void apply(Aggregation.Builder result, Object measureFact ); 
    
    void merge(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation );
    public String getName() ;

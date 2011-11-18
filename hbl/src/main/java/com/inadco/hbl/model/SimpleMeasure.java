@@ -41,7 +41,7 @@ public class SimpleMeasure implements Measure {
     }
 
     @Override
-    public Double asDouble(Object value) {
+    public Object compilerFact2Measure(Object value) {
         if (value == null)
             return null;
         else if (value instanceof Double)
