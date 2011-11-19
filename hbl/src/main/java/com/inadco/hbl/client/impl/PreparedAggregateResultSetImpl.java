@@ -77,7 +77,7 @@ public class PreparedAggregateResultSetImpl extends AggregateResultSetImpl imple
         if (def instanceof String[]) {
             // aggregate measure
             String[] aggrDef = (String[]) def;
-            return super.getDoubleAggregate(aggrDef[0], aggrDef[1]);
+            return super.getAggregate(aggrDef[0], aggrDef[1]);
         }
         // otherwise it is a dimension group member request
         String dim = (String) def;

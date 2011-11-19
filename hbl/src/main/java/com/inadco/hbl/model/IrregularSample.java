@@ -16,19 +16,42 @@
  *  
  *  
  */
-package com.inadco.hbl.api;
+package com.inadco.hbl.model;
 
-import com.inadco.hbl.client.impl.SliceOperation;
-import com.inadco.hbl.protocodegen.Cells.Aggregation;
+/**
+ * Class that supports irregular sample (time-based) facts
+ * 
+ * @author dmitriy
+ * 
+ */
+public class IrregularSample {
+    private Object fact;
+    private long   time; // time in ms since epoch
 
-public interface AggregateFunction {
-    
-   void apply(Aggregation.Builder result, Object measureFact ); 
-   
-   void merge(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation );
-   public String getName() ;
-   public boolean supportsComplementScan();
-   
-   public Object getAggrValue(Aggregation source);
+    public IrregularSample(Object fact, long time) {
+        super();
+        this.fact = fact;
+        this.time = time;
+    }
+
+    public IrregularSample() {
+        super();
+    }
+
+    public Object getFact() {
+        return fact;
+    }
+
+    public void setFact(Object fact) {
+        this.fact = fact;
+    }
+
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+    }
 
 }

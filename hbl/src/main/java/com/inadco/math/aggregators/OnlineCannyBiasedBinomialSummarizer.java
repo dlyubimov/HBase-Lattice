@@ -56,23 +56,9 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
         super(state);
 
         Validate.isTrue(p0 < 1 && p0 > 0);
+        
+        resetBias(p0, epsilon);
 
-        /*
-         * TODO: this estimate is still based on an exponent behavior, not on
-         * Canny's difference of exponents, so it will overestimate bposneg. It
-         * looks like it is hard to actually estimate CannyFunction^-1(epsilon),
-         * so i'll take my chances with exponent.
-         * 
-         * Exponent estimate will reduce bias components, so actual bias
-         * behavior will be less aggressive than needed. So i will reduce
-         * default epsilon instead.
-         */
-
-        double unit = (epsilon - 1) / Math.log(epsilon);
-        if (p0 >= 0.5)
-            bpos = (bneg = unit) * p0 / (1 - p0);
-        else
-            bneg = (bpos = unit) * (1 - p0) / p0;
     }
 
     /**
@@ -148,9 +134,23 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      *            new epsilon
      */
     public void resetBias(double p0, double epsilon) {
-        double bposneg = 2 * (epsilon - 1) / Math.log(epsilon);
-        bpos = bposneg * p0;
-        bneg = bposneg * (1 - p0);
+        /*
+         * TODO: this estimate is still based on an exponent behavior, not on
+         * Canny's difference of exponents, so it will overestimate bposneg. It
+         * looks like it is hard to actually estimate CannyFunction^-1(epsilon),
+         * so i'll take my chances with exponent.
+         * 
+         * Exponent estimate will reduce bias components, so actual bias
+         * behavior will be less aggressive than needed. So i will reduce
+         * default epsilon instead.
+         */
+
+        double unit = (epsilon - 1) / Math.log(epsilon);
+        if (p0 >= 0.5)
+            bpos = (bneg = unit) * p0 / (1 - p0);
+        else
+            bneg = (bpos = unit) * (1 - p0) / p0;
+
     }
 
     public void resetBias(double p0) {

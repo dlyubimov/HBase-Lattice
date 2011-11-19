@@ -41,9 +41,12 @@ public class SimpleMeasure implements Measure {
     }
 
     @Override
-    public Object compilerFact2Measure(Object value) {
+    public Object compiler2Fact(Object value) {
         if (value == null)
             return null;
+        /*
+         * translate all numeric types to Double.
+         */
         else if (value instanceof Double)
             return (Double) value;
         else if (value instanceof Long)

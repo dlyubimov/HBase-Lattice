@@ -161,10 +161,10 @@ public class Example1 extends Configured implements Tool {
                 AggregateResult ar = rs.current();
                 System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
                                   new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                  ar.getDoubleAggregate("impCnt", "SUM"),
-                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-                                  ar.getDoubleAggregate("click", "SUM"),
-                                  ar.getDoubleAggregate("click", "COUNT"));
+                                  ar.getAggregate("impCnt", "SUM"),
+                                  ar.getAggregate("impCnt", "COUNT"),
+                                  ar.getAggregate("click", "SUM"),
+                                  ar.getAggregate("click", "COUNT"));
             }
 
             closeables.remove(rs);
@@ -204,10 +204,10 @@ public class Example1 extends Configured implements Tool {
                 AggregateResult ar = rs.current();
                 System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
                                   new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                  ar.getDoubleAggregate("impCnt", "SUM"),
-                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-                                  ar.getDoubleAggregate("click", "SUM"),
-                                  ar.getDoubleAggregate("click", "COUNT"));
+                                  ar.getAggregate("impCnt", "SUM"),
+                                  ar.getAggregate("impCnt", "COUNT"),
+                                  ar.getAggregate("click", "SUM"),
+                                  ar.getAggregate("click", "COUNT"));
             }
             closeables.remove(rs);
             rs.close();
@@ -244,10 +244,10 @@ public class Example1 extends Configured implements Tool {
                 System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
                 // new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
                                   "no-group",
-                                  ar.getDoubleAggregate("impCnt", "SUM"),
-                                  ar.getDoubleAggregate("impCnt", "COUNT"),
-                                  ar.getDoubleAggregate("click", "SUM"),
-                                  ar.getDoubleAggregate("click", "COUNT"));
+                                  ar.getAggregate("impCnt", "SUM"),
+                                  ar.getAggregate("impCnt", "COUNT"),
+                                  ar.getAggregate("click", "SUM"),
+                                  ar.getAggregate("click", "COUNT"));
             }
             closeables.remove(rs);
             rs.close();
@@ -300,10 +300,10 @@ public class Example1 extends Configured implements Tool {
                     AggregateResult ar = rs.current();
                     System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
                                       new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
-                                      ar.getDoubleAggregate("impCnt", "SUM"),
-                                      ar.getDoubleAggregate("impCnt", "COUNT"),
-                                      ar.getDoubleAggregate("click", "SUM"),
-                                      ar.getDoubleAggregate("click", "COUNT"));
+                                      ar.getAggregate("impCnt", "SUM"),
+                                      ar.getAggregate("impCnt", "COUNT"),
+                                      ar.getAggregate("click", "SUM"),
+                                      ar.getAggregate("click", "COUNT"));
                 }
                 closeables.remove(rs);
                 rs.close();

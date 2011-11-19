@@ -28,6 +28,6 @@ package com.inadco.hbl.api;
 public interface Measure  {
     String getName();
 
-    Object compilerFact2Measure(Object value);
+    Object compiler2Fact(Object value);
 
 }

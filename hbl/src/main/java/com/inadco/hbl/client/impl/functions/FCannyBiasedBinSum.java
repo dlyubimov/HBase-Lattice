@@ -18,57 +18,50 @@
  */
 package com.inadco.hbl.client.impl.functions;
 
-import com.inadco.hbl.api.AggregateFunction;
+import java.io.IOException;
+
+import org.apache.hadoop.io.DataInputBuffer;
+
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
+import com.inadco.math.aggregators.OnlineCannyBiasedBinomialSummarizer;
 
-public class FCount implements AggregateFunction {
-    
-    
-    
-    @Override
-    public void apply(Builder result, Object measure) {
-        if ( ! (measure instanceof Double))  return;
-        
-        long cnt=result.hasCnt()?result.getCnt():0;
-        result.setCnt(cnt+1);
+public class FCannyBiasedBinSum extends FCustomStateFunc {
+
+    private double dt;
+
+    FCannyBiasedBinSum(String name, int ordinal, double dt) {
+        super(name, ordinal);
+        this.dt = dt;
     }
 
+    @Override
+    public void apply(Builder result, Object measureFact) {
+        // TODO Auto-generated method stub
+
+    }
 
     @Override
-    public String getName() {
-        return "COUNT";
+    public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
+        // TODO Auto-generated method stub
+
     }
-    
 
     @Override
     public boolean supportsComplementScan() {
         return true;
     }
 
-
-    @Override
-    public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
-        if (!source.hasCnt())
-            return;
-
-        switch (operation) {
-        case ADD:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() + source.getCnt() : source.getCnt());
-            break;
-        case COMPLEMENT:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() - source.getCnt() : -source.getCnt());
-            break;
-        }
-    }
-
-
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasCnt()?source.getCnt():0;
+        try {
+            return extractState(source, new OnlineCannyBiasedBinomialSummarizer());
+
+        } catch (IOException exc) {
+            throw new RuntimeException(exc);
+        }
+
     }
-    
-    
 
 }

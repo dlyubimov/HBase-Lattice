@@ -234,7 +234,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
     }
 
     @Override
-    public Double getDoubleAggregate(String measure, String functionName) throws HblException {
+    public Object getAggregate(String measure, String functionName) throws HblException {
         try {
             Integer index = measureName2IndexMap.get(measure);
             if (index == null)
@@ -250,7 +250,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                 result[index] = b == null ? null : (measureAggr = b.build()); // cache
             }
 
-            return measureAggr==null?null:af.getDoubleValue(measureAggr);
+            return measureAggr==null?null:af.getAggrValue(measureAggr);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }
