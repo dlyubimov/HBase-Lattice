@@ -1,0 +1,2378 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman lmodern
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Exponentially Weighted Metrics 
+\begin_inset Newline newline
+\end_inset
+
+With Irregular Sampling
+\end_layout
+
+\begin_layout Author
+Dmitriy Lyubimov
+\begin_inset Newline newline
+\end_inset
+
+
+\size small
+\emph on
+dlyubimov@inadco.com
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Notations
+\end_layout
+
+\begin_layout Standard
+Internal state of the summarizer 
+\begin_inset Formula 
+\[
+S_{n}=\left\{ w_{n},s_{n},t_{n}\right\} .
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Observation values are 
+\begin_inset Formula $(x_{1},x_{2},...x_{n})$
+\end_inset
+
+ corresponding to times 
+\begin_inset Formula $\left(t_{1},t_{2},...t_{n}\right).$
+\end_inset
+
+ Hence, single observation could be denoted as 
+\begin_inset Formula $\left(x_{i},t_{i}\right).$
+\end_inset
+
+ In our specific case, for the map/reduce paradigm, we can assume that earlier
+ observations may occur further in the sequence for the same summarizer,
+ i.e it is possible that 
+\begin_inset Formula $t_{n}<t_{n-1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Exponentially weighted average with irregular sampling
+\end_layout
+
+\begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Iterative-state-updates"
+
+\end_inset
+
+Iterative state updates
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{n+1}\geq t_{n}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\begin{cases}
+\pi_{0}=1,\\
+\pi_{n+1}=e^{-\left(t_{n+1}-t_{n}\right)/\alpha};
+\end{cases}\\
+w_{n+1}=1+\pi_{n+1}w_{n};\\
+s_{n+1}=x_{n+1}+\pi_{n+1}s_{n};\\
+t_{n+1}=t_{n+1}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{n+1}<t_{n}:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\begin{cases}
+\pi_{0}=1,\\
+\pi=e^{-\left(t_{n}-t_{n+1}\right)/\alpha},
+\end{cases}\\
+w_{n+1}=w_{n}+\pi_{n+1},\\
+s_{n+1}=s_{n}+\pi_{n+1}x_{n+1},\\
+t_{n+1}=t_{n}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Latest average value at any moment :
+\begin_inset Formula 
+\[
+\mu\left(S\right)=\frac{s}{w}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Combining two summarizers having observed two disjoint sets as subsets of
+ original observation set
+\end_layout
+
+\begin_layout Standard
+Combining two summarizer states 
+\begin_inset Formula $S_{1},\, S_{2}$
+\end_inset
+
+ having observed two disjoint sets of original observation superset:
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{2}\geq t_{1}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{cases}
+t=t_{2};\\
+\pi=e^{-(t_{2}-t_{1})/\alpha};\\
+s=s_{2}+s_{1}\pi;\\
+w=w_{2}+w_{1}\pi.
+\end{cases}\label{eq:stdcomb}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{2}<t_{1}$
+\end_inset
+
+ is symmetrical to the above w.r.t.
+ to indices 
+\begin_inset Formula $\left(\cdot\right)_{1},\left(\cdot\right)_{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The prerequisite for combining is 
+\begin_inset Formula $\alpha_{1}=\alpha_{2}=\alpha$
+\end_inset
+
+ (history decay is the same).
+\end_layout
+
+\begin_layout Subsection
+Complement summarizer
+\end_layout
+
+\begin_layout Standard
+Suppose we have results for two observation sets 
+\begin_inset Formula $S_{1}=\{x_{i},t_{i}\}$
+\end_inset
+
+, 
+\begin_inset Formula $S_{2}=\{x_{j},t_{j}\}$
+\end_inset
+
+ such that 
+\begin_inset Formula $S_{1}\supseteq S_{2}$
+\end_inset
+
+.
+ We want to find summarizer state for a complement observation set 
+\begin_inset Formula 
+\[
+S=S_{1}\backslash S_{2}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It's not hard to see that finding complement summarizer is an inverse operation
+ of combining.
+ Indeed, since 
+\begin_inset Formula $S$
+\end_inset
+
+ and 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ are disjoint sets such that 
+\begin_inset Formula $S_{1}=S\cup S_{2}$
+\end_inset
+
+ then 
+\begin_inset Formula $\mbox{sum}\left(S_{1}\right)=\mbox{combine}\left(\mbox{sum}\left(S\right),\mbox{sum}\left(S_{2}\right)\right)$
+\end_inset
+
+.
+ Assuming invertion of the combine operation, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mbox{case }t_{1}\ge t_{2}:
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{cases}
+t=t_{1};\\
+\pi=e^{-\left(t_{1}-t_{2}\right)/\alpha};\\
+s=s_{1}-s_{2}\pi;\\
+w=w_{1}-w_{2}\pi.
+\end{cases}\label{eq:complem}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that case 
+\begin_inset Formula $t_{1}<t_{2}$
+\end_inset
+
+ is invalid, because 
+\begin_inset Formula $S_{1}\supseteq S_{2}$
+\end_inset
+
+, i.e.
+ 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+ must include latest event in 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+.
+ So we must assert 
+\begin_inset Formula $t_{1}\ge t_{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Complement summarization comes up when optimizing slice hierarchies in the
+ Time Series projections.
+ E.g.
+ suppose we have a summarizer for a month with UTC boundaries and we want
+ to adjust it for timezone 
+\begin_inset Formula $z>0$
+\end_inset
+
+.
+ Then what we want to do is find a result of 
+\begin_inset Formula 
+\[
+\mbox{complement}\left(\mbox{sum}\left(month+z_{fromMonthEnd}\right),z_{fromMonthStart}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Initial parameter computation.
+\end_layout
+
+\begin_layout Standard
+Given 
+\begin_inset Formula $\Delta t$
+\end_inset
+
+ is the desired history length that experiences phase out down to margin
+ 
+\begin_inset Formula $m$
+\end_inset
+
+ in exponential scale (
+\begin_inset Formula $m=0.01$
+\end_inset
+
+ default), history decay parameter 
+\begin_inset Formula 
+\[
+\alpha=\frac{-\Delta t}{\ln m}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Implementation class
+\end_layout
+
+\begin_layout Standard
+These formulas are implemented by class 
+\family typewriter
+OnlineExpWeightedIrregularSummarizer
+\family default
+.
+\end_layout
+
+\begin_layout Section
+Exponentially weighted biased binomial average with irregular sampling.
+\end_layout
+
+\begin_layout Subsection
+Binomial biased probability at time of the update 
+\begin_inset Formula $n+1$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+P_{n+1}=\frac{b_{+}+s_{n+1}}{b_{+}+b_{-}+w_{n+1}},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where bias parameters are based on bias 
+\begin_inset Formula $P_{0}=\lim_{n\rightarrow0}P=\frac{b_{+}}{b_{+}+b_{-}}$
+\end_inset
+
+ as
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+for compactness of notation.
+ In fact, computation is simpler, e.g.
+ it's not difficult to see that for the case 
+\begin_inset Formula $P_{0}\ge0.5$
+\end_inset
+
+ it becomes 
+\begin_inset Formula 
+\begin{eqnarray*}
+b_{-} & = & \frac{\varepsilon-1}{\ln\varepsilon},\\
+b_{+} & = & \frac{P_{0}}{1-P_{0}}b_{-}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Similarly, for the case 
+\begin_inset Formula $P_{0}<0.5$
+\end_inset
+
+ we get: 
+\begin_inset Formula 
+\begin{eqnarray*}
+b_{+} & = & \frac{\varepsilon-1}{\ln\varepsilon},\\
+b_{-} & = & \frac{1-P_{0}}{P_{0}}b_{+}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{eqnarray*}
+k & = & \frac{1}{\min\left(P_{0},1-P_{0}\right)};\\
+b_{+} & = & kP_{0}\frac{\varepsilon-1}{\ln\varepsilon};\\
+b_{-} & = & k\left(1-P_{0}\right)\frac{\varepsilon-1}{\ln\varepsilon}.
+\end{eqnarray*}
+
+\end_inset
+
+
+\begin_inset Formula $\varepsilon\in\left(0,1\right)$
+\end_inset
+
+ is margin excluded from history for the purposes of bias, default 
+\begin_inset Formula $\varepsilon=0.5$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $b_{-}$
+\end_inset
+
+ and 
+\begin_inset Formula $b_{+}$
+\end_inset
+
+ is something that sometimes in literature is being referred to as 
+\begin_inset Quotes eld
+\end_inset
+
+pseudocounts
+\begin_inset Quotes erd
+\end_inset
+
+ (in this case, of Bernoulli trials).
+ The intuition reasoning for this that is that if prior belief of a (binomial)
+ event is not exactly 1 or 0, then there must have been at least one positive
+ or negative event before.
+ Corollary to this reasoning, we define the pseudocounts formula above.
+ 
+\end_layout
+
+\begin_layout Standard
+Also, for the corner cases 
+\begin_inset Formula $P_{0}=1\,\mbox{or\,}0$
+\end_inset
+
+, one of the pseudocounts does not exist (approaches infinity) which probably
+ amounts to no prior knowledge at all (our prior estimator always has seen
+ either all 0 or 1s.).
+ It is not difficult to see that no prior biased estimator should ever produce
+ corner cases, and the very first estimator in the chain of inference (as
+ in Beta-distribution mean estimator) should assume psedo counts corresponding
+ to 50% prior belief (no prior knowledge whatsoever).
+\end_layout
+
+\begin_layout Standard
+So for the corner cases which should really never be motivated in reality
+ we just correct prior knowledge to 0.5 automatically to avoid division by
+ zero.
+\end_layout
+
+\begin_layout Subsection
+pNow()
+\end_layout
+
+\begin_layout Standard
+Function that evaluates binomial prob from 'now' point of view: 
+\begin_inset Formula 
+\begin{equation}
+P_{t}=\frac{b_{+}+s_{n}e^{-\left(t-t_{n}\right)/\alpha}}{b_{+}+b_{-}+w_{n}e^{-\left(t-t_{n}\right)/\alpha}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As we can see, this formula has many common elements with case 
+\begin_inset Formula $t_{n+1}>t_{n}$
+\end_inset
+
+ of 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Iterative-state-updates"
+
+\end_inset
+
+, so in practice these computations are combined into one.
+\end_layout
+
+\begin_layout Subsection
+Summing up pageload logs and positive event logs separately.
+\end_layout
+
+\begin_layout Standard
+Typical case is when we have to analyze 2 different logs separately.
+ One log typically contains event counts only (typically, page loads, so
+ I will call it a 
+\begin_inset Quotes eld
+\end_inset
+
+pageload
+\begin_inset Quotes erd
+\end_inset
+
+ log) but no information of the user action on those.
+ Second log contains information of the user action but most typically only
+ if user had any action at all (i.e.
+ only positives).
+ At the end we want an estimate of the user action rate.
+ First intuitive impulse is just to outer-join the logs and then use a summarize
+r to deduce the final inference.
+ 
+\end_layout
+
+\begin_layout Standard
+But it appears that it may not always be practical.
+ Specifically, for real time incremental compilations such as what we have
+ in HBase-Lattice.
+ 
+\end_layout
+
+\begin_layout Standard
+For once, we are not even guaranteed to see a complete user session in increment
+al fact streams and therefore we will not be able to guarantee we truly
+ know whether event is negative or it is yet to become positive, even if
+ we joined them.
+ This strategy would probably be practical (although still not 100% accurate)
+ on larger chunks of logs (such as daily chunks) but we don't want to wait
+ a day to derive what we already can tell right now.
+\end_layout
+
+\begin_layout Standard
+And of course, joining is considerably more expensive than considering these
+ log streams separately in a completely independent ETL fashion.
+\end_layout
+
+\begin_layout Standard
+To weasel my way out of this real-time statistics predicament, I decided
+ to use 2 summarizers separately and then combine them in a specific way
+ to deduce final summarizer state at the request time.
+ With this approach I still may account for some yet-to-be-completed user
+ sessions as negatives at the request time, but it will self-correct if
+ they become positives and i poll the summarizer state later.
+ Also, I can decrease amount of false positives in the most recent statistics
+ if I query HBL to exclude most recent counts (because that's where my false
+ negatives will likely be).
+\end_layout
+
+\begin_layout Standard
+We will denote the summarizer that runs over pageload log as 
+\begin_inset Formula $S^{\left(0\right)}$
+\end_inset
+
+ (assuming every pageload as a negative event at that time, but some of
+ them actually may turn later to be positives) and the one that runs over
+ positive event log as summarizer 
+\begin_inset Formula $S^{\left(1\right)}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+After we computed those sums, we can't just combine those two summarizers
+ per 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:stdcomb"
+
+\end_inset
+
+ above as our summarizers counted all positive events twice: once as 
+\begin_inset Formula $\left(0,t_{i}\right)$
+\end_inset
+
+ in pageload log and once as 
+\begin_inset Formula $\left(1,t_{i}\right)$
+\end_inset
+
+ in the positive event log 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Perhaps error due to simple history merge would be small enough and acceptable
+ if there's huge skew towards negatives; but it doesn't cost much extra
+ to compensate for this, so let's do a little more work here.
+\end_layout
+
+\end_inset
+
+.
+ The formulas to combine positive summarizers thus should not account for
+ weights of 1's when merging them into 0.
+ We actually could merge summarizers counting positive events onto base
+ summarizer multiple times:
+\end_layout
+
+\begin_layout Standard
+assuming case 
+\begin_inset Formula $t^{\left(1\right)}\geq t^{\left(0\right)}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t^{\left(1\right)};\\
+s=s^{\left(1\right)}+s^{\left(0\right)}e^{-\left(t_{2}-t_{1}\right)/\alpha};\\
+w=w^{\left(0\right)}e^{-\left(t_{2}-t_{1}\right)/\alpha}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t^{\left(1\right)}<t^{\left(0\right)}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t^{\left(0\right)}; & \left(no\, change\right)\\
+s=s^{\left(0\right)}+s^{\left(1\right)}e^{-\left(t_{2}-t_{1}\right)/\alpha};\\
+w=w^{\left(0\right)}. & \left(no\, change\right)
+\end{cases}
+\]
+
+\end_inset
+
+These formulas are implemented by 
+\family typewriter
+OnlineExpWeightedIrregularSummarizer#combineBinomialOnes()
+\family default
+ method.
+ Thus, to combine the impression binomial sum 
+\begin_inset Formula $S^{\left(0\right)}$
+\end_inset
+
+ and click binomial sum 
+\begin_inset Formula $S^{\left(1\right)}$
+\end_inset
+
+, we need to do 
+\family typewriter
+pageloadSum.combineBinomialOnes(positiveLogSum)
+\family default
+.
+\end_layout
+
+\begin_layout Subsection
+Implementation class
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+OnlineBinomialBiasedExpWeightedIrregularSummarizer
+\family default
+.
+\end_layout
+
+\begin_layout Section
+Exponentially weighted rates
+\end_layout
+
+\begin_layout Subsection
+Rate updates
+\end_layout
+
+\begin_layout Standard
+Exponentially weighted rates is essentially the same as exponentially weighted
+ average except we rate it by count/time, so every event accounts for 
+\begin_inset Formula $x_{n}/\left(t_{n}-t_{n-1}\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $x_{n}$
+\end_inset
+
+ plays role of 
+\series bold
+number of occurrences
+\series default
+ of the event at time 
+\begin_inset Formula $t_{n}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+r=\frac{\sum_{i}x_{i}e^{-\left(t_{i}-t_{0}\right)/\alpha}}{\sum_{i}\left[\left(t_{i}-t_{i-1}\right)\cdot\mathrm{avg}\left(e^{-x}|{}_{-\left(t_{i}-t_{i-1}\right)/\alpha}^{0}\right)\right]},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which translates again into (assuming 
+\begin_inset Formula $\pi_{0}=1,\, w_{0}=0,\, s_{0}=0$
+\end_inset
+
+ ):
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{n+1}>t_{n}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\Delta t=t_{n+1}-t_{n},\\
+\begin{cases}
+\pi_{0}=1;\\
+\pi_{n+1}=e^{-\Delta t/\alpha};
+\end{cases}\\
+w_{n+1}=\pi_{n+1}w_{n}+\alpha\cdot(1-\pi_{n+1});\\
+s_{n+1}=x_{n+1}+\pi_{n+1}s_{n};\\
+t_{n+1}=t_{n+1}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{n+1}<t_{n}:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\Delta t=t_{n}-t_{n+1},\\
+\begin{cases}
+\pi_{0}=1,\\
+\pi=e^{-\Delta t/\alpha},
+\end{cases}\\
+w_{n+1}=\max\left[w_{n},\alpha\cdot\left(1-\pi_{n+1}\right)\right],\\
+s_{n+1}=s_{n}+\pi_{n+1}x_{n+1},\\
+t_{n+1}=t_{n}. & \left(\mathrm{no\, change}\right)
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The term 
+\begin_inset Formula $\alpha\left(1-\pi_{n+1}\right)$
+\end_inset
+
+ really corresponds to the function average of the exponent 
+\begin_inset Formula $f\left(x\right)=e^{x}$
+\end_inset
+
+ multiplied by 
+\begin_inset Formula $\Delta t$
+\end_inset
+
+ which boils down to integrating area under exponent
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Using this useful identity: 
+\begin_inset Formula $\int e^{ax}=$
+\end_inset
+
+
+\begin_inset Formula $\frac{1}{a}e^{ax}.$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset Formula 
+\[
+\Delta t\cdot\bar{f}\left(x|\left[-\frac{\Delta t}{\alpha},0\right]\right)=\int_{0}^{\Delta t}e^{-x/\alpha}dx=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\alpha\cdot\left(e^{0}-e^{-\Delta t/\alpha}\right)=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\alpha\left(1-\pi\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+rNow()
+\end_layout
+
+\begin_layout Standard
+Similarly to 
+\family typewriter
+pNow()
+\family default
+, it is possible to pull rate from any future point of time and encorporate
+ the gap since last even into the rate:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+r_{t}=\frac{s_{n}\pi_{t}}{\alpha\left(1-\pi_{t}\right)+w_{n}\pi_{t}},
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\pi_{n}=e^{-\left(t-t_{n}\right)/\alpha}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Combining rate summarizers 
+\end_layout
+
+\begin_layout Standard
+See implementation class for detail.
+ In most general case, when both summarizers have non-zero history, and
+ 
+\begin_inset Formula $t_{1}\ge t_{2}$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\pi=e^{-\Delta t/\alpha},
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+w=\max\left(w_{1},\pi w_{2}+\alpha\left(1-\pi\right)\right),
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+s=s_{1}+\pi s_{2},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+t=\max\left(t_{1,}t_{2}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{1}<t_{2}$
+\end_inset
+
+ is symmetrical w.r.t.
+ indices 
+\begin_inset Formula $\left(\cdot\right)_{1},\,\left(\cdot\right)_{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Complementing rate summarizers 
+\end_layout
+
+\begin_layout Standard
+Again, per above 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:complem"
+
+\end_inset
+
+, we assert 
+\begin_inset Formula $t_{1}\ge t_{2}$
+\end_inset
+
+.
+ Strictly speaking, inverse operation for rates is not possible (at least,
+ i don't see how).
+ The only thing that is possible is to compute a complement set of events
+ with assumption that 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ includes all measurements in the correspondent continous period (i.e.
+ S1 is all events for April and 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ is all events for 3-5 of April and we want to find rate during 1-2 , 6-30
+ of April.
+ ) 
+\end_layout
+
+\begin_layout Standard
+For that corner case, corrections for rates are: 
+\begin_inset Formula 
+\[
+s=s_{1}-s_{2}\pi;
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+w=w_{1}-w_{2}\pi.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Also, another invariant to assert is 
+\begin_inset Formula 
+\[
+w_{1}-\alpha\left(1-\pi\right)\ge\pi w_{2},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which asserts that first observation of 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ was not earlier than first observation of 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Warning1:
+\end_layout
+
+\begin_layout Standard
+As I said, the above formula only works for 100% continuous intervals 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Warning2:
+\end_layout
+
+\begin_layout Standard
+Note that if you create summarizer for 
+\begin_inset Formula $\left\{ x_{1},t_{1}...x_{k},t_{k}\right\} $
+\end_inset
+
+ then it relates to time period 
+\begin_inset Formula $\left[t_{1},t_{k}\right]$
+\end_inset
+
+.
+ Subsequently, if you combine two subsequnces of the above, it will correspond
+ to times 
+\begin_inset Formula $\left[t_{1},t_{i}\right]$
+\end_inset
+
+ and 
+\begin_inset Formula $\left[t_{i+1},t_{k}\right]$
+\end_inset
+
+ which does not add up to a continues interval.
+ Instead, it will have a time gap 
+\begin_inset Formula $\left(t_{i},t_{i+1}\right)$
+\end_inset
+
+ that is unnaccounted for.
+ This will create errors for both combining rates and complementing continues
+ rate intervals.
+ To fix that, the first sequence 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+ needs to include additional sample 
+\begin_inset Formula $\left(0,t_{i+1}\right)$
+\end_inset
+
+ to connect correctly to the next slice.
+ 
+\end_layout
+
+\begin_layout Standard
+In practice, when building projections, we just need to explicitly set boundarie
+s of projections by adding samples 
+\begin_inset Formula $\left(0,t_{left}\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(0,t_{right}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Implementation class
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+OnlineExpWeightedRateSummarizer
+\family default
+.
+\end_layout
+
+\begin_layout Section
+Canny filters 
+\end_layout
+
+\begin_layout Subsection
+Adaptation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s\left(t\right)=ke^{-t}-\left(k-1\right)e^{-\frac{k}{k-1}t},\, k>1.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This 
+\begin_inset Formula $s\left(t\right)$
+\end_inset
+
+ (which Ted Dunning calls 'Canny's filter', 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Canny-filter"
+
+\end_inset
+
+) has desirable properties of 
+\begin_inset Formula $s'\left(0\right)=0$
+\end_inset
+
+ and 
+\begin_inset Formula $s\left(0\right)=1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename ../../../inadco-tdd/3.x/CannyFilter.png
+	width 95col%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Canny-filter"
+
+\end_inset
+
+Canny filter with 
+\begin_inset Formula $k=4$
+\end_inset
+
+ (red) vs.
+ 
+\begin_inset Formula $y\left(x\right)=e^{-x}$
+\end_inset
+
+ (black) vs.
+ bell-shape 
+\begin_inset Formula $y\left(x\right)=\sqrt{e^{-x^{2}}}$
+\end_inset
+
+(blue).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In our case, it takes form of 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y\left(x\right)=ke^{-x/\alpha}-\left(k-1\right)e^{-kx/\alpha\left(k-1\right)}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Given margin 
+\begin_inset Formula $m$
+\end_inset
+
+ and decay time 
+\begin_inset Formula $\Delta t$
+\end_inset
+
+, so that 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+y\left(\Delta t\right)=m,\label{eq:canny-margin}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+solving 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:canny-margin"
+
+\end_inset
+
+ for alpha, we get estimate for 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ assuming margin 
+\begin_inset Formula $m\ll1$
+\end_inset
+
+ as 
+\begin_inset Formula 
+\[
+\alpha\approx-\frac{\Delta t}{\ln\left(m/k\right)}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Iterative update 
+\begin_inset Formula $t_{n+1}\geq t_{n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\begin{cases}
+\pi_{0}=1,\,\nu_{0}=1,\\
+\pi=e^{-\left(t_{n+1}-t_{n}\right)/\alpha};\\
+\nu=e^{-k\left(t_{n+1}-t_{n}\right)/\alpha\left(k-1\right)};
+\end{cases}\\
+w_{n+1}=1+\pi w_{n};\\
+v_{n+1}=1+\nu v_{n};\\
+s_{n+1}=x_{n+1}+\pi s_{n};\\
+u_{n+1}=x_{n+1}+\nu u_{n};\\
+t_{n+1}=t_{n+1}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then average 
+\begin_inset Formula 
+\[
+\mu=\frac{ks-\left(k-1\right)u}{kw-\left(k-1\right)v}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Persisted summarizer state thus consists of parameters 
+\begin_inset Formula $\left\{ w,v,s,u,t,k,\alpha\right\} .$
+\end_inset
+
+ Parameters 
+\begin_inset Formula $k$
+\end_inset
+
+ and 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ are set in constructor and thus don't evolve.
+\end_layout
+
+\begin_layout Subsection
+Iterative update in-the-past 
+\begin_inset Formula $t_{n+1}<t_{n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+\begin{cases}
+\pi_{0}=1,\,\nu_{0}=1;\\
+\pi=e^{-\left(t_{n}-t_{n+1}\right)/\alpha},\\
+\nu=e^{-k\left(t_{n}-t_{n+1}\right)/\alpha\left(k-1\right)};
+\end{cases}\\
+w_{n+1}=w_{n}+\pi,\\
+v_{n+1}=v_{n}+\nu,\\
+s_{n+1}=s_{n}+\pi x_{n+1},\\
+u_{n+1}=u_{n}+\nu x_{n+1},\\
+t_{n+1}=t_{n}.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Combining Canny summarizers 
+\end_layout
+
+\begin_layout Standard
+Combining two summarizer states 
+\begin_inset Formula $S_{1},\, S_{2}$
+\end_inset
+
+ having observed two disjoint sets of original observation superset:
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{2}\geq t_{1}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{cases}
+t=t_{2};\\
+\pi=e^{-\left(t_{2}-t_{1}\right)/\alpha};\\
+\nu=e^{-k\left(t_{2}-t_{1}\right)/\alpha\left(k-1\right)};\\
+s=s_{2}+s_{1}\pi;\\
+u=u_{2}+u_{1}\nu;\\
+w=w_{2}+w_{1}\pi;\\
+v=v_{2}+v_{1}\nu.
+\end{cases}\label{eq:cannycomb}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Complementing Canny summarizers
+\end_layout
+
+\begin_layout Standard
+Assuming 
+\begin_inset Formula $S=S_{1}\backslash S_{2}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mbox{case }t_{1}\ge t_{2}:
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t_{1};\\
+\pi=e^{-(t_{1}-t_{2})/\alpha};\\
+\nu=e^{-k(t_{1}-t_{2})/\alpha\left(k-1\right)};\\
+s=s_{1}-s_{2}\pi;\\
+u=u_{1}-u_{2}\nu;\\
+w=w_{1}-w_{2}\pi;\\
+v=v_{1}-v_{2}\nu.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t_{1}<t_{2}$
+\end_inset
+
+ is illegal (since 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+ must include all events in 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+, including the latest one).
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Note1: Surprisingly, this intuition doesn't work in case of Canny sums,
+ apparently, because it keeps ratios 
+\begin_inset Formula $s/w$
+\end_inset
+
+ and 
+\begin_inset Formula $u/v$
+\end_inset
+
+ identical but not 
+\begin_inset Formula $\frac{ks-\left(k-1\right)u}{kw-\left(k-1\right)v}.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Note2: as additional unit testing shows, it apparently works, just not terribly
+ numerically stable over significant amount of iterations as opposed to
+ combining.
+ So we should be avoiding a lot of nested complement operations with these
+ functions (but 1 or 2 are o.k.) 
+\end_layout
+
+\begin_layout Subsection
+Merging in positive samples only for binomial cases 
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t^{\left(1\right)}\geq t^{\left(0\right)}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t^{\left(1\right)};\\
+\pi=e^{-\left(t^{\left(1\right)}-t^{\left(0\right)}\right)/\alpha};\\
+\nu=e^{-k\left(t^{\left(1\right)}-t^{\left(0\right)}\right)/\alpha\left(k-1\right)};\\
+s=s^{\left(1\right)}+s^{\left(0\right)}\pi;\\
+u=u^{\left(1\right)}+u^{\left(0\right)};\\
+w=w^{\left(0\right)}\pi;\\
+v=v^{\left(0\right)}\nu.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Case 
+\begin_inset Formula $t^{\left(1\right)}<t^{\left(0\right)}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t^{\left(0\right)}; & \left(no\, change\right)\\
+\pi=e^{-\left(t^{\left(0\right)}-t^{\left(1\right)}\right)/\alpha};\\
+\nu=e^{-k\left(t^{\left(0\right)}-t^{\left(1\right)}\right)/\alpha\left(k-1\right)};\\
+s=s^{\left(0\right)}+s^{\left(1\right)}\pi;\\
+u=u^{\left(0\right)}+u^{\left(1\right)}\nu;\\
+w=w^{\left(0\right)}; & \left(no\, change\right)\\
+v=v^{\left(0\right)} & (no\, change).
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Pecularities of Canny rate summarizer implementation 
+\end_layout
+
+\begin_layout Standard
+As with regular exponential rate summarizer, combining and complementing
+ state operations work much smoother if for time increments, we take area
+ under curve, instead of just time increment 
+\begin_inset Formula $\Delta t$
+\end_inset
+
+, i.e.
+ we use general approach of incremental build of time-related metric
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\hat{w}_{n+1}=s(t_{n})\hat{w}_{n-1}+\int_{0}^{\Delta t}s\left(t\right)dt.\label{eq:inc-time}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The term 
+\begin_inset Formula $\int_{0}^{\Delta t}s\left(t\right)dt$
+\end_inset
+
+ is essentially the same time, 
+\begin_inset Formula $\Delta t$
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+continuously compressed
+\begin_inset Quotes erd
+\end_inset
+
+ by the negative exponent decay, or, in this case, by Canny function decay.
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:inc-time"
+
+\end_inset
+
+ comes apart as difference of two exponent related terms, which we previously
+ denoted 
+\begin_inset Formula $w$
+\end_inset
+
+ and 
+\begin_inset Formula $v$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Integrating time for the first exponent gives already familiar result
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\int_{0}^{\Delta t}\exp\left(-\frac{x}{\alpha}\right)dx=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\alpha\left[\exp\left(-\frac{x}{\alpha}\right)|_{\Delta t}^{0}\right]=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\alpha\left(1-\pi\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Integrating time for second exponent
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\int_{0}^{\Delta t}\exp\left(-\frac{k}{\left(k-1\right)\alpha}x\right)dx=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\frac{\left(k-1\right)\alpha}{k}\exp\left(-\frac{k}{\left(k-1\right)\alpha}x\right)|_{\Delta t}^{0}=
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+=\frac{\alpha\left(k-1\right)}{k}\left(1-\nu\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(of course in the latter case if 
+\begin_inset Formula $w_{n}\geq\alpha\left(1-\pi\right)\equiv v_{n}\geq\frac{\left(k-1\right)}{k}\alpha\left(1-\nu\right)$
+\end_inset
+
+, so we can optimize a little based on that).
+\end_layout
+
+\begin_layout Standard
+Assuming 
+\begin_inset Formula $\pi_{0}=1,\,\nu_{0}=1$
+\end_inset
+
+, but otherwise 
+\begin_inset Formula 
+\[
+\pi=\exp\left(-\frac{\left|t_{n+1}-t_{n}\right|}{\alpha}\right),
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\nu=\exp\left(-\frac{k\cdot\left|t_{n+1}-t_{n}\right|}{\alpha\left(k-1\right)}\right),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+for the case of 
+\begin_inset Formula $t_{n+1}\geq t_{n}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+w_{n+1}=\pi w_{n}+k\alpha\left(1-\pi\right);\\
+v_{n+1}=\nu v_{n}+\frac{\left(k-1\right)^{2}}{k}\alpha\left(1-\nu\right);
+\end{cases}
+\]
+
+\end_inset
+
+and for the case of 
+\begin_inset Formula $t_{n+1}<t_{n}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+w_{n+1}=\max\left(w_{n},\alpha\left(1-\pi\right)\right);\\
+v_{n+1}=\max\left(v_{n},\frac{\left(k-1\right)}{k}\alpha\left(1-\nu\right)\right).
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The logic of advancing 
+\begin_inset Formula $s_{n+1}$
+\end_inset
+
+ and 
+\begin_inset Formula $u_{n+1}$
+\end_inset
+
+ is the same as in Canny average summarizer.
+\end_layout
+
+\begin_layout Subsection
+Pecularities of combining Canny rate summarizers
+\end_layout
+
+\begin_layout Standard
+Assuming both summarizers have nonzero history and 
+\begin_inset Formula $\alpha^{\left(1\right)}=\alpha^{\left(2\right)}=\alpha,$
+\end_inset
+
+ and 
+\begin_inset Formula $k^{\left(1\right)}=k^{\left(2\right)}=k$
+\end_inset
+
+ as a precondition, combining routine looks like 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi=\exp\left(-\frac{\left|t^{\left(2\right)}-t^{(1)}\right|}{\alpha}\right),
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\nu=\exp\left(-\frac{k\cdot\left|t^{\left(2\right)}-t_{n}^{\left(1\right)}\right|}{\alpha\left(k-1\right)}\right),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mbox{case }t^{\left(1\right)}\ge t^{\left(2\right)}:
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+t=t^{\left(1\right)}\\
+s=s^{\left(1\right)}+\pi s^{\left(2\right)}\\
+u=u^{\left(1\right)}+\nu u^{\left(2\right)}\\
+w=\max\left(w^{\left(1\right)},\pi w^{\left(2\right)}+\alpha\left(1-\pi\right)\right)\\
+v=\max\left(v^{\left(1\right)},\nu v^{\left(2\right)}+\frac{\left(k-1\right)}{k}\alpha\left(1-\nu\right)\right)
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+case 
+\begin_inset Formula $t^{\left(1\right)}<t^{\left(2\right)}$
+\end_inset
+
+ is symmetric w.r.t.
+ indices 
+\begin_inset Formula $\left(\cdot\right)^{\left(1\right)}$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(\cdot\right)^{\left(2\right)}$
+\end_inset
+
+.
+ Also note that choices under both max() functions are identical, so we
+ can save on comparisons a little bit.
+\end_layout
+
+\begin_layout Subsection
+Pecularities of biased binomial Canny estimator
+\end_layout
+
+\begin_layout Standard
+I haven't figured a good way to solve this exactly, so i am using approximations
+ as per 1 exponent.
+\end_layout
+
+\begin_layout Section
+OnlineMeanSummarizer
+\end_layout
+
+\begin_layout Standard
+This is a simple Welford summarizer computing mean and variance with combine
+ method provided and supported 
+\family typewriter
+Writable
+\family default
+ serialization.
+\end_layout
+
+\begin_layout Section
+Test classes
+\end_layout
+
+\begin_layout Standard
+Test class for summarizers is 
+\family typewriter
+OnlineSummarizerTest
+\family default
+.
+\end_layout
+
+\begin_layout Section
+Pig functions
+\end_layout
+
+\begin_layout Standard
+Each pig function accepts initialization string determining type of summarizer
+ and (optionally) its parameters.
+ The initialization spring is space-separated <name>=<value> pairs:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+sep = 1*( SPACE / TAB )
+\end_layout
+
+\begin_layout Plain Layout
+
+init-str = nvp *( sep nvp )
+\end_layout
+
+\begin_layout Plain Layout
+
+nvp = name *sep '=' *sep value   ; name-value pair
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One common parameter is 
+\family typewriter
+type
+\family default
+.
+ Currently available values are : 
+\end_layout
+
+\begin_layout Description
+type=EXP_AVG exponential average with irregular sampling.
+ Valid additional parameters are: 
+\family typewriter
+dt
+\family default
+ (mandatory, history length), 
+\family typewriter
+m
+\family default
+ (optional, default 0.01, history length margin).
+\end_layout
+
+\begin_layout Description
+type=EXP_BIASED_BINOMIAL exponentially weighted biased binomial estimator.
+ Valid additional parameters are: 
+\family typewriter
+p0
+\family default
+ (mandatory, prior value), 
+\family typewriter
+dt
+\family default
+ (mandatory, history length), 
+\family typewriter
+m
+\family default
+ (margin, optional, default 0.01), 
+\family typewriter
+epsilon
+\family default
+ (bias significance margin, optional, 0.5 default).
+\end_layout
+
+\begin_layout Description
+type=EXP_RATE exponentially weighted rate of events (x is number of events
+ at time t).
+ Valid additional parameters are: 
+\family typewriter
+dt
+\family default
+, 
+\family typewriter
+m
+\family default
+ (same as in exponential average).
+\end_layout
+
+\begin_layout Description
+type=CANNY_AVG Canny's filter weighted exponential average with irregular
+ sampling.
+ Valid additional parameters are: 
+\family typewriter
+dt
+\family default
+ (mandatory, history length), 
+\family typewriter
+m
+\family default
+ (optional, default 0.01, approximate history margin), 
+\family typewriter
+k
+\family default
+ (optional, default 4, k-factor in Canny's filter function).
+\end_layout
+
+\begin_layout Description
+type=CANNY_AVG Canny's rate summarizer.
+ Parameters are the same as for CANNY_AVG.
+\end_layout
+
+\begin_layout Description
+com.inadco.math.pig.ExpAvgUpdate(bag:{(x:double,t:double)}) Create & summarize
+ a bag given as a parameter.
+ Bag schema must contain a tuple 
+\begin_inset Formula $\left(x_{i},t_{i}\right)$
+\end_inset
+
+.
+ See use example below.
+ 
+\begin_inset Newline newline
+\end_inset
+
+Function's constructor accepts initialization script that should contain
+ 
+\family typewriter
+type
+\family default
+ parameter and all mandatory parameters for that type per above.
+\end_layout
+
+\begin_layout Description
+com.inadco.math.pig.ExpAvgCombine(s1:bytearray,...,sN:bytearray) Combine an arbitrary
+ number of summarizers.
+ 
+\begin_inset Newline newline
+\end_inset
+
+The constructor accepts initialization string which can have only 
+\family typewriter
+type
+\family default
+ parameter per above since this function never creates an 'empty' serializer
+ but rather only deserializes existing ones.
+\end_layout
+
+\begin_layout Description
+com.inadco.math.pig.ExpAvgGet(s:bytearray
+\begin_inset space ~
+\end_inset
+
+[,
+\begin_inset space ~
+\end_inset
+
+tNow:double]) Get most recent summarizer value.
+ Some summarizers can account for the time that has passed since the last
+ observation (pNow parameter).
+ If it is supplied, then that version of summarizer value is called.
+ Otherwise, 
+\begin_inset Quotes eld
+\end_inset
+
+now
+\begin_inset Quotes erd
+\end_inset
+
+ is considered to be time of the last (most recent time-wise) observation.
+\begin_inset Newline newline
+\end_inset
+
+The constructor accepts initialization string which can have only 
+\family typewriter
+type
+\family default
+ parameter per above since this function never creates an 'empty' serializer
+ but rather only deserializes existing ones.
+\end_layout
+
+\begin_layout Description
+com.inadco.math.pig.ExpAvgNew() Create an empty summarizer with parameters supplied
+ in the init string.
+\end_layout
+
+\begin_layout Paragraph
+Example.
+\end_layout
+
+\begin_layout Standard
+The example that uses the functions is found in 
+\family typewriter
+ExpAvgTest.java
+\family default
+.
+ The pig script that is run is found in 
+\family typewriter
+expavgtest.pig
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+expavgtest.pig
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout LyX-Code
+
+\size tiny
+DEFINE CannyUpdate6days com.inadco.math.pig.ExpAvgUpdate('type=CANNY_AVG dt=6.0');
+ 
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+DEFINE CannyCombine com.inadco.math.pig.ExpAvgCombine('type=CANNY_AVG'); 
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+DEFINE CannyGet com.inadco.math.pig.ExpAvgGet('type=CANNY_AVG'); 
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+DEFINE CannyNew6days com.inadco.math.pig.ExpAvgNew('type=CANNY_AVG dt=6.0');
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+data = load 'input.txt'  using PigStorage(',') AS (name:chararray,x:double,t:doub
+le);
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe data;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+D10 = foreach data generate name, x,t;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe D10;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+D20 = GROUP D10 by name;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe D20;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+D30 = foreach D20 generate group as name, CannyUpdate6days(D10.(x,t)) as
+ avg;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe D30;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+-- add additional empty compatible summarizer as avg1 
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+D40 = foreach D30 generate name, avg, CannyNew6days() as avg1;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe D40;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+-- combine use demo D50 = foreach D40 generate name, CannyCombine(avg,avg1)
+ as avg;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe D50; 
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+-- now get the final average and report it D60 = foreach D50 generate name,
+ CannyGet(avg) as avg;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+TFin = foreach D60 generate *;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+describe TFin;
+\end_layout
+
+\begin_layout LyX-Code
+
+\size tiny
+store  TFin into 'output';
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\labelwidthstring References
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Dunning"
+
+\end_inset
+
+Credit is due to Ted Dunning's blog 
+\begin_inset CommandInset href
+LatexCommand href
+target "http://tdunning.blogspot.com/2011/03/exponentially-weighted-averaging-for.html"
+
+\end_inset
+
+ which touched off the thought process on online summarization and exponent
+ difference functions.
+\end_layout
+
+\begin_layout Bibliography
+\labelwidthstring References
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Lyubimov"
+
+\end_inset
+
+ 
+\begin_inset CommandInset href
+LatexCommand href
+target "http://weatheringthrutechdays.blogspot.com/search/label/biased%20summarizer"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
