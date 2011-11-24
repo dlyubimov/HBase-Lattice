@@ -16,13 +16,14 @@
  *  
  *  
  */
-package com.inadco.hbl.client;
+package com.inadco.hbl.model;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.client.impl.functions.FCount;
 import com.inadco.hbl.client.impl.functions.FSum;
@@ -36,11 +37,11 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
  * @author dmitriy
  * 
  */
-public class AggregateFunctionRegistry {
+public class SimpleAggregateFunctionRegistry implements AggregateFunctionRegistry {
 
     private final Map<String, AggregateFunction> functions = new HashMap<String, AggregateFunction>();
 
-    public AggregateFunctionRegistry() {
+    SimpleAggregateFunctionRegistry() {
         super();
         // standard aggregates
         addFunction(new FCount());
@@ -72,7 +73,7 @@ public class AggregateFunctionRegistry {
             af.merge(accumulator, source, operation);
     }
 
-    public void addFunction(AggregateFunction function) {
+    void addFunction(AggregateFunction function) {
         functions.put(function.getName().toUpperCase(), function);
     }
 

@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
 
-import com.inadco.hbl.client.AggregateFunctionRegistry;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;

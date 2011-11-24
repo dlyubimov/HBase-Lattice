@@ -26,15 +26,16 @@ import org.apache.pig.PigException;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Measure;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
+import com.inadco.hbl.model.SimpleAggregateFunctionRegistry;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
 /**
  * 
  * Pig function that takes the measure value, and uses measure to translate it
- * to double first and then {@link AggregateFunctionRegistry} to produce final
- * {@link Aggregation}.
+ * to double first and then {@link SimpleAggregateFunctionRegistry} to produce
+ * final {@link Aggregation}.
  * <P>
  * 
  * meausure name and model must be configured thru Pig's DEFINE.
@@ -47,12 +48,13 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
  */
 public class AggregationFromMeasure extends BaseFunc<DataByteArray> {
 
-    private AggregateFunctionRegistry afr = new AggregateFunctionRegistry();
+    private AggregateFunctionRegistry afr;
     private String                    measureName;
 
     public AggregationFromMeasure(String measureName, String encodedModel) throws PigException {
         super(encodedModel);
         this.measureName = measureName;
+        this.afr = super.cube.getAggregateFunctionRegistry();
     }
 
     @Override

@@ -27,13 +27,15 @@ import java.util.Set;
 
 import org.apache.commons.lang.Validate;
 
+import com.inadco.hbl.api.AggregateFunction;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Measure;
+import com.inadco.hbl.client.impl.functions.FCustomFunc;
 
 /**
- * Simple cube model implementation. 
+ * Simple cube model implementation.
  * 
  * @author dmitriy
  * 
@@ -51,14 +53,19 @@ public class SimpleCube implements Cube {
 
     protected Map<String, Measure>      measures         = new HashMap<String, Measure>();
     protected Map<String, Measure>      readonlyMeasures = Collections.unmodifiableMap(measures);
+    protected SimpleAggregateFunctionRegistry afr;
 
     /**
      * constructor
      * 
      * @param name
+     *            cube name
      * @param dimensions
+     *            list (set) of dimensions
      * @param cuboids
+     *            sequence of cuboids. Order important.
      * @param measures
+     *            list (set) of measures
      */
     public SimpleCube(String name, Dimension[] dimensions, Cuboid[] cuboids, Measure[] measures) {
         super();
@@ -73,6 +80,17 @@ public class SimpleCube implements Cube {
         }
         for (Measure m : measures)
             this.measures.put(m.getName(), m);
+        this.afr = new SimpleAggregateFunctionRegistry();
+    }
+
+    public SimpleCube(String name,
+                      Dimension[] dimensions,
+                      Cuboid[] cuboids,
+                      Measure[] measures,
+                      AggregateFunction[] customFunctions) {
+        this(name, dimensions, cuboids, measures);
+        for (AggregateFunction cf : customFunctions)
+            afr.addFunction(cf);
     }
 
     public String getName() {
@@ -106,4 +124,10 @@ public class SimpleCube implements Cube {
         return readonlyDims;
     }
 
+    @Override
+    public SimpleAggregateFunctionRegistry getAggregateFunctionRegistry() {
+        return afr;
+    }
+
+    
 }

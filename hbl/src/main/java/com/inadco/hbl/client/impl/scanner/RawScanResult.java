@@ -23,7 +23,7 @@ import java.util.Comparator;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.inadco.hbl.client.AggregateFunctionRegistry;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 

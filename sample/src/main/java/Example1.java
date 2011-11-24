@@ -159,7 +159,7 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
                                   new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
                                   ar.getAggregate("impCnt", "SUM"),
                                   ar.getAggregate("impCnt", "COUNT"),
@@ -202,7 +202,7 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
                                   new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
                                   ar.getAggregate("impCnt", "SUM"),
                                   ar.getAggregate("impCnt", "COUNT"),
@@ -241,7 +241,7 @@ public class Example1 extends Configured implements Tool {
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
-                System.out.printf("%s sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                System.out.printf("%s sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
                 // new BigInteger(1,(byte[])ar.getGroupMember("dim1")),
                                   "no-group",
                                   ar.getAggregate("impCnt", "SUM"),
@@ -298,7 +298,7 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     AggregateResult ar = rs.current();
-                    System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
                                       new BigInteger(1, (byte[]) ar.getGroupMember("dim1")),
                                       ar.getAggregate("impCnt", "SUM"),
                                       ar.getAggregate("impCnt", "COUNT"),
@@ -382,7 +382,7 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    System.out.printf("%032X sum/cnt: impCnt %.4f/%.0f, click %.4f/%.0f\n",
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
 
                                       new BigInteger(1, (byte[]) ar.getObject(0)),
                                       ar.getObject("impSum"),
@@ -442,9 +442,9 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    System.out.printf("dim1: %032X impCnt %%.4f\n",
-                                      new BigInteger(1,(byte[])ar.getObject("dim1"))
-//                                      ,ar.getObject("impCnt")
+                    System.out.printf("dim1: %032X impCnt %.4f\n",
+                                      new BigInteger(1,(byte[])ar.getObject("dim1")),
+                                      ar.getObject("impCnt")
                                       );
                 }
                 closeables.remove(rs);

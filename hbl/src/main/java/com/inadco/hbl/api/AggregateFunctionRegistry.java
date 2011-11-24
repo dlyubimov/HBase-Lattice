@@ -16,35 +16,30 @@
  *  
  *  
  */
-
 package com.inadco.hbl.api;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import com.inadco.hbl.model.SimpleAggregateFunctionRegistry;
+import com.inadco.hbl.client.impl.SliceOperation;
+import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
-public interface Cube  {
-    
-    String getName();
+/**
+ * Aggregate function registry supporting certain compilation and query
+ * operations over aggregate function space.
+ * 
+ * @author dmitriy
+ * 
+ */
+public interface AggregateFunctionRegistry {
 
-    Collection<? extends Cuboid> getCuboids();
+    void applyAll(Aggregation.Builder accumulator, Object measure);
 
-    /**
-     * finds cuboid with composite key order exactly as path
-     * 
-     * @param path
-     * @return cuboid, or null if none exist
-     */
-    Cuboid findCuboidForPath(List<String> path);
+    void mergeFunctions(Collection<String> funcNames,
+                        Aggregation.Builder accumulator,
+                        Aggregation source,
+                        SliceOperation operation);
 
-    Cuboid findClosestSupercube(Set<String> dimensions);
-    
-    Map<String,? extends Measure> getMeasures();
-    Map<String,? extends Dimension> getDimensions();
-    
-    AggregateFunctionRegistry getAggregateFunctionRegistry();
+    void mergeAll(Aggregation.Builder accumulator, Aggregation source, SliceOperation operation);
 
+    AggregateFunction findFunction(String name);
 }

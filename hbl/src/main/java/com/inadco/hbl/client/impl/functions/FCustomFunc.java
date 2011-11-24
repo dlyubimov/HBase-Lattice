@@ -29,12 +29,12 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.inadco.hbl.api.AggregateFunction;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
-public abstract class FCustomStateFunc implements AggregateFunction {
+public abstract class FCustomFunc implements AggregateFunction {
 
     private int    ordinal;
     private String name;
 
-    protected FCustomStateFunc(String name, int ordinal) {
+    protected FCustomFunc(String name, int ordinal) {
         super();
         this.ordinal = ordinal;
         this.name = name;

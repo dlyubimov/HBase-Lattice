@@ -32,8 +32,8 @@ import org.antlr.runtime.tree.Tree;
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
 
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Cube;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.PreparedAggregateQuery;
@@ -61,8 +61,8 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
     private Map<Integer, Object> resultDefsByIndex = new HashMap<Integer, Object>();
     private Map<String, Object>  resultDefsByAlias = new HashMap<String, Object>();
 
-    public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
-        super(cube, es, tpool, afr);
+    public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool) {
+        super(cube, es, tpool);
     }
 
     @Override

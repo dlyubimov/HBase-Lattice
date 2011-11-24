@@ -32,13 +32,13 @@ import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Hierarchy;
 import com.inadco.hbl.api.Measure;
 import com.inadco.hbl.api.Range;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateQuery;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
@@ -58,19 +58,19 @@ public class AggregateQueryImpl implements AggregateQuery {
     /**
      * dim name -> range slice requested
      */
-    private Map<String, List<Slice>>     dimSlices       = new HashMap<String, List<Slice>>();
+    private Map<String, List<Slice>>    dimSlices       = new HashMap<String, List<Slice>>();
     private Set<String>                 measures        = new HashSet<String>();
 
     protected List<String>              groupDimensions = new ArrayList<String>();
     private HTablePool                  tpool;
     protected AggregateFunctionRegistry afr;
 
-    public AggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool, AggregateFunctionRegistry afr) {
+    public AggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool) {
         super();
         this.cube = cube;
         this.es = es;
         this.tpool = tpool;
-        this.afr = afr;
+        this.afr = cube.getAggregateFunctionRegistry();
     }
 
     @Override
@@ -174,13 +174,7 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 
-            return createResultSet(
-                scanSpecs,
-                es,
-                tpool,
-                afr,
-                measureName2indexMap,
-                dimName2GroupKeyOffsetMap);
+            return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

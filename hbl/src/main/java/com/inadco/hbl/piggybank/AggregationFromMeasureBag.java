@@ -32,9 +32,9 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Measure;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
@@ -179,7 +179,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
-        protected AggregateFunctionRegistry afr         = new AggregateFunctionRegistry();
+        protected AggregateFunctionRegistry afr;
         protected boolean                   combine;
 
         public Initial() {
@@ -190,6 +190,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
             super(encodedModel);
             this.measureName = measureName;
             this.combine = (combine != null && "y".equals(combine));
+            this.afr = super.cube.getAggregateFunctionRegistry();
         }
 
         @Override
@@ -233,7 +234,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
-        protected AggregateFunctionRegistry afr         = new AggregateFunctionRegistry();
+        protected AggregateFunctionRegistry afr;
 
         public Final() {
             super();
@@ -242,6 +243,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         public Final(String measureName, String encodedModel) {
             super(encodedModel);
             this.measureName = measureName;
+            this.afr = super.cube.getAggregateFunctionRegistry();
         }
 
         @Override

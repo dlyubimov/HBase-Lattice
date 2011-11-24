@@ -21,18 +21,20 @@ package com.inadco.hbl.client.impl.scanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.datastructs.GroupingStrategy;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 
 /**
- * Grouping strategy for scan groups. <P>
+ * Grouping strategy for scan groups.
+ * <P>
  * 
- * Given scan spec, merge adjacent tuples together that constitute a group.<P>
+ * Given scan spec, merge adjacent tuples together that constitute a group.
+ * <P>
  * 
  * @author dmitriy
- *
+ * 
  */
-public class GroupingScanStrategy implements GroupingStrategy<RawScanResult,RawScanResult> {
+public class GroupingScanStrategy implements GroupingStrategy<RawScanResult, RawScanResult> {
 
     private ScanSpec                  scanSpec;
     private AggregateFunctionRegistry afr;
@@ -50,26 +52,26 @@ public class GroupingScanStrategy implements GroupingStrategy<RawScanResult,RawS
     @Override
     public boolean isItemInGroup(RawScanResult group, RawScanResult item) {
 
-        return 0 == Bytes.BYTES_RAWCOMPARATOR.compare(group.getGroup(), 0, groupKeyLen, item.getGroup(), 0, groupKeyLen);
+        return 0 == Bytes.BYTES_RAWCOMPARATOR
+            .compare(group.getGroup(), 0, groupKeyLen, item.getGroup(), 0, groupKeyLen);
     }
 
-    
     @Override
     public void initGroup(RawScanResult group, RawScanResult item) {
-        byte[] grBytes=item.getGroup();
-        System.arraycopy(grBytes,0,group.getGroup(),0,grBytes.length);
-        
+        byte[] grBytes = item.getGroup();
+        System.arraycopy(grBytes, 0, group.getGroup(), 0, grBytes.length);
+
     }
 
     @Override
     public void aggregate(RawScanResult groupTo, RawScanResult item) {
-        groupTo.mergeMeasures(item, afr, applySliceOperation?item.getSliceOperation():SliceOperation.ADD);
+        groupTo.mergeMeasures(item, afr, applySliceOperation ? item.getSliceOperation() : SliceOperation.ADD);
     }
 
     @Override
     public RawScanResult newGroupHolder(RawScanResult old) {
-        if ( old == null ) { 
-            RawScanResult newGroup=new RawScanResult(scanSpec);
+        if (old == null) {
+            RawScanResult newGroup = new RawScanResult(scanSpec);
             return newGroup;
         } else {
             old.reset();

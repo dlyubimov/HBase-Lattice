@@ -60,7 +60,6 @@ public class HblQueryClient implements Closeable {
     private String                    yamlModelStr;
     private ExecutorService           es;
     private HTablePool                tpool;
-    private AggregateFunctionRegistry afr;
     private Cube                      cube;
     private Deque<Closeable>          closeables          = new ArrayDeque<Closeable>();
 
@@ -68,7 +67,7 @@ public class HblQueryClient implements Closeable {
         this(conf, cubeName, null);
     }
 
-    public HblQueryClient(Configuration conf, String cubeName, int maxThreads ) throws IOException {
+    public HblQueryClient(Configuration conf, String cubeName, int maxThreads) throws IOException {
         ThreadPoolExecutor tpe =
             new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
                 DEFAULT_QUEUE_SIZE));
@@ -77,7 +76,7 @@ public class HblQueryClient implements Closeable {
         init(conf, yamlModel, tpe);
     }
 
-    public HblQueryClient(Configuration conf, String cubeName, ExecutorService es ) throws IOException { 
+    public HblQueryClient(Configuration conf, String cubeName, ExecutorService es) throws IOException {
         Resource yamlModel = HblAdmin.readModelFromHBase(conf, cubeName, HblAdmin.HBL_DEFAULT_SYSTEM_TABLE);
         init(conf, yamlModel, es);
     }
@@ -144,7 +143,6 @@ public class HblQueryClient implements Closeable {
             // encodedYamlStr = YamlModelParser.encodeCubeModel(yamlModelStr);
             cube = YamlModelParser.parseYamlModel(yamlModelStr);
 
-            afr = new AggregateFunctionRegistry();
             tpool = new HTablePool(conf, 400);
 
         } finally {
@@ -153,10 +151,10 @@ public class HblQueryClient implements Closeable {
     }
 
     public AggregateQuery createQuery() {
-        return new AggregateQueryImpl(cube, es, tpool, afr);
+        return new AggregateQueryImpl(cube, es, tpool);
     }
-    
-    public PreparedAggregateQuery createPreparedQuery() { 
-        return new PreparedAggregateQueryImpl(cube, es, tpool, afr);
+
+    public PreparedAggregateQuery createPreparedQuery() {
+        return new PreparedAggregateQueryImpl(cube, es, tpool);
     }
 }

@@ -34,7 +34,6 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
-import org.apache.hadoop.hbase.rest.protobuf.generated.CellMessage.Cell;
 import org.apache.log4j.Logger;
 
 import com.inadco.datastructs.InputIterator;
@@ -42,9 +41,9 @@ import com.inadco.datastructs.adapters.GroupingIterator;
 import com.inadco.datastructs.adapters.NWayMergingIterator;
 import com.inadco.datastructs.util.StatefulHeapSortMergeStrategy;
 import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
-import com.inadco.hbl.client.AggregateFunctionRegistry;
 import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
@@ -85,10 +84,11 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
         Validate.notNull(scanSpecs);
         Validate.notEmpty(scanSpecs);
         Validate.notNull(measureName2IndexMap);
+        Validate.notNull(afr);
 
         this.measureName2IndexMap = measureName2IndexMap;
         this.dim2GroupKeyOffsetMap = dimName2GroupKeyOffsetMap;
-        this.afr = afr == null ? new AggregateFunctionRegistry() : afr;
+        this.afr = afr;
 
         ScanSpec spec = scanSpecs.get(0);
         this.cuboid = spec.getCuboid();
@@ -250,7 +250,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                 result[index] = b == null ? null : (measureAggr = b.build()); // cache
             }
 
-            return measureAggr==null?null:af.getAggrValue(measureAggr);
+            return measureAggr == null ? null : af.getAggrValue(measureAggr);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }
