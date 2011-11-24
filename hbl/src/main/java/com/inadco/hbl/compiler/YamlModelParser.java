@@ -41,6 +41,7 @@ import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
 import com.inadco.hbl.api.Cube;
+import com.inadco.hbl.client.impl.functions.FCannyAvgSum;
 import com.inadco.hbl.model.HexDimension;
 import com.inadco.hbl.model.SimpleCube;
 import com.inadco.hbl.model.SimpleCuboid;
@@ -118,6 +119,9 @@ public final class YamlModelParser {
         addTag(HexDimension.class, c, rp);
         addTag(SimpleTimeHourHierarchy.class, c, rp);
         addTag(SimpleMeasure.class, c, rp);
+        
+        // some additional function support 
+        addTag(FCannyAvgSum.class,c,rp);
         return new Yaml(c, rp);
 
     }

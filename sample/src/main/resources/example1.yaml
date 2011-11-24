@@ -27,6 +27,12 @@
     - !SimpleMeasure [ impCnt ]
     - !SimpleMeasure [ click ]
     - !SimpleMeasure [ excludedMeasure ]
+    
+  - # additional custom functions 
+    # Canny avg summarizer for 90 days with internal ordinal mapping id=0 (90*24*3600*1000 = 7,776,000,000 ms)
+    - !FCannyAvgSum [ cannyAvg90d, 0, 7776000000 ] 
+    # Canny avg summarizer for 7 days =604,800,000 ms
+    - !FCannyAvgSum [ cannyAvg7d, 1, 604800000 ]
   
   
   

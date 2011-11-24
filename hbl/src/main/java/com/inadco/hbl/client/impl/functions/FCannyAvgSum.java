@@ -28,7 +28,8 @@ import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
 
 /**
  * Canny function -based aggregation support for averages on fact streams with
- * irregular sampling.<P>
+ * irregular sampling.
+ * <P>
  * 
  * This function expects facts of {@link IrregularSample} type for
  * {@link #apply(Builder, Object)} updates during compilation and serialized
@@ -45,9 +46,10 @@ public class FCannyAvgSum extends FCustomFunc {
     private OnlineCannyAvgSummarizer sumBuf, sumBuf1;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param name function name to register with.
+     * @param name
+     *            function name to register with.
      * @param ordinal
      * @param dt
      */
@@ -64,16 +66,21 @@ public class FCannyAvgSum extends FCustomFunc {
             return; // we don't know how to sum anything else
         IrregularSample sample = (IrregularSample) measureFact;
 
-        sumBuf.reset();
         Object fact = sample.getFact();
         if (!(fact instanceof Number))
             return;
 
         double x = ((Number) fact).doubleValue();
 
-        sumBuf.update(x, sample.getTime());
-
         try {
+
+            OnlineCannyAvgSummarizer s = super.extractState(result, sumBuf);
+            if (s == null) {
+                sumBuf.reset();
+                s = sumBuf;
+            }
+            s.update(x, sample.getTime());
+
             super.saveState(result, sumBuf);
         } catch (IOException exc) {
             // should not happen .
@@ -85,20 +92,24 @@ public class FCannyAvgSum extends FCustomFunc {
     @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
         try {
-            super.extractState(accumulator, sumBuf);
-            super.extractState(source, sumBuf1);
+            OnlineCannyAvgSummarizer s1 = super.extractState(accumulator, sumBuf);
+            OnlineCannyAvgSummarizer s2 = super.extractState(source, sumBuf1);
 
             switch (operation) {
             case ADD:
-                sumBuf.combine(sumBuf1);
+                if ( s1 != null && s2 != null ) 
+                    s1.combine(s2);
+                else if ( s1 == null ) s1 =  s2;
                 break;
             case COMPLEMENT:
-                sumBuf.complement(sumBuf1, true);
+                if ( s2 != null && s1 != null )
+                    s1.complement(s2, true);
                 break;
             default:
                 throw new RuntimeException("Unsupported slice operation");
             }
-            super.saveState(accumulator, sumBuf);
+            if ( s1 != null ) 
+                super.saveState(accumulator, s1);
 
         } catch (IOException exc) {
             // should not happen .
@@ -116,8 +127,11 @@ public class FCannyAvgSum extends FCustomFunc {
     @Override
     public Object getAggrValue(Aggregation source) {
         try {
+            /*
+             * since we don't have control over result object lifecycle in this
+             * case, we'd rather create a new summarizer for each incoming request. 
+             */
             return extractState(source, new OnlineCannyAvgSummarizer());
-
         } catch (IOException exc) {
             throw new RuntimeException(exc);
         }
