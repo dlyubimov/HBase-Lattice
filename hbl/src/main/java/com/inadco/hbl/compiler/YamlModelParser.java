@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
@@ -43,6 +42,7 @@ import org.yaml.snakeyaml.representer.Representer;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.client.impl.functions.FCannyAvgSum;
 import com.inadco.hbl.model.HexDimension;
+import com.inadco.hbl.model.IrregularSampleMeasure;
 import com.inadco.hbl.model.SimpleCube;
 import com.inadco.hbl.model.SimpleCuboid;
 import com.inadco.hbl.model.SimpleMeasure;
@@ -82,22 +82,22 @@ public final class YamlModelParser {
             return null;
         return decodeCubeModel(modelStr);
     }
-    
-    public static Cube decodeCubeModel ( String encoded ) throws IOException { 
+
+    public static Cube decodeCubeModel(String encoded) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        OutputStream os = new InflaterOutputStream(baos,new Inflater(false));
+        OutputStream os = new InflaterOutputStream(baos, new Inflater(false));
         os.write(Base64.decodeBase64(encoded.getBytes("US-ASCII")));
         os.close();
-        return parseYamlModel(new String(baos.toByteArray(),"utf-8"));
+        return parseYamlModel(new String(baos.toByteArray(), "utf-8"));
     }
-    
-    public static String encodeCubeModel ( String yamlStr ) throws IOException { 
-        
+
+    public static String encodeCubeModel(String yamlStr) throws IOException {
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Writer w = new OutputStreamWriter(new DeflaterOutputStream(baos,new Deflater(9, false)),"utf-8");
+        Writer w = new OutputStreamWriter(new DeflaterOutputStream(baos, new Deflater(9, false)), "utf-8");
         w.append(yamlStr);
         w.close();
-        
+
         String result = new String(Base64.encodeBase64(baos.toByteArray()), "US-ASCII");
         decodeCubeModel(result);
         return result;
@@ -106,8 +106,7 @@ public final class YamlModelParser {
     public static void initCubeModel(String yamlStr, Configuration confTo) throws IOException {
         Validate.notNull(yamlStr);
         Validate.notNull(confTo);
-        confTo.set(Pig8CubeIncrementalCompilerBean.PROP_CUBEMODEL,
-                   encodeCubeModel(yamlStr));
+        confTo.set(Pig8CubeIncrementalCompilerBean.PROP_CUBEMODEL, encodeCubeModel(yamlStr));
     }
 
     private static Yaml getYaml() {
@@ -119,9 +118,10 @@ public final class YamlModelParser {
         addTag(HexDimension.class, c, rp);
         addTag(SimpleTimeHourHierarchy.class, c, rp);
         addTag(SimpleMeasure.class, c, rp);
-        
-        // some additional function support 
-        addTag(FCannyAvgSum.class,c,rp);
+        addTag(IrregularSampleMeasure.class, c, rp);
+
+        // some additional function support
+        addTag(FCannyAvgSum.class, c, rp);
         return new Yaml(c, rp);
 
     }

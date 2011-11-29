@@ -6,7 +6,12 @@
 
 -- need protobuf-2.3.0.jar. Assuming default maven location...
 
-HBL_INPUT = load '$input' using 
+INP = load '$input' using 
   com.inadco.ecoadapters.pig.SequenceFileProtobufLoader(
   'com.inadco.hb.example1.codegen.Example1\$CompilerInput');
 
+-- form some irregular samples to populate irregular sampling aggregates
+
+HBL_INPUT = foreach INP generate *, 
+TOTUPLE(impCnt, impressionTime) as impTimeSeries, -- time series measure for impression events
+TOTUPLE(click, impressionTime ) as clickTimeSeries; -- time series measure for click events
