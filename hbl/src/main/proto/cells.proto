@@ -5,7 +5,7 @@ option optimize_for = SPEED;
 
 message Aggregation  {
     required uint64         cnt = 1 [default = 0];
-    required double         sum = 2 [ default = 0.0];
+    optional double         sum = 2 [ default = 0.0];
     
     repeated bytes          customStates = 51;
 }

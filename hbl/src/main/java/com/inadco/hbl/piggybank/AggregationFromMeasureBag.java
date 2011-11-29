@@ -128,7 +128,8 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
         Measure m = cube.getMeasures().get(measureName);
         Validate.notNull(m, "no measure passed/found");
 
-        Object d = m.compiler2Fact(input.size() == 1 ? input.get(0) : input.getAll());
+        Object val = input.get(0);
+        Object d = m.compiler2Fact(val instanceof Tuple ? ((Tuple) val).getAll() : val);
 
         return d;
     }

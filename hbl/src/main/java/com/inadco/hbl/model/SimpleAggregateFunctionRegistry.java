@@ -74,7 +74,7 @@ public class SimpleAggregateFunctionRegistry implements AggregateFunctionRegistr
     }
 
     void addFunction(AggregateFunction function) {
-        functions.put(function.getName().toUpperCase(), function);
+        functions.put(function.getName()/*.toUpperCase()*/, function);
     }
 
     public AggregateFunction findFunction(String name) {

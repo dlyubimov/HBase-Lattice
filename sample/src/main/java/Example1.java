@@ -42,6 +42,7 @@ import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
+import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
 
 /**
  * to run, use hadoop command line
@@ -90,11 +91,12 @@ public class Example1 extends Configured implements Tool {
             new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
         // test fact compile time exclusion to allow merging different fact
         // stream sources
-        compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt", "click")));
 
-        // or:
-        // compiler.setMeasureExclude(new
-        // HashSet<String>(Arrays.asList("excludedMeasure")));
+         compiler.setMeasureExclude(new
+         HashSet<String>(Arrays.asList("excludedMeasure")));
+
+         // or:
+//       compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt", "click")));
 
         /*
          * this is the version that uses model from resource instead of hbl
@@ -350,8 +352,10 @@ public class Example1 extends Configured implements Tool {
              * parameter set cannot be used.
              */
             query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
-                + "COUNT(click) as clickCnt " + "from Example1 where dim1 in [?] " + ", impressionTime in [?,?) "
-                + ", dim2 in [ '1' ]" + "group by dim1");
+                + "COUNT(click) as clickCnt, cannyAvg7d(clickTimeSeries) as ctr " +
+
+                "from Example1 where dim1 in [?] " + ", impressionTime in [?,?) " + ", dim2 in [ '1' ]"
+                + "group by dim1");
 
             System.out.println("Test5:\n\n");
 
@@ -382,13 +386,21 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d\n",
+                    
+                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer)ar.getObject("ctr");
+                    double wctr = ctrSum==null?0:ctrSum.getValue();
+
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
 
                                       new BigInteger(1, (byte[]) ar.getObject(0)),
                                       ar.getObject("impSum"),
                                       ar.getObject("impCnt"),
                                       ar.getObject("clickSum"),
-                                      ar.getObject("clickCnt"));
+                                      ar.getObject("clickCnt"),
+                                      (Long)ar.getObject("clickCnt")/
+                                          (Double)ar.getObject("clickSum"),
+                                          wctr
+                                      );
                 }
                 closeables.remove(rs);
                 rs.close();
@@ -421,9 +433,7 @@ public class Example1 extends Configured implements Tool {
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
              */
-            query.prepare("select " + 
-             "SUM(impCnt) as impCnt, " + 
-             " dim1 " + "from Example1 group by dim1");
+            query.prepare("select " + "SUM(impCnt) as impCnt, " + " dim1 " + "from Example1 group by dim1");
 
             for (int i = 0; i < 2; i++) {
 
@@ -443,9 +453,8 @@ public class Example1 extends Configured implements Tool {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
                     System.out.printf("dim1: %032X impCnt %.4f\n",
-                                      new BigInteger(1,(byte[])ar.getObject("dim1")),
-                                      ar.getObject("impCnt")
-                                      );
+                                      new BigInteger(1, (byte[]) ar.getObject("dim1")),
+                                      ar.getObject("impCnt"));
                 }
                 closeables.remove(rs);
                 rs.close();

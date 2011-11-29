@@ -24,29 +24,25 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
 
 public class FCount implements AggregateFunction {
-    
-    
-    
+
     @Override
     public void apply(Builder result, Object measure) {
-        if ( ! (measure instanceof Double))  return;
-        
-        long cnt=result.hasCnt()?result.getCnt():0;
-        result.setCnt(cnt+1);
-    }
+        if (measure == null)
+            return;
 
+        long cnt = result.hasCnt() ? result.getCnt() : 0;
+        result.setCnt(cnt + 1);
+    }
 
     @Override
     public String getName() {
         return "COUNT";
     }
-    
 
     @Override
     public boolean supportsComplementScan() {
         return true;
     }
-
 
     @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
@@ -63,12 +59,9 @@ public class FCount implements AggregateFunction {
         }
     }
 
-
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasCnt()?source.getCnt():0;
+        return source.hasCnt() ? source.getCnt() : 0;
     }
-    
-    
 
 }

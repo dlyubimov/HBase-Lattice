@@ -43,7 +43,7 @@ public class IrregularSampleMeasure extends SimpleMeasure {
             @SuppressWarnings("unchecked")
             List<Object> l = (List<Object>) value;
 
-            Validate.isTrue(l.size() != 2, "irregular sample facts must be tuple(x,t)");
+            Validate.isTrue(l.size() == 2, "irregular sample facts must be tuple(x,t)");
 
             Object x = super.compiler2Fact(l.get(0));
             Object tobj = l.get(1);
