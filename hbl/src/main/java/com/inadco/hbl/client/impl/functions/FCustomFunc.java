@@ -25,7 +25,6 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.Writable;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.inadco.hbl.api.AggregateFunction;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 

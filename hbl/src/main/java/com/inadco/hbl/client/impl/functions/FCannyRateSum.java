@@ -24,10 +24,10 @@ import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.model.IrregularSample;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
+import com.inadco.math.aggregators.OnlineCannyRateSummarizer;
 
 /**
- * Canny function -based aggregation support for averages on fact streams with
+ * Canny function -based aggregation support for rates on fact streams with
  * irregular sampling.
  * <P>
  * 
@@ -36,14 +36,19 @@ import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
  * {@link OnlineCannyAvgSummarizer} states for
  * {@link #merge(Builder, Aggregation, SliceOperation)} during compilation/query
  * time.
+ * <P>
+ * 
+ * <b>Warning</b>: complement is fundamentally difficult with rate summarizer, 
+ * so we report complement as unavailable functionality for rates.<P>
+ * 
  * 
  * @author dmitriy
  * 
  */
-public class FCannyAvgSum extends FCustomFunc {
+public class FCannyRateSum extends FCustomFunc {
 
     // private double dt;
-    private OnlineCannyAvgSummarizer sumBuf, sumBuf1;
+    private OnlineCannyRateSummarizer sumBuf, sumBuf1;
 
     /**
      * Constructor
@@ -53,11 +58,11 @@ public class FCannyAvgSum extends FCustomFunc {
      * @param ordinal
      * @param dt
      */
-    public FCannyAvgSum(String name, int ordinal, double dt) {
+    public FCannyRateSum(String name, int ordinal, double dt) {
         super(name, ordinal);
         // this.dt = dt;
-        sumBuf = new OnlineCannyAvgSummarizer(dt);
-        sumBuf1 = new OnlineCannyAvgSummarizer(dt);
+        sumBuf = new OnlineCannyRateSummarizer(dt);
+        sumBuf1 = new OnlineCannyRateSummarizer(dt);
     }
 
     @Override
@@ -74,7 +79,7 @@ public class FCannyAvgSum extends FCustomFunc {
 
         try {
 
-            OnlineCannyAvgSummarizer s = super.extractState(result, sumBuf);
+            OnlineCannyRateSummarizer s = super.extractState(result, sumBuf);
             if (s == null) {
                 sumBuf.reset();
                 s = sumBuf;
@@ -92,8 +97,8 @@ public class FCannyAvgSum extends FCustomFunc {
     @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
         try {
-            OnlineCannyAvgSummarizer s1 = super.extractState(accumulator, sumBuf);
-            OnlineCannyAvgSummarizer s2 = super.extractState(source, sumBuf1);
+            OnlineCannyRateSummarizer s1 = super.extractState(accumulator, sumBuf);
+            OnlineCannyRateSummarizer s2 = super.extractState(source, sumBuf1);
 
             switch (operation) {
             case ADD:
@@ -122,7 +127,7 @@ public class FCannyAvgSum extends FCustomFunc {
 
     @Override
     public boolean supportsComplementScan() {
-        return true;
+        return false;
     }
 
     @Override
@@ -133,7 +138,7 @@ public class FCannyAvgSum extends FCustomFunc {
              * case, we'd rather create a new summarizer for each incoming
              * request.
              */
-            return extractState(source, new OnlineCannyAvgSummarizer());
+            return extractState(source, new OnlineCannyRateSummarizer());
         } catch (IOException exc) {
             throw new RuntimeException(exc);
         }

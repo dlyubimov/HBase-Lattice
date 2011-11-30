@@ -92,6 +92,14 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         }
     }
 
+    /**
+     * WARNING: time complementation is really screwed up here. It is
+     * fundamentally difficult to complement time because we don't know what the
+     * new time must be (last event in the complement sequence of events). This
+     * information is fundamentally unknown with this technique, it seems.
+     * 
+     * 
+     */
     @Override
     public void complement(IrregularSamplingSummarizer other, boolean artificialStretch) {
         Validate.isTrue(other instanceof OnlineCannyRateSummarizer);

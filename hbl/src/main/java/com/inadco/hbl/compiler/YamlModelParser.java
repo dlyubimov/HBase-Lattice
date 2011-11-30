@@ -41,6 +41,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.client.impl.functions.FCannyAvgSum;
+import com.inadco.hbl.client.impl.functions.FCannyRateSum;
 import com.inadco.hbl.model.HexDimension;
 import com.inadco.hbl.model.IrregularSampleMeasure;
 import com.inadco.hbl.model.SimpleCube;
@@ -122,6 +123,7 @@ public final class YamlModelParser {
 
         // some additional function support
         addTag(FCannyAvgSum.class, c, rp);
+        addTag(FCannyRateSum.class,c,rp);
         return new Yaml(c, rp);
 
     }
