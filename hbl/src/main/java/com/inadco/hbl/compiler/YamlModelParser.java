@@ -123,7 +123,7 @@ public final class YamlModelParser {
 
         // some additional function support
         addTag(FCannyAvgSum.class, c, rp);
-        addTag(FCannyRateSum.class,c,rp);
+        addTag(FCannyRateSum.class, c, rp);
         return new Yaml(c, rp);
 
     }
