@@ -17,7 +17,7 @@ Check out the docs folder.
 Contributors
 ============ 
 
-Please check out [Features sought after](wiki/features-sought-after) wiki page.
+Please check out [Features sought after](https://github.com/dlyubimov/HBase-Lattice/wiki/Features-sought-after) wiki page.
 
 
 LICENSE
