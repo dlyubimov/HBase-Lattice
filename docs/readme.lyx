@@ -534,6 +534,21 @@ SUM()
 COUNT()
 \end_layout
 
+\begin_layout Itemize
+Exponentially (or, rather, Canny function) weighted average for facts with
+ time-based sampling (x,t) as a custom function in the model (see Example
+ and doc)
+\end_layout
+
+\begin_layout Itemize
+Exponentially (or, rather, Canny function) weighted rate for facts with
+ time-based sampling (count,t) as a custom function (see Example and doc)
+\end_layout
+
+\begin_layout Itemize
+easy api to add many more, it's just what we needed at the moment
+\end_layout
+
 \begin_layout Subsection
 Querying with a prepared query 
 \end_layout
@@ -813,6 +828,22 @@ where-clause
  one measure to sum up in an aggregate (even if one doesn't use it).
 \end_layout
 
+\begin_layout Itemize
+Unlike with MDX, there's no 
+\emph on
+optimized 
+\emph default
+way to query a dimension or hierarchy membership.
+ Since the system is pretty dynamic, new members might appear at any time
+ and at this point we don't keep track of distinct list of them.
+ 
+\emph on
+It is possible to query members in a particular slice though, including
+ the total cube, 
+\emph default
+but that would be a full table scan over shortest cuboid still.
+\end_layout
+
 \begin_layout Subsection
 Complement and additive scan query optimizations.
  
@@ -1036,7 +1067,8 @@ Poor selection of aggregate functions.
 \end_layout
 
 \begin_layout Standard
-Poor selection of hierarchy and dimension types
+Poor selection of hierarchy and dimension types.
+ Add more fine grained time hierarchy.
 \end_layout
 
 \begin_layout Standard
