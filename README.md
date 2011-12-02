@@ -14,6 +14,11 @@ Documentation
 
 Check out the docs folder. 
 
+Contributors
+============ 
+
+Please check out [Features sought after](wiki/features-sought-after) wiki page.
+
 
 LICENSE
 ========

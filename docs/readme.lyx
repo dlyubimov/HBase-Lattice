@@ -60,7 +60,7 @@
 \paragraph_separation skip
 \defskip medskip
 \quotes_language english
-\papercolumns 2
+\papercolumns 1
 \papersides 1
 \paperpagestyle default
 \tracking_changes false
@@ -434,9 +434,60 @@ Supported measure types
 \end_layout
 
 \begin_layout Standard
-The only types currently supported for the measures in the fact stream are
- double and long.
+The measure type per se is currently not limited to a particular type.
+ It can be any type.
+ However, aggregate functions will only support a particular type.
+ If the fact is not of the type an aggregate function would expect during
+ compilation, it will be considered NULL without any additional noise.
  
+\end_layout
+
+\begin_layout Standard
+Most of the aggregate functions like SUM(), COUNT() are supporting facts
+ of a numerical type only.
+ In the 
+\emph on
+yaml 
+\emph default
+model this is defined as 
+\family typewriter
+SimpleMeasure
+\family default
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Currently, compiler also recognizes pig tuples in a form of 
+\begin_inset Formula $\left(x,t\right)$
+\end_inset
+
+ tuples where x is a numeric fact and 
+\begin_inset Formula $t\in\mathbb{N}_{1}$
+\end_inset
+
+ long type representing time of the sample.
+ Such facts are converted to an instance of 
+\family typewriter
+IrregularSample
+\family default
+ class and subsequently are used with exponentially weighted averaging and
+ rate functions.
+ To define an irregular fact sampling with time datum, 
+\family typewriter
+IrregularSampleMeasure
+\family default
+ must be used in the model
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See example for the usage details.
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -458,22 +509,52 @@ preambula
 \begin_inset Quotes erd
 \end_inset
 
- and expected to be supplied via Spring Resource specification.
+ and expected to be supplied via Spring 
+\family typewriter
+Resource
+\family default
+ specification.
  
 \begin_inset Foot
 status collapsed
 
 \begin_layout Plain Layout
-Perhaps this only dependency on Spring is bad and it is worth considering
- getting rid of this abstraction; but developing a project-specific resource
- abstraction is probably just as equally bad.
+Perhaps this only dependency on 
+\emph on
+Spring
+\emph default
+ is bad and it is worth considering getting rid of this abstraction; but
+ developing a project-specific resource abstraction is probably just as
+ equally bad.
+ Besides, it facilitates wiring compiler bean up using 
+\emph on
+Spring
+\emph default
+, which is what we do.
 \end_layout
 
 \end_inset
 
- The compiler expects fact stream to be put in a predefined Pig relation
- (HBL_INPUT by default).
+ The compiler expects fact stream to be put in a Pig relation with a predefined
+ name (
+\begin_inset Quotes eld
+\end_inset
+
+HBL_INPUT
+\begin_inset Quotes erd
+\end_inset
+
+ by default).
  
+\end_layout
+
+\begin_layout Standard
+Preambula is also an opportunity to massage fact stream data a little bit
+ before handing off to compiler.
+ Preambula doesn't suit to host complex preprocessors though because of
+ the codegen'd nature of the final script.
+ If complex data preprocessing is required, it probably better be done by
+ the logging application or a separate preprocessing MR job.
 \end_layout
 
 \begin_layout Standard
@@ -527,26 +608,64 @@ Supported aggregate functions at this time.
 \end_layout
 
 \begin_layout Itemize
-SUM()
+SUM().
+ This function returns 
+\family typewriter
+Double
+\family default
+ in queries.
 \end_layout
 
 \begin_layout Itemize
-COUNT()
+COUNT().
+ This function returns 
+\family typewriter
+Long
+\family default
+ in queries.
 \end_layout
 
 \begin_layout Itemize
 Exponentially (or, rather, Canny function) weighted average for facts with
- time-based sampling (x,t) as a custom function in the model (see Example
- and doc)
+ time-based sampling 
+\series bold
+
+\begin_inset Formula $\left(x,t\right)$
+\end_inset
+
+ 
+\series default
+as a custom function in the model.
+ This function returns instance of 
+\family typewriter
+OnlineCannyAvgSummarizer
+\family default
+ containing the weighted sum state.
+ It additionally can be used to derive a biased binomial estimate on a slice
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+see metrics doc and example.
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Itemize
 Exponentially (or, rather, Canny function) weighted rate for facts with
- time-based sampling (count,t) as a custom function (see Example and doc)
+ time-based sampling 
+\begin_inset Formula $\left(\mbox{count},t\right)$
+\end_inset
+
+ as a custom function (see Example and doc)
 \end_layout
 
-\begin_layout Itemize
-easy api to add many more, it's just what we needed at the moment
+\begin_layout Standard
+Api allows to add new custom functions easily, it's just all we needed at
+ the moment.
 \end_layout
 
 \begin_layout Subsection

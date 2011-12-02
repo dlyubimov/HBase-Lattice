@@ -11,6 +11,12 @@
     - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime]
     
   - # cuboids
+    # NOTE: since with most use cases querying over time dimension 
+    # tend to be highly non-uniform, it is suggested to use time dimensions 
+    # as a last item in defining cuboids. As long as hash ids are the 
+    # first dimension in cuboid tables, queries will tend to be uniformly 
+    # distributed accross regions.
+    
     - !SimpleCuboid 
       dimensions: [*dim1, *dimImpressionTime ]
       hbaseTTL: 7776000  # default: 90 days
@@ -21,6 +27,8 @@
     - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim3, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
+    
+    
   
   - # measures 
     - !SimpleMeasure [ impCnt ]
