@@ -14,6 +14,18 @@ Documentation
 
 Check out the docs folder. 
 
+Build
+=====
+
+Current build sets dependencies on CDH3u0 stuff. 
+
+It also depends on another our project, ecoadapters (same repo).
+
+If you want to pull prebuilt artifacts, you can use 
+https://github.com/dlyubimov/dlyubimov-maven-repo/raw/master/releases for repo url to pull from.
+
+all released builds there are tagged in the git (see tags).
+
 Contributors
 ============ 
 
