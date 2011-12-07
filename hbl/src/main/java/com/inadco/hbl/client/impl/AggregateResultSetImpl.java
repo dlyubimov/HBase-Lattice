@@ -150,7 +150,15 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
             } catch (InterruptedException exc) {
                 lastExc = new IOException("Interrupted", exc);
             }
+        }
 
+        /*
+         * done initializing the scanners. if any of initialization generated at
+         * least one error, re-throw the last one.
+         */
+        if (lastExc != null) {
+            IOUtil.closeAllQuietly(closeables);
+            throw new IOException("Errors during parallel scanners. One of exceptions enclosed.", lastExc);
         }
 
         @SuppressWarnings("unchecked")

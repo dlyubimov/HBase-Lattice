@@ -94,6 +94,26 @@ public final class IOUtil {
      *             the last exception (if any) of all closed resources
      */
     public static void closeAll(Collection<? extends Closeable> closeables) throws IOException {
+        closeAll(closeables, false);
+    }
+
+    /**
+     * closes all and doesn't complain.
+     * <P>
+     * 
+     * WARNING: beware overuse. This is valid for error handling paths only.
+     * Using it on non-bailing path of execution means ignoring I/O error and
+     * allowing the algorithm to proceed normally unawares.
+     * <P>
+     * 
+     * @param closeables
+     * @throws IOException
+     */
+    public static void closeAllQuietly(Collection<? extends Closeable> closeables) throws IOException {
+        closeAll(closeables, true);
+    }
+
+    public static void closeAll(Collection<? extends Closeable> closeables, boolean quiet) throws IOException {
         Throwable lastThr = null;
 
         for (Closeable closeable : closeables) {
@@ -109,7 +129,7 @@ public final class IOUtil {
         // but that has to be modifiable collection
         closeables.clear();
 
-        if (lastThr != null) {
+        if (!quiet && lastThr != null) {
             if (lastThr instanceof IOException) {
                 throw (IOException) lastThr;
             } else if (lastThr instanceof RuntimeException) {
@@ -360,7 +380,7 @@ public final class IOUtil {
         private Future<?> future;
         private long      wait;
         private TimeUnit  tu;
-        
+
         public FutureCloseable(Future<?> future, long wait, TimeUnit tu) {
             super();
             this.future = future;
@@ -372,12 +392,12 @@ public final class IOUtil {
         public void close() throws IOException {
             try {
                 future.get(wait, tu);
-            } catch ( TimeoutException exc ) { 
-                throw new IOException (exc);
-            } catch ( ExecutionException exc ) { 
-                throw new IOException ( exc);
-            } catch ( InterruptedException exc ) { 
-                throw new IOException ( exc );
+            } catch (TimeoutException exc) {
+                throw new IOException(exc);
+            } catch (ExecutionException exc) {
+                throw new IOException(exc);
+            } catch (InterruptedException exc) {
+                throw new IOException(exc);
             }
         }
     }
@@ -395,7 +415,6 @@ public final class IOUtil {
             m_factory.close();
         }
     }
-
 
     public static class MultipleOutputsCloseable implements Closeable {
 
@@ -450,11 +469,11 @@ public final class IOUtil {
         }
 
     }
-    
-    public static class PoolableHtableCloseable implements Closeable { 
-        private HTablePool pool;
+
+    public static class PoolableHtableCloseable implements Closeable {
+        private HTablePool      pool;
         private HTableInterface htable;
-        
+
         public PoolableHtableCloseable(HTablePool pool, HTableInterface htable) {
             super();
             this.pool = pool;
@@ -463,10 +482,10 @@ public final class IOUtil {
 
         @Override
         public void close() throws IOException {
-            pool.putTable(htable) ;
+            pool.putTable(htable);
         }
     }
-    
+
     public static String fromStream(InputStream is, String encoding) throws IOException {
         StringWriter sw = new StringWriter();
         Reader r = new InputStreamReader(is, "utf-8");
@@ -476,8 +495,5 @@ public final class IOUtil {
         sw.close();
         return sw.toString();
     }
-    
-    
-
 
 }
