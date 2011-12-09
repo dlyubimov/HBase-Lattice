@@ -27,11 +27,14 @@ public class FCount implements AggregateFunction {
 
     @Override
     public void apply(Builder result, Object measure) {
-        if (measure == null)
-            return;
 
-        long cnt = result.hasCnt() ? result.getCnt() : 0;
-        result.setCnt(cnt + 1);
+        if ( result.hasCnt()) { 
+            if ( measure != null ) 
+                result.setCnt(result.getCnt()+1l);
+        } else { 
+            result.setCnt(measure==null?0l:1l);
+        }
+
     }
 
     @Override

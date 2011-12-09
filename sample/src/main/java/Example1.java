@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -92,11 +94,11 @@ public class Example1 extends Configured implements Tool {
         // test fact compile time exclusion to allow merging different fact
         // stream sources
 
-         compiler.setMeasureExclude(new
-         HashSet<String>(Arrays.asList("excludedMeasure")));
+        compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
 
-         // or:
-//       compiler.setMeasureInclude(new HashSet<String>(Arrays.asList("impCnt", "click")));
+        // or:
+        // compiler.setMeasureInclude(new
+        // HashSet<String>(Arrays.asList("impCnt", "click")));
 
         /*
          * this is the version that uses model from resource instead of hbl
@@ -386,9 +388,9 @@ public class Example1 extends Configured implements Tool {
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    
-                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer)ar.getObject("ctr");
-                    double wctr = ctrSum==null?0:ctrSum.getValue();
+
+                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
+                    double wctr = ctrSum == null ? 0 : ctrSum.getValue();
 
                     System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
 
@@ -397,10 +399,8 @@ public class Example1 extends Configured implements Tool {
                                       ar.getObject("impCnt"),
                                       ar.getObject("clickSum"),
                                       ar.getObject("clickCnt"),
-                                      (Long)ar.getObject("clickCnt")/
-                                          (Double)ar.getObject("clickSum"),
-                                          wctr
-                                      );
+                                      (Long) ar.getObject("clickCnt") / (Double) ar.getObject("clickSum"),
+                                      wctr);
                 }
                 closeables.remove(rs);
                 rs.close();
@@ -542,11 +542,25 @@ public class Example1 extends Configured implements Tool {
              * our way with this right now.
              */
 
-            pc.addJar("target/sample-0.1.3-SNAPSHOT-hadoop-job.jar");
+            File[] jobJars = new File("target").listFiles(new FileFilter() {
 
-            // pig-preprocess. We specified hbl input as $input in the
-            // preambula, so
-            // we now need to substitute it using Grunt's preprocessor.
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.getName().matches("sample-\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?-hadoop-job.jar");
+                }
+            });
+            if (jobJars == null || jobJars.length == 0)
+                throw new IOException(
+                    "hadoop job jar was not found, please rebuild and run from $HBL_HOME/sample location..");
+
+            for (File f : jobJars)
+                pc.addJar(f.getAbsolutePath());
+
+            /*
+             * pig-preprocess. We specified hbl input as $input in the
+             * preambula, so we now need to substitute it using Grunt's
+             * preprocessor.
+             */
 
             ParameterSubstitutionPreprocessor psp = new ParameterSubstitutionPreprocessor(512);
             StringWriter sw = new StringWriter();
