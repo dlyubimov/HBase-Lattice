@@ -348,7 +348,7 @@ public class Example1 extends Configured implements Tool {
              * prepared query is supposed to do. we also have an option of
              * re-preparing query at any time, but we still need to run reset()
              * to clean out stuff like parameters initialized and execution.
-             * reset() does not necesserily cancel previously existing AST tree
+             * reset() does not necessarily cancel previously existing AST tree
              * of the query, only prepare() updates that. but prepare does
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
