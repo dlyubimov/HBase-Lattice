@@ -38,6 +38,7 @@ import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.PreparedAggregateQuery;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
+import com.inadco.hbl.hblquery.ErrorAccumulator;
 import com.inadco.hbl.hblquery.HBLQueryASTLexer;
 import com.inadco.hbl.hblquery.HBLQueryASTParser;
 import com.inadco.hbl.hblquery.HBLQueryPrep;
@@ -54,6 +55,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
 
     private HBLQueryASTParser    parser            = new HBLQueryASTParser(null);
     private HBLQueryASTLexer     lexer             = new HBLQueryASTLexer();
+    private ErrorAccumulator     errors            = new ErrorAccumulator();
     private HBLQueryPrep         prepper           = null;
 
     private Tree                 selectAST;
@@ -63,6 +65,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
 
     public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool) {
         super(cube, es, tpool);
+        parser.setErrorReporter(errors);
     }
 
     @Override
@@ -80,11 +83,13 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         try {
             HBLQueryASTParser.select_return r = parser.select();
             selectAST = (Tree) r.getTree();
-            if (parser.getNumberOfSyntaxErrors() > 0)
-                throw new HblException("Syntax errors present in hbl query.:");
-
-            // DEBUG
-            // System.out.println(selectAST.toString());
+//            if (parser.getNumberOfSyntaxErrors() > 0)
+            if ( errors.getErrors().size()>0 ) { 
+                StringBuffer sbAllErrors = new StringBuffer("Syntax errors present in hbl query.:\n");
+                for (String errStr : errors.getErrors() )
+                    sbAllErrors.append(errStr+"\n");
+                throw new HblException(sbAllErrors.toString());
+            }
 
         } catch (RecognitionException exc) {
             throw new HblException(exc.getMessage());

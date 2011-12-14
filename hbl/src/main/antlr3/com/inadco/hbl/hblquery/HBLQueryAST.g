@@ -36,14 +36,28 @@ tokens {
 
 @members {
 	Map<Integer,String> params = new HashMap<Integer,String>();
+    private IErrorReporter errorReporter = null;
 	
 	public Map<Integer,String> getHblQueryParams() { 
 		return params; 
 	}
+    public void setErrorReporter(IErrorReporter errorReporter) {
+        this.errorReporter = errorReporter;
+    }
+    public IErrorReporter getErrorReporter() {
+        return errorReporter; 
+    }
+    public void emitErrorMessage(String msg) {
+        if ( errorReporter != null ) errorReporter.reportError(msg);
+    }
+    public void reset() { 
+        if ( errorReporter != null ) errorReporter.reset();
+        super.reset();
+    }
 }
 
 select 
-	: 	SELECT^ selectExprList fromClause whereClause? groupClause?  
+	: 	SELECT^ selectExprList fromClause whereClause? groupClause? EOF 
 	;
 	
 selectExprList 
