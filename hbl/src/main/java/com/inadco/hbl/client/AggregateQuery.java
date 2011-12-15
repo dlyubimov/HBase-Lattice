@@ -66,6 +66,8 @@ package com.inadco.hbl.client;
  * 
  */
 public interface AggregateQuery {
+    
+    AggregateQuery setCube(String cubeName) throws HblException;
 
     /**
      * Add measure to compile group operators for.

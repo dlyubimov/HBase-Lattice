@@ -40,6 +40,7 @@ scope Visitor {
   import java.util.Map;
   import java.util.HashMap;
   import com.inadco.hbl.client.impl.QueryVisitor;
+  import com.inadco.hbl.client.HblException;
 }
 
 @members {
@@ -95,10 +96,11 @@ scope Visitor;
 	qVisitor.reset(); 
     hblParamCnt =0;
 }
-	: 	^( SELECT exprList fromClause=. whereClause? groupClause? ) 
-	{ qVisitor.visitSelect ( $exprList.start, $fromClause, $whereClause.start, $groupClause.start ); }
+	: 	^( SELECT exprList fromClause whereClause? groupClause? ) 
+	{ 
+		qVisitor.visitSelect ( $exprList.start, $fromClause.start, $whereClause.start, $groupClause.start );
+	}
 	; 
-
 
 exprList
 scope Visitor;
@@ -106,6 +108,18 @@ scope Visitor;
 	$Visitor::selectionExpr = true; 
 }
     :   ^(SELECTION_LIST selectExpr+)      
+    ;
+
+fromClause
+    :   ^(FROM id)
+    {
+    	try { 
+    	   qVisitor.visitCube($id.nameVal);
+    	} catch ( HblException exc ) {
+           throw (RecognitionException) new RecognitionException  (input).
+               initCause(exc); 
+    	}
+    }
     ;
 
 whereClause

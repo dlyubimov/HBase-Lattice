@@ -57,7 +57,7 @@ tokens {
 }
 
 select 
-	: 	SELECT^ selectExprList fromClause whereClause? groupClause? EOF 
+	: 	SELECT^ selectExprList fromClause whereClause? groupClause? EOF! 
 	;
 	
 selectExprList 

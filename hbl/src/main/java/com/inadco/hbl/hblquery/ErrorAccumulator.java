@@ -31,5 +31,13 @@ public final class ErrorAccumulator implements IErrorReporter {
     public List<String> getErrors() { 
         return unmodifiableErrors;
     }
+    
+    public String formatErrors () { 
+        StringBuffer sbAllErrors = new StringBuffer("Syntax errors present in hbl query.:\n");
+        for (String errStr : errors )
+            sbAllErrors.append(errStr + "\n");
+        return sbAllErrors.toString();
+
+    }
 
 }

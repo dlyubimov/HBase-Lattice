@@ -42,6 +42,7 @@ import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.AggregateQuery;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
+import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 
 /**
@@ -53,6 +54,7 @@ import com.inadco.hbl.client.impl.scanner.ScanSpec;
  */
 public class AggregateQueryImpl implements AggregateQuery {
 
+    protected HblQueryClient            client;
     protected Cube                      cube;
     private ExecutorService             es;
     /**
@@ -65,17 +67,25 @@ public class AggregateQueryImpl implements AggregateQuery {
     private HTablePool                  tpool;
     protected AggregateFunctionRegistry afr;
 
-    public AggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool) {
+    public AggregateQueryImpl(HblQueryClient client, ExecutorService es, HTablePool tpool) {
         super();
-        this.cube = cube;
         this.es = es;
         this.tpool = tpool;
-        this.afr = cube.getAggregateFunctionRegistry();
+        this.client = client;
+    }
+
+    public AggregateQuery setCube(String cubeName) throws HblException {
+        if (cube == null || !cube.getName().equals(cubeName)) {
+            cube = client.getCube(cubeName);
+            afr = cube.getAggregateFunctionRegistry();
+        }
+        return this;
     }
 
     @Override
     public AggregateQuery addMeasure(String measure) {
         Validate.notNull(measure);
+        Validate.notNull(cube, "A cube not set");
         Validate.isTrue(cube.getMeasures().containsKey(measure), "Unknown measure name");
         measures.add(measure);
         return this;
@@ -84,6 +94,7 @@ public class AggregateQueryImpl implements AggregateQuery {
     @Override
     public AggregateQuery addGroupBy(String dimName) {
         Validate.notNull(dimName);
+        Validate.notNull(cube, "A cube not set");
         Validate.isTrue(cube.getDimensions().containsKey(dimName), "no such dimension found");
 
         groupDimensions.add(dimName);
@@ -112,6 +123,7 @@ public class AggregateQueryImpl implements AggregateQuery {
                                    Object rightBound,
                                    boolean rightOpen) {
         Validate.notNull(dimension);
+        Validate.notNull(cube, "A cube not set");
         Validate.isTrue(cube.getDimensions().containsKey(dimension));
 
         if (leftBound == null && rightBound == null) {
@@ -129,7 +141,7 @@ public class AggregateQueryImpl implements AggregateQuery {
     @Override
     public AggregateResultSet execute() throws HblException {
         try {
-
+            Validate.notNull(cube, "A cube not set");
             Cuboid cuboid = findCuboid();
 
             Validate.notNull(cuboid, "Unable find suitable cuboid for the slice query.");

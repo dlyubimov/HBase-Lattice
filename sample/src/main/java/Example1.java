@@ -141,7 +141,7 @@ public class Example1 extends Configured implements Tool {
     private void testClient1(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
+            HblQueryClient queryClient = new HblQueryClient(getConf());
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -156,7 +156,7 @@ public class Example1 extends Configured implements Tool {
              */
 
             AggregateQuery query = queryClient.createQuery();
-            query.addMeasure("impCnt").addMeasure("click");
+            query.setCube(cubeName).addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1", ids[0], ids[0]).addGroupBy("dim1");
             AggregateResultSet rs = query.execute();
             closeables.addFirst(rs);
@@ -183,7 +183,7 @@ public class Example1 extends Configured implements Tool {
     private void testClient2(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
+            HblQueryClient queryClient = new HblQueryClient(getConf());
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -200,7 +200,7 @@ public class Example1 extends Configured implements Tool {
              */
             AggregateQuery query = queryClient.createQuery();
 
-            query.addMeasure("impCnt").addMeasure("click");
+            query.setCube(cubeName).addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1", ids[0], ids[1]).addGroupBy("dim1");
             AggregateResultSet rs = query.execute();
             while (rs.hasNext()) {
@@ -224,7 +224,7 @@ public class Example1 extends Configured implements Tool {
     private void testClient3(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
+            HblQueryClient queryClient = new HblQueryClient(getConf());
             closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
@@ -239,7 +239,7 @@ public class Example1 extends Configured implements Tool {
              */
             AggregateQuery query = queryClient.createQuery();
 
-            query.addMeasure("impCnt").addMeasure("click");
+            query.setCube(cubeName).addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1", ids[0], ids[1])/* .addGroupBy("dim1") */;
             AggregateResultSet rs = query.execute();
             while (rs.hasNext()) {
@@ -264,10 +264,11 @@ public class Example1 extends Configured implements Tool {
     private void testClient4(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
+            HblQueryClient queryClient = new HblQueryClient(getConf());
             closeables.addFirst(queryClient);
 
             AggregateQuery query = queryClient.createQuery();
+            query.setCube(cubeName);
             for (int i = 0; i < 5; i++) {
 
                 query.reset();
