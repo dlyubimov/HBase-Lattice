@@ -40,6 +40,7 @@ scope Visitor {
   import java.util.Map;
   import java.util.HashMap;
   import com.inadco.hbl.client.impl.QueryVisitor;
+  import com.inadco.hbl.client.HblException;
 }
 
 @members {
@@ -47,6 +48,7 @@ scope Visitor {
 	private Map<Integer,Object> hblParams;
 	private QueryVisitor qVisitor;
 	private int hblParamCnt;
+    private IErrorReporter errorReporter = null;
 	
 	public void setHblParams ( Map<Integer,Object> params ) {
 		hblParams = params; 
@@ -64,16 +66,29 @@ scope Visitor {
                                                throws RecognitionException    {
         throw e;
     }
-}
-// Alter code generation so catch-clauses get replace with
-// this action.
-@rulecatch {
-catch (RecognitionException e) {
-throw e;
+    public void setErrorReporter(IErrorReporter errorReporter) {
+        this.errorReporter = errorReporter;
+    }
+    public IErrorReporter getErrorReporter() {
+    	return errorReporter; 
+    }
+    public void emitErrorMessage(String msg) {
+        if ( errorReporter != null ) errorReporter.reportError(msg);
+    }
+    public void reset() { 
+    	if ( errorReporter != null ) errorReporter.reset();
+    	super.reset();
+    }
+    
 }
 
-	
-}
+// Alter code generation so catch-clauses get replaced with
+// this action.
+//@rulecatch {
+//catch (RecognitionException e) {
+//throw e;
+//}
+// }
 
 select
 scope Visitor; 
@@ -81,10 +96,11 @@ scope Visitor;
 	qVisitor.reset(); 
     hblParamCnt =0;
 }
-	: 	^( SELECT exprList fromClause=. whereClause? groupClause? ) 
-	{ qVisitor.visitSelect ( $exprList.start, $fromClause, $whereClause.start, $groupClause.start ); }
+	: 	^( SELECT exprList fromClause whereClause? groupClause? ) 
+	{ 
+		qVisitor.visitSelect ( $exprList.start, $fromClause.start, $whereClause.start, $groupClause.start );
+	}
 	; 
-
 
 exprList
 scope Visitor;
@@ -92,6 +108,18 @@ scope Visitor;
 	$Visitor::selectionExpr = true; 
 }
     :   ^(SELECTION_LIST selectExpr+)      
+    ;
+
+fromClause
+    :   ^(FROM id)
+    {
+    	try { 
+    	   qVisitor.visitCube($id.nameVal);
+    	} catch ( HblException exc ) {
+           throw (RecognitionException) new RecognitionException  (input).
+               initCause(exc); 
+    	}
+    }
     ;
 
 whereClause

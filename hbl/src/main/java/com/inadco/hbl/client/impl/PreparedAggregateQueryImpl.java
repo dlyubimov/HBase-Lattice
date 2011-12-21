@@ -33,11 +33,12 @@ import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
 
 import com.inadco.hbl.api.AggregateFunctionRegistry;
-import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
+import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.PreparedAggregateQuery;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
+import com.inadco.hbl.hblquery.ErrorAccumulator;
 import com.inadco.hbl.hblquery.HBLQueryASTLexer;
 import com.inadco.hbl.hblquery.HBLQueryASTParser;
 import com.inadco.hbl.hblquery.HBLQueryPrep;
@@ -54,15 +55,19 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
 
     private HBLQueryASTParser    parser            = new HBLQueryASTParser(null);
     private HBLQueryASTLexer     lexer             = new HBLQueryASTLexer();
+    private ErrorAccumulator     errors            = new ErrorAccumulator();
     private HBLQueryPrep         prepper           = null;
+    private ErrorAccumulator     prepperErrors     = new ErrorAccumulator();
+    private QueryPrepVisitor     qVisitor          = new QueryPrepVisitor(this);
 
     private Tree                 selectAST;
     private Map<Integer, Object> parameters        = new HashMap<Integer, Object>();
     private Map<Integer, Object> resultDefsByIndex = new HashMap<Integer, Object>();
     private Map<String, Object>  resultDefsByAlias = new HashMap<String, Object>();
 
-    public PreparedAggregateQueryImpl(Cube cube, ExecutorService es, HTablePool tpool) {
-        super(cube, es, tpool);
+    public PreparedAggregateQueryImpl(HblQueryClient client, ExecutorService es, HTablePool tpool) {
+        super(client, es, tpool);
+        parser.setErrorReporter(errors);
     }
 
     @Override
@@ -80,11 +85,10 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         try {
             HBLQueryASTParser.select_return r = parser.select();
             selectAST = (Tree) r.getTree();
-            if (parser.getNumberOfSyntaxErrors() > 0)
-                throw new HblException("Syntax errors present in hbl query.:");
-
-            // DEBUG
-            // System.out.println(selectAST.toString());
+            // if (parser.getNumberOfSyntaxErrors() > 0)
+            if (errors.getErrors().size() > 0) {
+                throw new HblException(errors.formatErrors());
+            }
 
         } catch (RecognitionException exc) {
             throw new HblException(exc.getMessage());
@@ -122,7 +126,8 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         if (prepper == null) {
             prepper = new HBLQueryPrep(new CommonTreeNodeStream(selectAST));
             prepper.setHblParams(parameters);
-            prepper.setQueryVisitor(new QueryPrepVisitor(this));
+            prepper.setQueryVisitor(qVisitor);
+            prepper.setErrorReporter(prepperErrors);
         } else {
             prepper.reset();
             prepper.setTreeNodeStream(new CommonTreeNodeStream(selectAST));
@@ -130,6 +135,8 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
 
         try {
             prepper.select();
+            if ( prepperErrors.getErrors().size()>0 ) 
+                throw new HblException (prepperErrors.formatErrors());
         } catch (RecognitionException exc) {
             throw new HblException(exc.getMessage(), exc);
         }
@@ -155,6 +162,16 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
             resultDefsByAlias);
     }
 
+    /**
+     * Add measure expression. Measure expression must have an aggregate
+     * function, the measure name, and optional alias how to call that
+     * expression in the result set.
+     * 
+     * @param index
+     * @param alias
+     * @param funcName
+     * @param measure
+     */
     void addAggregateResultDef(int index, String alias, String funcName, String measure) {
 
         if (afr.findFunction(funcName) == null)
@@ -171,6 +188,15 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         resultDefsByAlias.put(alias, def);
     }
 
+    /**
+     * add dimension expression. Dimension expression can only consist of the
+     * dimension name and optional alias. (Optionality is provided by query
+     * parser, if it is not specified, then dimension name is used).
+     * 
+     * @param index
+     * @param alias
+     * @param dim
+     */
     void addAggregateResultDef(int index, String alias, String dim) {
         if (!cube.getDimensions().containsKey(dim))
             throw new IllegalArgumentException(String.format("Unknown dimension %s.", dim));

@@ -18,27 +18,32 @@
  */
 package com.inadco.hbl.client.impl;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 import org.antlr.runtime.tree.CommonTree;
 
+import com.inadco.hbl.client.HblException;
+
 /**
- * Query AST tree visitor. 
+ * Query AST tree visitor.
  * 
  * @author dmitriy
- *
+ * 
  */
 public class QueryPrepVisitor implements QueryVisitor {
 
     private PreparedAggregateQueryImpl query;
-    private int selectExprIndex;
-    
+    private Deque<String[]>            selectExpr = new ArrayDeque<String[]>();
+
     public QueryPrepVisitor(PreparedAggregateQueryImpl query) {
         super();
         this.query = query;
     }
 
     @Override
-    public void reset() { 
-        selectExprIndex=0;
+    public void reset() {
+        selectExpr.clear();
     }
 
     @Override
@@ -46,14 +51,23 @@ public class QueryPrepVisitor implements QueryVisitor {
                             CommonTree fromClause,
                             CommonTree whereClause,
                             CommonTree groupClause) {
-
+        int i = 0;
+        for (String[] expr : selectExpr) {
+            if (expr.length == 2)
+                // id, alias
+                query.addAggregateResultDef(i++, expr[0], expr[1]);
+            else if (expr.length == 3) {
+                // alias,func,measure name
+                query.addMeasure(expr[2]);
+                query.addAggregateResultDef(i++, expr[0], expr[1], expr[2]);
+            }
+        }
     }
-
 
     @Override
     public void visitGroupDimension(String dim) {
         // DEBUG
-//        System.out.printf("Adding group dimension %s.\n", dim);
+        // System.out.printf("Adding group dimension %s.\n", dim);
 
         query.addGroupBy(dim);
     }
@@ -61,15 +75,6 @@ public class QueryPrepVisitor implements QueryVisitor {
     @Override
     public void visitSlice(String dimension, boolean leftOpen, Object left, boolean rightOpen, Object right) {
 
-        // DEBUG 
-//        System.out.printf("Adding slice for %s, left-open:%s, right-open:%s, %s,%s.\n",
-//                          dimension,
-//                          leftOpen,
-//                          rightOpen,
-//                          left.toString(),
-//                          right == null ? "" : right.toString());
-        
-        
         if (right == null)
             // cause nothing else makes sense here
             query.addClosedSlice(dimension, left, left);
@@ -80,23 +85,26 @@ public class QueryPrepVisitor implements QueryVisitor {
 
     @Override
     public void visitSelectExpressionAsID(String id, String alias) {
-        // DEBUG
-//        System.out.printf("adding dim member %s aliased as %s.\n", id,alias);
-        
-        query.addAggregateResultDef(selectExprIndex++, alias, id);
-        
+
+        selectExpr.add(new String[] { id, alias });
+        // query.addAggregateResultDef(selectExprIndex++, alias, id);
+
     }
 
     @Override
     public void visitSelectExpressionAsAggrFunc(String func, String measure, String alias) {
-        // DEBUG
-//        System.out.printf("adding aggr func %s for measure %s aliased as %s.\n", func, measure, alias);
-        
-        query.addMeasure(measure);
-        query.addAggregateResultDef(selectExprIndex++,alias, func, measure);
-        
+
+        /*
+         * can't do it here because cube expression is not set at that point.
+         */
+        selectExpr.add(new String[] { alias, func, measure });
+        // query.addMeasure(measure);
+        // query.addAggregateResultDef(selectExprIndex++, alias, func, measure);
     }
 
-    
-    
+    @Override
+    public void visitCube(String cubeName) throws HblException {
+        query.setCube(cubeName);
+    }
+
 }
