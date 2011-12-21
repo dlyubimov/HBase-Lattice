@@ -25,8 +25,14 @@ import java.util.Map;
 import com.inadco.hbl.api.AggregateFunction;
 import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
+import com.inadco.hbl.client.impl.functions.FAvg;
 import com.inadco.hbl.client.impl.functions.FCount;
+import com.inadco.hbl.client.impl.functions.FMax;
+import com.inadco.hbl.client.impl.functions.FMin;
+import com.inadco.hbl.client.impl.functions.FStdDev;
+import com.inadco.hbl.client.impl.functions.FStdVar;
 import com.inadco.hbl.client.impl.functions.FSum;
+import com.inadco.hbl.client.impl.functions.FSumSq;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
 /**
@@ -46,6 +52,12 @@ public class SimpleAggregateFunctionRegistry implements AggregateFunctionRegistr
         // standard aggregates
         addFunction(new FCount());
         addFunction(new FSum());
+        addFunction(new FAvg());
+        addFunction(new FStdDev());
+        addFunction(new FStdVar());
+        addFunction(new FSumSq());
+        addFunction(new FMax());
+        addFunction(new FMin());
     }
 
     public void applyAll(Aggregation.Builder accumulator, Object measure) {
@@ -74,7 +86,8 @@ public class SimpleAggregateFunctionRegistry implements AggregateFunctionRegistr
     }
 
     void addFunction(AggregateFunction function) {
-        functions.put(function.getName()/*.toUpperCase()*/, function);
+        functions.put(function.getName()/* .toUpperCase() */, function);
+        function.init(this);
     }
 
     public AggregateFunction findFunction(String name) {

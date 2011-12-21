@@ -382,6 +382,13 @@ enced data.
 byte[]
 \family default
  and its Pig equivalent (in context of compilation).
+ Now also accepts any numbers and converts them to key using Big Endian
+ conversion.
+ Results returned from queries are always of 
+\family typewriter
+byte[]
+\family default
+ type.
 \end_layout
 
 \begin_layout Itemize
@@ -643,7 +650,7 @@ OnlineCannyAvgSummarizer
  containing the weighted sum state.
  It additionally can be used to derive a biased binomial estimate on a slice
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 see metrics doc and example.
@@ -661,6 +668,30 @@ Exponentially (or, rather, Canny function) weighted rate for facts with
 \end_inset
 
  as a custom function (see Example and doc)
+\end_layout
+
+\begin_layout Itemize
+SUM_SQ() sum of squares
+\end_layout
+
+\begin_layout Itemize
+AVG() 
+\end_layout
+
+\begin_layout Itemize
+SD() standard deviation (todo: add sample deviation)
+\end_layout
+
+\begin_layout Itemize
+VAR() standard variance (todo: add sample variance)
+\end_layout
+
+\begin_layout Itemize
+MIN() 
+\end_layout
+
+\begin_layout Itemize
+MAX()
 \end_layout
 
 \begin_layout Standard
@@ -1156,7 +1187,11 @@ At this point there's no JDBC provider available (we don't use jdbc; we
 \end_layout
 
 \begin_layout Standard
-Complement scan optimizations for hierarchies are not in yet.
+
+\series bold
+Complement scan optimizations for hierarchies are not in yet
+\series default
+.
  (but there's a working prototype).
  
 \end_layout
@@ -1188,6 +1223,14 @@ Poor selection of aggregate functions.
 \begin_layout Standard
 Poor selection of hierarchy and dimension types.
  Add more fine grained time hierarchy.
+ Queries don't support specifying hierarchy members in their hierarchical
+ inline syntas as in [ALL][2011][JAN] , but only as a continuous value.
+ Hierarchical members can be constructed and passed in as parameters though.
+\end_layout
+
+\begin_layout Standard
+Crosstab output is not formatted as tab (although equivalent data can be
+ returned as adjacency list).
 \end_layout
 
 \begin_layout Standard
@@ -1208,6 +1251,22 @@ Is there a clever way of supporting some of HAVING conditions without running
 
 \begin_layout Standard
 Parallel querying with region server-side preprocessors?
+\end_layout
+
+\begin_layout Standard
+Support for stringified dimensions.
+ probably needs back and forth conversion from string to hashified representatio
+n.
+ Also, probably functionality to enumerate all distinct members of such
+ dimensions.
+ More ideas how to represent? Can as well represent as a fixed size type,
+ then no hash tricks required.
+\end_layout
+
+\begin_layout Standard
+Pivoting UI: how to enable them? an MDX minimum dialect (which is an effort
+ similar to building a Mondrian or whatever tranlsator)? what minimum subset
+ of MDX is needed for such UI? embed our own dialect into jpivot?
 \end_layout
 
 \end_body

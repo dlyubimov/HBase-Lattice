@@ -22,44 +22,53 @@ import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
 
-public class FCount extends AbstractAggregateFunc {
+/**
+ * aggregate function of sum
+ * 
+ * @author dmitriy
+ * 
+ */
+public class FMax extends AbstractAggregateFunc {
 
-    public static final String FNAME = "COUNT";
+    public static final String FNAME = "MAX";
 
-    public FCount() {
+    public FMax() {
         super(FNAME);
     }
 
     @Override
-    public void apply(Builder result, Object measure) {
-
-        if (result.hasCnt()) {
-            if (measure != null)
-                result.setCnt(result.getCnt() + 1l);
-        } else {
-            result.setCnt(measure == null ? 0l : 1l);
-        }
-
+    public boolean supportsComplementScan() {
+        return false;
     }
 
     @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
-        if (!source.hasCnt())
+        if (!source.hasMax())
             return;
 
         switch (operation) {
         case ADD:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() + source.getCnt() : source.getCnt());
+            if (!accumulator.hasMax() || accumulator.getMax() < source.getMax())
+                accumulator.setMax(source.getMax());
             break;
-        case COMPLEMENT:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() - source.getCnt() : -source.getCnt());
-            break;
+        }
+    }
+
+    @Override
+    public void apply(Builder result, Object measure) {
+        if (!(measure instanceof Number))
+            return;
+
+        double dmeasure = ((Number) measure).doubleValue();
+
+        if (!result.hasMax() || result.getMax() < dmeasure) {
+            result.setMax(dmeasure);
         }
     }
 
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasCnt() ? source.getCnt() : 0;
+        return source.hasMin() ? source.getMin() : null;
     }
 
 }

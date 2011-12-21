@@ -32,7 +32,6 @@ import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Measure;
-import com.inadco.hbl.client.impl.functions.FCustomFunc;
 
 /**
  * Simple cube model implementation.

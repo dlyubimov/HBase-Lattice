@@ -25,73 +25,66 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.Writable;
 
 import com.google.protobuf.ByteString;
-import com.inadco.hbl.api.AggregateFunction;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 
-public abstract class FCustomFunc implements AggregateFunction {
+public abstract class FCustomFunc extends AbstractAggregateFunc {
 
-    private int    ordinal;
-    private String name;
+    private int ordinal;
 
     protected FCustomFunc(String name, int ordinal) {
-        super();
+        super(name);
         this.ordinal = ordinal;
-        this.name = name;
-    }
-    
-    @Override
-    public String getName() {
-        return name;
     }
 
-    protected void saveState(Aggregation.Builder b, Writable source ) throws IOException { 
+    protected void saveState(Aggregation.Builder b, Writable source) throws IOException {
         DataOutputBuffer dob = new DataOutputBuffer();
         source.write(dob);
         dob.close();
-        
-        // ?? do we need to explicitly fill in the "holes" in the repeated fields?
-        ByteString bsVal = ByteString.copyFrom(dob.getData(),0,dob.getLength());
+
+        /*
+         * do we need to explicitly fill in the "holes" in the repeated fields?
+         */
+        ByteString bsVal = ByteString.copyFrom(dob.getData(), 0, dob.getLength());
         int cnt = b.getCustomStatesCount();
-        if ( cnt == ordinal ) 
+        if (cnt == ordinal)
             b.addCustomStates(bsVal);
-        else if ( cnt > ordinal ) 
-        b.setCustomStates(ordinal, bsVal );
-        else { 
-            for ( int i = cnt; i < ordinal-1; i++ )
+        else if (cnt > ordinal)
+            b.setCustomStates(ordinal, bsVal);
+        else {
+            for (int i = cnt; i < ordinal - 1; i++)
                 b.addCustomStates(ByteString.EMPTY);
             b.addCustomStates(bsVal);
         }
     }
-    
-    protected <T extends Writable> T extractState(Aggregation source, T recipient ) throws IOException {
-        
-        if (source.getCustomStatesCount() <= ordinal)
-            return null;
-        ByteString bs = source.getCustomStates(ordinal);
-        if (bs.isEmpty())
-            return null;
-        
-        readState(bs,recipient);
-        return recipient;
-    }
-    
-    protected <T extends Writable> T extractState(Aggregation.Builder source, T recipient ) throws IOException {
-        
+
+    protected <T extends Writable> T extractState(Aggregation source, T recipient) throws IOException {
+
         if (source.getCustomStatesCount() <= ordinal)
             return null;
         ByteString bs = source.getCustomStates(ordinal);
         if (bs.isEmpty())
             return null;
 
-        readState(bs,recipient);
+        readState(bs, recipient);
         return recipient;
     }
-    
-    private void readState(ByteString bs, Writable recipient ) throws IOException { 
+
+    protected <T extends Writable> T extractState(Aggregation.Builder source, T recipient) throws IOException {
+
+        if (source.getCustomStatesCount() <= ordinal)
+            return null;
+        ByteString bs = source.getCustomStates(ordinal);
+        if (bs.isEmpty())
+            return null;
+
+        readState(bs, recipient);
+        return recipient;
+    }
+
+    private void readState(ByteString bs, Writable recipient) throws IOException {
         DataInputBuffer dib = new DataInputBuffer();
-        dib.reset(bs.toByteArray(),bs.size());
+        dib.reset(bs.toByteArray(), bs.size());
         recipient.readFields(dib);
     }
-
 
 }

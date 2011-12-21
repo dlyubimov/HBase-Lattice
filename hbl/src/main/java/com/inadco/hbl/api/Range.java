@@ -23,6 +23,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.commons.lang.Validate;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Writable;
 
 import com.inadco.hbl.client.impl.SliceOperation;
@@ -37,11 +38,11 @@ import com.inadco.hbl.util.HblUtil;
 
 public class Range implements Writable {
 
-    private byte[]        start, end;
-    private boolean       leftOpen, rightOpen;
-    private int           subkeyLen;
-    private int           keyLen;
-    
+    private byte[]                   start, end;
+    private boolean                  leftOpen, rightOpen;
+    private int                      subkeyLen;
+    private int                      keyLen;
+
     private transient SliceOperation sliceOperation;
 
     @Override
@@ -56,7 +57,7 @@ public class Range implements Writable {
             throw new IOException("Unexpected EOF reading range specficiation");
         leftOpen = (stuff & 0x01) != 0;
         rightOpen = (stuff & 0x02) != 0;
-        subkeyLen=HblUtil.readVarUint32(in);
+        subkeyLen = HblUtil.readVarUint32(in);
 
     }
 
@@ -114,6 +115,7 @@ public class Range implements Writable {
 
         Validate.notNull(start);
         Validate.notNull(end);
+        Validate.isTrue(Bytes.BYTES_RAWCOMPARATOR.compare(start, end) <= 0, "scan start after scan end");
 
         this.keyLen = start.length;
         Validate.isTrue(end.length == keyLen);
@@ -183,6 +185,5 @@ public class Range implements Writable {
     public void setSliceOperation(SliceOperation sliceOperation) {
         this.sliceOperation = sliceOperation;
     }
-    
-    
+
 }

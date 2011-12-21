@@ -57,9 +57,11 @@ import edu.emory.mathcs.backport.java.util.Arrays;
 public class CompositeKeyRowFilter extends FilterBase {
     private Range[]              pathRange;
 
-    // of course since we are using Writable serialization rather than java
-    // native, keyword 'transitve' doesn't mean anything in this context, but
-    // i'd like to use it as a marker for something i don't really serialize.
+    /*
+     * of course since we are using Writable serialization rather than java
+     * native, keyword 'transient' doesn't mean anything in this context, but
+     * i'd like to use it as a marker for something i don't really serialize.
+     */
     private transient int[]      subkeyLengths;
     private transient int[]      keyOffsets;
     private transient int        compositeKeyLen;
@@ -70,6 +72,7 @@ public class CompositeKeyRowFilter extends FilterBase {
         super();
 
         Validate.notNull(pathRange);
+        
         this.pathRange = pathRange;
 
     }
@@ -132,11 +135,11 @@ public class CompositeKeyRowFilter extends FilterBase {
                 return false;
             }
 
-            // filter out wrong hierarchy depths
-            // which is signified by filtering more than 0 of
-            // 0x0 bytes on the right side of the key.
-            // in other words, if there' that many 0x0 at the end,
-            // fitler it out.
+            /*
+             * filter out wrong hierarchy depths which is signified by filtering
+             * more than 0 of 0x0 bytes on the right side of the key. in other
+             * words, if there' that many 0x0 at the end, filter it out.
+             */
 
             int z = subkeyLengths[i];
             if (z > 0) {
@@ -197,7 +200,8 @@ public class CompositeKeyRowFilter extends FilterBase {
         int keyOffset = keyOffsets[dimIndex];
         int keyLen = pathRange[dimIndex].getKeyLen();
 
-        if ( nextKeyHint == null ) nextKeyHint = new byte[compositeKeyLen];
+        if (nextKeyHint == null)
+            nextKeyHint = new byte[compositeKeyLen];
         System.arraycopy(compositeKey, compositeKeyOffset, nextKeyHint, 0, keyOffset);
         if (plus1) {
             if (HblUtil.incrementKey(nextKeyHint, 0, keyOffset))

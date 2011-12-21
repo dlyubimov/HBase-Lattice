@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.inadco.hbl.model.SimpleAggregateFunctionRegistry;
-
 public interface Cube  {
     
     String getName();

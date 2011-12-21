@@ -22,44 +22,49 @@ import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
 
-public class FCount extends AbstractAggregateFunc {
+/**
+ * aggregate function of sum of squares
+ * 
+ * @author dmitriy
+ * 
+ */
+public class FSumSq extends AbstractAggregateFunc {
 
-    public static final String FNAME = "COUNT";
+    public static final String FNAME = "SUM_SQ";
 
-    public FCount() {
+    public FSumSq() {
         super(FNAME);
     }
 
     @Override
-    public void apply(Builder result, Object measure) {
-
-        if (result.hasCnt()) {
-            if (measure != null)
-                result.setCnt(result.getCnt() + 1l);
-        } else {
-            result.setCnt(measure == null ? 0l : 1l);
-        }
-
-    }
-
-    @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
-        if (!source.hasCnt())
+        if (!source.hasSumSq())
             return;
+
+        double sq = source.getSumSq();
+        sq *= sq;
 
         switch (operation) {
         case ADD:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() + source.getCnt() : source.getCnt());
+            accumulator.setSumSq(accumulator.hasSumSq() ? accumulator.getSumSq() + sq : sq);
             break;
         case COMPLEMENT:
-            accumulator.setCnt(accumulator.hasCnt() ? accumulator.getCnt() - source.getCnt() : -source.getCnt());
-            break;
+            accumulator.setSum(accumulator.hasSum() ? accumulator.getSum() - sq : -sq);
         }
+    }
+
+    @Override
+    public void apply(Builder result, Object measure) {
+        if (!(measure instanceof Number))
+            return;
+        double sq = result.hasSumSq() ? 0.0 : result.getSumSq();
+        sq += ((Number) measure).doubleValue();
+        result.setSum(sq);
     }
 
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasCnt() ? source.getCnt() : 0;
+        return source.hasSum() ? source.getSum() : 0.0;
     }
 
 }

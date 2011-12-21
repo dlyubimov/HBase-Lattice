@@ -18,50 +18,51 @@
  */
 package com.inadco.hbl.client.impl.functions;
 
+import com.inadco.hbl.api.AggregateFunction;
+import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
 
 /**
- * aggregate function of sum
+ * common suggested base for all aggregate function implementations
  * 
  * @author dmitriy
  * 
  */
-public class FSum extends AbstractAggregateFunc {
+public abstract class AbstractAggregateFunc implements AggregateFunction {
 
-    public static final String FNAME = "SUM";
+    protected String                    name;
+    protected AggregateFunctionRegistry parent;
 
-    public FSum() {
-        super(FNAME);
+    protected AbstractAggregateFunc(String name) {
+        super();
+        this.name = name;
+    }
+
+    @Override
+    public void init(AggregateFunctionRegistry parent) {
+        this.parent = parent;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean supportsComplementScan() {
+        return true;
+    }
+
+    @Override
+    public void apply(Builder result, Object measureFact) {
+
     }
 
     @Override
     public void merge(Builder accumulator, Aggregation source, SliceOperation operation) {
-        if (!source.hasSum())
-            return;
 
-        switch (operation) {
-        case ADD:
-            accumulator.setSum(accumulator.hasSum() ? accumulator.getSum() + source.getSum() : source.getSum());
-            break;
-        case COMPLEMENT:
-            accumulator.setSum(accumulator.hasSum() ? accumulator.getSum() - source.getSum() : -source.getSum());
-        }
-    }
-
-    @Override
-    public void apply(Builder result, Object measure) {
-        if (!(measure instanceof Number))
-            return;
-        double sum = result.hasSum() ? 0.0 : result.getSum();
-        sum += ((Number) measure).doubleValue();
-        result.setSum(sum);
-    }
-
-    @Override
-    public Object getAggrValue(Aggregation source) {
-        return source.hasSum() ? source.getSum() : 0.0;
     }
 
 }
