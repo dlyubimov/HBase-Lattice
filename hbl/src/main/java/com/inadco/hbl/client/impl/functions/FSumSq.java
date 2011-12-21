@@ -42,7 +42,6 @@ public class FSumSq extends AbstractAggregateFunc {
             return;
 
         double sq = source.getSumSq();
-        sq *= sq;
 
         switch (operation) {
         case ADD:
@@ -58,7 +57,10 @@ public class FSumSq extends AbstractAggregateFunc {
         if (!(measure instanceof Number))
             return;
         double sq = result.hasSumSq() ? 0.0 : result.getSumSq();
-        sq += ((Number) measure).doubleValue();
+        double dmeasure = ((Number) measure).doubleValue();
+
+        sq += dmeasure * dmeasure;
+        
         result.setSum(sq);
     }
 
