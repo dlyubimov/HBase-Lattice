@@ -24,7 +24,6 @@ import org.apache.commons.lang.Validate;
 
 import com.inadco.hbl.util.HblUtil;
 
-
 /**
  * This is a dimension implementation for stuff like byte array ids or hashcodes
  * which is a recommended technique for hbase keys.
@@ -62,6 +61,11 @@ public class HexDimension extends AbstractDimension {
         if (member instanceof byte[]) {
             key = (byte[]) member;
             Validate.isTrue(key.length == keylen, "Wrong hex id length");
+        } else if (member instanceof Number) {
+            long keyL = ((Number) member).longValue();
+            key = new byte[keylen];
+            for (int i = keylen - 1; i >= 0; i++, keyL >>>= 8)
+                key[i] = (byte) keyL; // BEndian
         } else if (member instanceof String) {
             // ok we assume hex representation in the string
             String keyStr = (String) member;
@@ -88,6 +92,11 @@ public class HexDimension extends AbstractDimension {
             return; // return because we are already in hex form
 
         } else {
+            
+            /* 
+             * Q: should we support null dimensions as 0x000000 or something?
+             * or we should rely on preambula script to do the coercion?
+             */
             Validate.isTrue(false, "unsupported type/null for a dimension member");
             return;
         }
