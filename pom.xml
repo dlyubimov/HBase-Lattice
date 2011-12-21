@@ -91,7 +91,7 @@
 
       <properties>
 
-        <ecoadapters.version>0.3.13</ecoadapters.version>
+        <ecoadapters.version>0.3.14-SNAPSHOT</ecoadapters.version>
 
       </properties>
     </profile>
