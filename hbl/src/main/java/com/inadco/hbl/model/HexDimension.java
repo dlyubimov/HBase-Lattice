@@ -60,7 +60,15 @@ public class HexDimension extends AbstractDimension {
 
         if (member instanceof byte[]) {
             key = (byte[]) member;
-            Validate.isTrue(key.length == keylen, "Wrong hex id length");
+            Validate.isTrue(key.length <= keylen, "Wrong hex id length");
+            if (key.length < keylen) {
+                /*
+                 * support left-padding with zeros
+                 */
+                byte[] paddedKey = new byte[keylen];
+                System.arraycopy(key, 0, paddedKey, 0, key.length);
+                key = paddedKey;
+            }
         } else if (member instanceof Number) {
             long keyL = ((Number) member).longValue();
             key = new byte[keylen];
@@ -92,10 +100,10 @@ public class HexDimension extends AbstractDimension {
             return; // return because we are already in hex form
 
         } else {
-            
-            /* 
-             * Q: should we support null dimensions as 0x000000 or something?
-             * or we should rely on preambula script to do the coercion?
+
+            /*
+             * Q: should we support null dimensions as 0x000000 or something? or
+             * we should rely on preambula script to do the coercion?
              */
             Validate.isTrue(false, "unsupported type/null for a dimension member");
             return;
