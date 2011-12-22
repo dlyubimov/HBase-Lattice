@@ -317,6 +317,85 @@ Quick Howto
 \end_layout
 
 \begin_layout Subsection
+Overview of the dev workflow
+\end_layout
+
+\begin_layout Standard
+The flow is as follows: 
+\end_layout
+
+\begin_layout Enumerate
+Define cube model.
+\end_layout
+
+\begin_layout Enumerate
+Deploy/update model to HBL system table in HBase.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Generate compiler script using compiler bean
+\end_layout
+
+\begin_layout Enumerate
+Run incremental compiler cycle on a next portion of a fact stream.
+\end_layout
+
+\begin_layout Enumerate
+Repeat step 4 as many times as needed.
+\end_layout
+
+\begin_layout Enumerate
+At any moment after (2) querying the cube is enabled.
+\end_layout
+
+\begin_layout Standard
+Step 1-2 may be repeated as many times as needed.
+ Step 2 requires script update (step 3) in order for the changes to take
+ effect.
+ The changes committed in step (2) are effective immediately for step 6
+ activities (almost; hbl client actually caches the models client side after
+ a first query to a cube.
+ So Hbl client interface must be re-created if reused in the client.
+ Perhaps we could implement api to reset the model cache and force the reload).
+\end_layout
+
+\begin_layout Standard
+Two fundamental approaches to implement steps 2-4 can be taken: Command
+ line interface approach and embedded approach.
+\end_layout
+
+\begin_layout Subsubsection
+Command line approach for the workflow
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+TODO: write command line wrappers for steps 2-4
+\end_layout
+
+\begin_layout Subsubsection
+Embedded approach.
+ 
+\end_layout
+
+\begin_layout Standard
+See 
+\begin_inset CommandInset href
+LatexCommand href
+name "Example1.java"
+target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/java/Example1.java"
+
+\end_inset
+
+ in sample module for the full cycle of steps 2-6.
+ That's actually how we use HBase Lattice: a 100% embedded client application
+ that handles scheduling of incremental compilations, schema updates and
+ code generation.
+\end_layout
+
+\begin_layout Subsection
 Specifying a model.
 \end_layout
 
@@ -359,6 +438,25 @@ target "http://code.google.com/p/snakeyaml/"
 SnakeYaml
 \emph default
  works with classes and constructors for details of what's going on there.
+\end_layout
+
+\begin_layout Standard
+Once model is defined, it needs to be deployed with HblAdmin (see 
+\begin_inset CommandInset href
+LatexCommand href
+name "Example1.java"
+target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/java/Example1.java"
+
+\end_inset
+
+ in sample module for the example of embedded approach).
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+TODO: create command line utility wrapping HblAdmin functionality for model
+ deployments/updates.
 \end_layout
 
 \begin_layout Subsubsection
@@ -597,7 +695,44 @@ HBL_INPUT
 \end_inset
 
  by default).
+ See 
+\begin_inset CommandInset href
+LatexCommand href
+name "Preambula script in sample module"
+target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/resources/example1-preambula.pig"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+If the script is being run directly in Pig's executable, preambula perhaps
+ should also register hbl jar as additional classpath jar with 
+\family typewriter
+register()
+\family default
+.
  
+\emph on
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+
+\emph on
+TODO: create maven build for default hadoop job jar for standalone pig applicati
+on.
+ Example module builds its own hadoop job jar that includes hbl and the
+ pig and uses PigContext api to communicate with Grunt mechanics which is
+ the way we run it, i.e.
+ 100% embedded way.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -631,6 +766,13 @@ It must have at least one measure fact (currently, of either long or double
  streams containing different measures and potentially originating in different
  sources (for as long as all dimensions can be inferred for each of them).
  
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+TODO: command line utility to run compiler bean to generate the pig script
+ into a file.
 \end_layout
 
 \begin_layout Subsection
@@ -746,6 +888,13 @@ Api allows to add new custom functions easily, it's just all we needed at
 
 \begin_layout Subsection
 Querying with a prepared query 
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+TODO: write a command line shell (perhaps akin to HBase shell) to enable
+ ad-hoc query runs.
 \end_layout
 
 \begin_layout Standard
