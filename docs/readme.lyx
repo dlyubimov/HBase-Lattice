@@ -327,7 +327,15 @@ Model is specified by composing a bunch of java classes representing cube,
  to use a declarative approach for model definition.
  We use YAML for declarative model definition (see file 
 \family typewriter
-example.yaml
+
+\begin_inset CommandInset href
+LatexCommand href
+name "example1.yaml"
+target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/resources/example1.yaml"
+
+\end_inset
+
+
 \family default
  in the 
 \emph on
@@ -389,6 +397,17 @@ byte[]
 byte[]
 \family default
  type.
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+HexDimension
+\family default
+ is initialized with the value length.
+ The fact stream will accept all values shorter or equal in length to the
+ one specified in model.
+ 
 \end_layout
 
 \begin_layout Itemize
@@ -434,6 +453,19 @@ copes with continous nature of time by setting up discrete member values
  may go all the way down to a millisecond, and still be able to optimize
  queries with additive and complement scans.
  
+\end_layout
+
+\begin_layout Paragraph
+Handling NULL values for dimensions in the fact stream.
+\end_layout
+
+\begin_layout Standard
+At this time, compiler will not accept NULL values for dimensions because
+ representation of NULL values is not currently supported in composite hbase
+ key structure.
+ If it is desirable to consider NULL values as a dimensional coordinate,
+ it may be transformed into a reserved non-null value in the compiler's
+ preambula.
 \end_layout
 
 \begin_layout Subsubsection
@@ -495,6 +527,19 @@ See example for the usage details.
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Paragraph
+Handling NULL values for measures in the fact stream.
+\end_layout
+
+\begin_layout Standard
+Measure values could be NULL in the fact stream.
+ It may affect behavior of certain aggregate functions similar to their
+ definition in Pig and SQL.
+ E.g.
+ if slice did not contain non-NULL facts for a measure, SUM() will produce
+ NULL but COUNT() will produce 0.
 \end_layout
 
 \begin_layout Subsection

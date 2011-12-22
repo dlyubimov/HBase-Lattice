@@ -5,10 +5,10 @@
 ---
   - Example1 # cube name as id
   - # dimensions
-    - &dim1 !HexDimension [dim1,16]
+    - &dim1 !HexDimension [dim1,16] # HexDimension's params: name, key length in bytes
     - &dim2 !HexDimension [dim2,16]
     - &dim3 !HexDimension [dim3,16]
-    - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime]
+    - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime] # params: dimension name
     
   - # cuboids
     # NOTE: since with most use cases querying over time dimension 

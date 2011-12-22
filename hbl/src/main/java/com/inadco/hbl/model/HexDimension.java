@@ -23,6 +23,7 @@ import java.util.Arrays;
 import org.apache.commons.lang.Validate;
 
 import com.inadco.hbl.util.HblUtil;
+import com.inadco.hbl.util.IOUtil;
 
 /**
  * This is a dimension implementation for stuff like byte array ids or hashcodes
@@ -41,11 +42,27 @@ import com.inadco.hbl.util.HblUtil;
 public class HexDimension extends AbstractDimension {
     protected String name;
     protected int    keylen;
+    protected Object nullkey;
 
     public HexDimension(String name, int keylen) {
+        this(name, keylen, null);
+    }
+
+    /**
+     * 
+     * @param name
+     * @param keylen
+     *            the length of the dimension type (stuff will be left-padded
+     *            with 0's)
+     * @param nullkey
+     *            if not null, use that value instead of null value instead of
+     *            generating an error.
+     */
+    public HexDimension(String name, int keylen, Object nullkey) {
         super(name);
         this.name = name;
         this.keylen = keylen;
+        this.nullkey = nullkey == null ? null : IOUtil.tryClone(nullkey);
     }
 
     @Override
@@ -57,6 +74,10 @@ public class HexDimension extends AbstractDimension {
     public void getKey(Object member, byte[] buff, int offset) {
 
         byte[] key;
+
+        if (member == null) {
+            member = nullkey;
+        }
 
         if (member instanceof byte[]) {
             key = (byte[]) member;
@@ -72,7 +93,7 @@ public class HexDimension extends AbstractDimension {
         } else if (member instanceof Number) {
             long keyL = ((Number) member).longValue();
             key = new byte[keylen];
-            for (int i = keylen - 1; i >= 0; i++, keyL >>>= 8)
+            for (int i = keylen - 1; i >= 0; i--, keyL >>>= 8)
                 key[i] = (byte) keyL; // BEndian
         } else if (member instanceof String) {
             // ok we assume hex representation in the string
