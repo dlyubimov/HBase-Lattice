@@ -122,10 +122,6 @@ public class HexDimension extends AbstractDimension {
 
         } else {
 
-            /*
-             * Q: should we support null dimensions as 0x000000 or something? or
-             * we should rely on preambula script to do the coercion?
-             */
             Validate.isTrue(false, "unsupported type/null for a dimension member");
             return;
         }
