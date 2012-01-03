@@ -19,26 +19,38 @@
 package com.inadco.hbl.model;
 
 import com.inadco.hbl.api.Hierarchy;
+import com.inadco.hbl.api.Range;
+
 /**
- * Abstract Hierarchy support. 
+ * Abstract Hierarchy support.
  * 
  * @author dmitriy
- *
+ * 
  */
 public abstract class AbstractHierarchy extends AbstractDimension implements Hierarchy {
 
-    public AbstractHierarchy(String name, String[] hierarchyPath ) {
+    public AbstractHierarchy(String name, String[] hierarchyPath) {
         super(name);
     }
 
     @Override
     public void getKey(Object member, byte[] buff, int offset) {
-        // by default, just evaluate hierarchy at deepest level. 
-        getKey(member,getDepth()-1,buff,offset);
+        // by default, just evaluate hierarchy at deepest level.
+        getKey(member, getDepth() - 1, buff, offset);
     }
 
-    
+    @Override
+    public Range allRange() {
+        /*
+         * By default, we support [all] range of a dimension by a key with level
+         * = 0. (all 0s in all positions, which means dimension cannot really
+         * have all-zero keys as a valid value).
+         */
+        byte[] allKey = new byte[getKeyLen()];
+        Range r = new Range(allKey, true);
+        // marker for the 'all' key:
+        r.setSubkeyLen(0);
+        return r;
+    }
 
-    
-    
 }

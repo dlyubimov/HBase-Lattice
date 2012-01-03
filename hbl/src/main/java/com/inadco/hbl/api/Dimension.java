@@ -57,5 +57,7 @@ public interface Dimension {
     RawComparator<?> getMemberComparator();
 
     Range[] optimizeSliceScan(Slice slice);
+    
+    Range allRange ();
 
 }

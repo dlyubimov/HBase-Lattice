@@ -77,4 +77,14 @@ public abstract class AbstractDimension implements Dimension {
 
     }
 
+    @Override
+    public Range allRange() {
+        int keylen = getKeyLen();
+        byte[] leftKey = new byte[keylen], rightKey = new byte[keylen];
+        Arrays.fill(rightKey, (byte) 0xff);
+        Range r = new Range(leftKey, rightKey, true, false, false);
+        r.setSubkeyLen(keylen);
+        return r;
+    }
+
 }

@@ -20,7 +20,6 @@ package com.inadco.hbl.client.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +35,6 @@ import com.inadco.hbl.api.AggregateFunctionRegistry;
 import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.api.Cuboid;
 import com.inadco.hbl.api.Dimension;
-import com.inadco.hbl.api.Hierarchy;
 import com.inadco.hbl.api.Measure;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.AggregateQuery;
@@ -242,31 +240,14 @@ public class AggregateQueryImpl implements AggregateQuery {
         Dimension dim = dimensions.get(dimIndex);
         List<Slice> slices = dimSlices.get(dim.getName());
         if (slices == null) {
+
             // generate 'total' slice
+            Range allRange = dim.allRange();
 
-            if (dim instanceof Hierarchy) {
-                // kinda hack: current hierachies are to support [ALL] hierarchy
-                // key
-                // which is all 0's .
-                byte[] allKey = new byte[dim.getKeyLen()];
-                Range allpoint = new Range(allKey, allKey, true, false, false);
-                if (partialSpec.size() == dimIndex)
-                    partialSpec.add(allpoint);
-                else
-                    partialSpec.set(dimIndex, allpoint);
-
-            } else {
-                // total range for a dimension: perhaps subefficient!
-                int keylen;
-                byte[] startKey = new byte[keylen = dim.getKeyLen()];
-                byte[] endKey = new byte[keylen];
-                Arrays.fill(endKey, (byte) 0xFF);
-                Range allrange = new Range(startKey, endKey, true, false, false);
-                if (partialSpec.size() == dimIndex)
-                    partialSpec.add(allrange);
-                else
-                    partialSpec.set(dimIndex, allrange);
-            }
+            if (partialSpec.size() == dimIndex)
+                partialSpec.add(allRange);
+            else
+                partialSpec.set(dimIndex, allRange);
 
             generateScanSpecs(cuboid, scanHolder, partialSpec, dimIndex + 1, groupKeyLen, so, measureQualifiers);
         } else {
