@@ -24,9 +24,9 @@
       hbaseMaxVersions: 1 # default: 1 
       
       # also a way to configure thru constructor only (dimensions)
-    - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
+    # - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim3, *dimImpressionTime ]]
-    - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
+    - !SimpleCuboid [[*dim2, *dim1, *dimImpressionTime]]
     
     
   
