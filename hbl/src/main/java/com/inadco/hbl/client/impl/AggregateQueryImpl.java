@@ -144,13 +144,13 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             Validate.notNull(cuboid, "Unable find suitable cuboid for the slice query.");
 
-            // FIXME, TODO: check slices for overlapping. otherwise, if slices
-            // overlap, not only we'd be performing more scans than needed, but
-            // they will also contain duplicate counts.
-
-            // for now we just have to assume that slices will not overlap.
-
-            // create cartesian product of ScanSpec's
+            /*
+             * FIXME, TODO: check slices for overlapping. otherwise, if slices
+             * overlap, not only we'd be performing more scans than needed, but
+             * they will also contain duplicate counts.
+             * 
+             * for now we just have to assume that slices will not overlap.
+             */
             List<ScanSpec> scanSpecs = new ArrayList<ScanSpec>();
 
             List<Range> partialSpec = new ArrayList<Range>();
@@ -262,17 +262,19 @@ public class AggregateQueryImpl implements AggregateQuery {
             for (Range r : ranges) {
                 SliceOperation nextSo = so;
 
-                // clarification:
-                // we introduce slice operation (a complement operation
-                // in a plan or additive operation) just for the dimension
-                // to be able to advise us on most optimal combination
-                // of such.
-                // Note that a complement slice S as in A\S becomes a union
-                // as in A\(S\S2) = (A\S) U S2 if S2 \subset S.
-                // so due to similar argumentation accross different dimensions,
-                // we just invert slice operations in each subsequent dimension
-                // encountered (since each subsequent dimension always operates
-                // on a subset of prior dimension's hyper slice).
+                /*
+                 * clarification:
+                 * 
+                 * we introduce slice operation (a complement operation in a
+                 * plan or additive operation) just for the dimension to be able
+                 * to advise us on most optimal combination of such. Note that a
+                 * complement slice S as in A\S becomes a union as in A\(S\S2) =
+                 * (A\S) U S2 if S2 \subset S. so due to similar argumentation
+                 * accross different dimensions, we just invert slice operations
+                 * in each subsequent dimension encountered (since each
+                 * subsequent dimension always operates on a subset of prior
+                 * dimension's hyper slice).
+                 */
                 if (r.getSliceOperation() == SliceOperation.COMPLEMENT) {
                     if (nextSo == SliceOperation.ADD)
                         nextSo = SliceOperation.COMPLEMENT;
@@ -291,10 +293,11 @@ public class AggregateQueryImpl implements AggregateQuery {
 
     private Cuboid findCuboid() {
 
-        // we need to find cuboid with composite keys where
-        // grouping dimensions are stacked on the left but
-        // where all of the sliced dimensions are also present (in any
-        // position).
+        /*
+         * we need to find cuboid with composite keys where grouping dimensions
+         * are stacked on the left but where all of the sliced dimensions are
+         * also present (in any position).
+         */
 
         Set<String> dimensionSubset = new HashSet<String>();
         dimensionSubset.addAll(dimSlices.keySet());
