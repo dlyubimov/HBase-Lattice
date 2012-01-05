@@ -283,6 +283,13 @@ public class Example1 extends Configured implements Tool {
 
                 GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
                 GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
+
+                /*
+                 * this will be in local time, whereas example was generated in
+                 * UTC. So for PST we get actually normally hours from 9,10 am.
+                 * which would result in impression count of 17 for key 00000,
+                 * and 21 ifor key 000001.
+                 */
                 startTime.add(Calendar.HOUR_OF_DAY, 1);
                 endTime.add(Calendar.HOUR_OF_DAY, 3);
                 // recalculate the calendars
@@ -336,6 +343,16 @@ public class Example1 extends Configured implements Tool {
 
             GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
             GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
+
+            // our actual example generated facts in utc zone of that day.
+            startTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+            endTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            // flush
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+
+            // modify time-of-day-wise
             startTime.add(Calendar.HOUR_OF_DAY, 1);
             endTime.add(Calendar.HOUR_OF_DAY, 3);
             // recalculate the calendars
