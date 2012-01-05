@@ -166,27 +166,29 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
             throw new HblException("unexpected hierarchy depth in the key.");
         }
         // we return stuff as calendar objects here.
-        GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        GregorianCalendar gc = new GregorianCalendar(UTC);
         gc.set(Calendar.YEAR, year);
         gc.set(Calendar.MONTH, month);
-        gc.set(Calendar.DATE,date);
+        gc.set(Calendar.DATE, date);
         gc.set(Calendar.HOUR_OF_DAY, hour);
         gc.set(Calendar.MINUTE, 0);
-        gc.set(Calendar.SECOND,0);
-        gc.set(Calendar.MILLISECOND,0);
+        gc.set(Calendar.SECOND, 0);
+        gc.set(Calendar.MILLISECOND, 0);
         return gc;
 
     }
 
     private static GregorianCalendar toGCal(Object member) {
-        if (member instanceof GregorianCalendar)
-            return (GregorianCalendar) member;
-        GregorianCalendar gcal = new GregorianCalendar();
-        gcal.setTimeInMillis((Long) member);
-        // flush
-        gcal.getTimeInMillis();
-        gcal.setTimeZone(UTC);
-        return gcal;
+        if (member instanceof GregorianCalendar) {
+            GregorianCalendar gcal = new GregorianCalendar(UTC);
+            gcal.setTimeInMillis(((GregorianCalendar) member).getTimeInMillis());
+            return gcal;
+        } else {
+            // assume epoch milliseconds
+            GregorianCalendar gcal = new GregorianCalendar(UTC);
+            gcal.setTimeInMillis((Long) member);
+            return gcal;
+        }
 
     }
 
