@@ -92,7 +92,7 @@
 
       <properties>
 
-        <ecoadapters.version>0.3.14</ecoadapters.version>
+        <ecoadapters.version>0.3.15-SNAPSHOT</ecoadapters.version>
 
       </properties>
     </profile>
