@@ -294,4 +294,10 @@ public class OnlineCannyAvgSummarizer implements IrregularSamplingSummarizer {
         return getValue();
     }
 
+    @Override
+    public String toString() {
+        return "OnlineCannyAvgSummarizer [alpha=" + alpha + ", k=" + k + ", w=" + w + ", u=" + u + ", s=" + s + ", v="
+            + v + ", t=" + t + "]";
+    }
+
 }

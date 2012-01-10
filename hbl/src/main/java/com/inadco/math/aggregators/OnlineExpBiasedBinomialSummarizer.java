@@ -201,4 +201,10 @@ public class OnlineExpBiasedBinomialSummarizer extends OnlineExpAvgSummarizer {
         return (bpos + s) / (bpos + bneg + w);
     }
 
+    @Override
+    public String toString() {
+        return "OnlineExpBiasedBinomialSummarizer [bpos=" + bpos + ", bneg=" + bneg + ", w=" + w + ", s=" + s + ", t="
+            + t + ", alpha=" + alpha + "]";
+    }
+
 }

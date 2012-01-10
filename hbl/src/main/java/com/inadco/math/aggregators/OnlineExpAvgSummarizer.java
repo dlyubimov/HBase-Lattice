@@ -268,4 +268,9 @@ public class OnlineExpAvgSummarizer implements IrregularSamplingSummarizer {
         out.writeDouble(alpha);
     }
 
+    @Override
+    public String toString() {
+        return "OnlineExpAvgSummarizer [w=" + w + ", s=" + s + ", t=" + t + ", alpha=" + alpha + "]";
+    }
+
 }

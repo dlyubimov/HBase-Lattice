@@ -203,4 +203,9 @@ public class OnlineExpRateSummarizer extends OnlineExpAvgSummarizer {
         return t - delta;
     }
 
+    @Override
+    public String toString() {
+        return "OnlineExpRateSummarizer [w=" + w + ", s=" + s + ", t=" + t + ", alpha=" + alpha + "]";
+    }
+
 }

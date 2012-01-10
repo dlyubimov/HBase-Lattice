@@ -208,4 +208,10 @@ public class OnlineCannyRateSummarizer extends OnlineCannyAvgSummarizer {
         return getValue();
     }
 
+    @Override
+    public String toString() {
+        return "OnlineCannyRateSummarizer [alpha=" + alpha + ", k=" + k + ", w=" + w + ", u=" + u + ", s=" + s + ", v="
+            + v + ", t=" + t + "]";
+    }
+
 }

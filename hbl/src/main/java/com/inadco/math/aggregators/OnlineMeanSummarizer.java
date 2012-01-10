@@ -42,8 +42,6 @@ public class OnlineMeanSummarizer implements OnlineSummarizer<OnlineMeanSummariz
     double variance;
     long   n;
 
-    
-    
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -106,12 +104,12 @@ public class OnlineMeanSummarizer implements OnlineSummarizer<OnlineMeanSummariz
         if (n > maxN)
             n = maxN;
     }
-    
+
     @Override
     public void complement(OnlineMeanSummarizer other, boolean artificialStretch) {
         // FIXME: this should be possible here, shouldn't it?
         throw new UnsupportedOperationException();
-        
+
     }
 
     @Override
@@ -137,6 +135,11 @@ public class OnlineMeanSummarizer implements OnlineSummarizer<OnlineMeanSummariz
         out.writeDouble(variance);
         out.writeDouble(n);
 
+    }
+
+    @Override
+    public String toString() {
+        return "OnlineMeanSummarizer [maxN=" + maxN + ", mean=" + mean + ", variance=" + variance + ", n=" + n + "]";
     }
 
 }

@@ -208,4 +208,12 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
         // this affects only biased estimate returned.
         return (bpos + k * s - (k - 1) * u) / (bpos + bneg + k * w - (k - 1) * v);
     }
+
+    @Override
+    public String toString() {
+        return "OnlineCannyBiasedBinomialSummarizer [bpos=" + bpos + ", bneg=" + bneg + ", alpha=" + alpha + ", k=" + k
+            + ", w=" + w + ", u=" + u + ", s=" + s + ", v=" + v + ", t=" + t + "]";
+    }
+    
+    
 }
