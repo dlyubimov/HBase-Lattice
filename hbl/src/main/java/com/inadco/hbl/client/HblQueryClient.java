@@ -40,6 +40,7 @@ import com.inadco.hbl.api.Cube;
 import com.inadco.hbl.client.impl.AggregateQueryImpl;
 import com.inadco.hbl.client.impl.PreparedAggregateQueryImpl;
 import com.inadco.hbl.compiler.YamlModelParser;
+import com.inadco.hbl.model.SimpleCube;
 import com.inadco.hbl.util.IOUtil;
 
 /**
@@ -64,6 +65,12 @@ public class HblQueryClient implements Closeable {
     private HTablePool                         tpool;
     private AtomicReference<Map<String, Cube>> cubeCache           = new AtomicReference<Map<String, Cube>>();
     private Deque<Closeable>                   closeables          = new ArrayDeque<Closeable>();
+
+    /*
+     * ttl for the model in the client, by default, 10 minutes, then need to
+     * update.
+     */
+    private long                               cubeCacheTTL        = 1000 * 60 * 10;
 
     public HblQueryClient(Configuration conf) throws IOException, HblException {
         this(conf, (String) null, null);
@@ -101,6 +108,14 @@ public class HblQueryClient implements Closeable {
         init(conf, tpe);
     }
 
+    public long getCubeCacheTTL() {
+        return cubeCacheTTL;
+    }
+
+    public void setCubeCacheTTL(long cubeCacheTTL) {
+        this.cubeCacheTTL = cubeCacheTTL;
+    }
+
     @Override
     public void close() throws IOException {
         IOUtil.closeAll(closeables);
@@ -111,14 +126,25 @@ public class HblQueryClient implements Closeable {
         map = cubeCache.get();
         Cube cube = map == null ? null : map.get(cubeName);
 
+        // TTL check
+        if (cube != null && (cube instanceof SimpleCube)) {
+            SimpleCube scube = (SimpleCube) cube;
+            if (System.currentTimeMillis() - scube.getTimestamp() >= cubeCacheTTL) {
+                cube = null;
+            }
+        }
+
         if (cube == null) {
             cube = loadCube(cubeName);
+            if (cube == null)
+                throw new HblException(String.format("Unable to find cube %s.", cubeName));
+
             do {
                 map = cubeCache.get();
                 update = map == null ? new HashMap<String, Cube>() : new HashMap<String, Cube>(map);
+                update.put(cubeName, cube);
 
             } while (!cubeCache.compareAndSet(map, update));
-
         }
         return cube;
     }

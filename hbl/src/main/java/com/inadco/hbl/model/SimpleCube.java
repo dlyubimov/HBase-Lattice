@@ -41,18 +41,19 @@ import com.inadco.hbl.api.Measure;
  */
 public class SimpleCube implements Cube {
 
-    protected String                    name;
-    protected Map<String, Dimension>    dimensions       = new HashMap<String, Dimension>();
-    protected Map<String, Dimension>    readonlyDims     = Collections.unmodifiableMap(dimensions);
+    protected String                          name;
+    protected Map<String, Dimension>          dimensions       = new HashMap<String, Dimension>();
+    protected Map<String, Dimension>          readonlyDims     = Collections.unmodifiableMap(dimensions);
 
     // mapped by "cuboid path" which is
     // the combination of dimensions in the composite hbase key
     // specified by name.
-    protected Map<List<String>, Cuboid> cuboids          = new HashMap<List<String>, Cuboid>();
+    protected Map<List<String>, Cuboid>       cuboids          = new HashMap<List<String>, Cuboid>();
 
-    protected Map<String, Measure>      measures         = new HashMap<String, Measure>();
-    protected Map<String, Measure>      readonlyMeasures = Collections.unmodifiableMap(measures);
+    protected Map<String, Measure>            measures         = new HashMap<String, Measure>();
+    protected Map<String, Measure>            readonlyMeasures = Collections.unmodifiableMap(measures);
     protected SimpleAggregateFunctionRegistry afr;
+    protected long                            ms;
 
     /**
      * constructor
@@ -80,6 +81,7 @@ public class SimpleCube implements Cube {
         for (Measure m : measures)
             this.measures.put(m.getName(), m);
         this.afr = new SimpleAggregateFunctionRegistry();
+        ms = System.currentTimeMillis();
     }
 
     public SimpleCube(String name,
@@ -128,5 +130,8 @@ public class SimpleCube implements Cube {
         return afr;
     }
 
-    
+    public long getTimestamp() {
+        return ms;
+    }
+
 }
