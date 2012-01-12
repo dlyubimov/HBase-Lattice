@@ -25,9 +25,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineCannyRateSummarizer;
 import com.inadco.hbl.util.IOUtil;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
-import com.inadco.math.aggregators.OnlineCannyRateSummarizer;
 
 /**
  * Canny's filter test

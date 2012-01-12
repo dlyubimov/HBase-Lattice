@@ -16,7 +16,7 @@
  *  
  *  
  */
-package com.inadco.math.aggregators;
+package com.inadco.hbl.math.aggregators;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -25,16 +25,22 @@ import java.io.IOException;
 import org.apache.commons.lang.Validate;
 
 /**
- * Canny summarizer's version of biased binomial estimator.
+ * see section 2.2.0 of FAS 2.0 Sale expectaiton.pdf for math details of
+ * exponentially weighted biased probability estimator with irregular sampling
+ * <P>
  * 
- * @see OnlineExpBiasedBinomialSummarizer
+ * This class is introducing conjugate prior bias for binomial summarizer (i.e.
+ * x must be 1 or 0, perhaps some observations could be 'partial' but it is not
+ * average anymore!)
+ * <P>
+ * There's also unbiased version somehwere in mahout (MAHOUT-634 I think)
  * 
  * @author dmitriy
  * 
  */
-public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarizer {
+public class OnlineExpBiasedBinomialSummarizer extends OnlineExpAvgSummarizer {
 
-    public static double DEFAULT_EPSILON = 0.3d;
+    public static double DEFAULT_EPSILON = 0.5d;
 
     // parameters
     protected double     bpos, bneg;
@@ -52,13 +58,16 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      *            epsilon (amt of most recent significant history, exponentially
      *            weighted) 0..1
      */
-    public OnlineCannyBiasedBinomialSummarizer(OnlineCannyAvgSummarizer state, double p0, double epsilon) {
+    public OnlineExpBiasedBinomialSummarizer(OnlineExpAvgSummarizer state, double p0, double epsilon) {
         super(state);
 
         Validate.isTrue(p0 < 1 && p0 > 0);
-        
-        resetBias(p0, epsilon);
 
+        double unit = (epsilon - 1) / Math.log(epsilon);
+        if (p0 >= 0.5)
+            bpos = (bneg = unit) * p0 / (1 - p0);
+        else
+            bneg = (bpos = unit) * (1 - p0) / p0;
     }
 
     /**
@@ -68,7 +77,7 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      * @param p0
      *            initial bias
      */
-    public OnlineCannyBiasedBinomialSummarizer(OnlineCannyAvgSummarizer state, double p0) {
+    public OnlineExpBiasedBinomialSummarizer(OnlineExpAvgSummarizer state, double p0) {
         this(state, p0, DEFAULT_EPSILON);
     }
 
@@ -83,11 +92,9 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      * @param m
      *            phaseout margin (amount of exponent still left after dt has
      *            passed)
-     * @param k
-     *            Canny's k parameter
      */
-    public OnlineCannyBiasedBinomialSummarizer(double p0, double epsilon, double dt, double m, double k) {
-        super(dt, m, k);
+    public OnlineExpBiasedBinomialSummarizer(double p0, double epsilon, double dt, double m) {
+        super(dt, m);
 
         resetBias(p0, epsilon);
     }
@@ -100,25 +107,31 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      * @param dt
      *            amount of history, time-wise
      */
-    public OnlineCannyBiasedBinomialSummarizer(double p0, double dt) {
-        this(p0, DEFAULT_EPSILON, dt, DEFAULT_MARGIN, DEFAULT_K);
+    public OnlineExpBiasedBinomialSummarizer(double p0, double dt) {
+        this(p0, DEFAULT_EPSILON, dt, DEFAULT_HISTORY_MARGIN);
     }
 
     /**
      * with reasonable defaults (1 wk of history assuming time is in ms )
      */
-    public OnlineCannyBiasedBinomialSummarizer() {
+    public OnlineExpBiasedBinomialSummarizer() {
         this(0.5d, 7 * 24 * 3600 * 1000);
     }
 
     @Override
     public double getValue() {
-        return super.getValue();
+        return getAvg();
     }
 
     @Override
     public double getValueNow(double tNow) {
         return pnow(tNow);
+    }
+
+    @Override
+    public double getAvg() {
+        // return pnow(System.currentTimeMillis());
+        return super.getAvg();
     }
 
     public double pnow(double t) {
@@ -134,23 +147,9 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
      *            new epsilon
      */
     public void resetBias(double p0, double epsilon) {
-        /*
-         * TODO: this estimate is still based on an exponent behavior, not on
-         * Canny's difference of exponents, so it will overestimate bposneg. It
-         * looks like it is hard to actually estimate CannyFunction^-1(epsilon),
-         * so i'll take my chances with exponent.
-         * 
-         * Exponent estimate will reduce bias components, so actual bias
-         * behavior will be less aggressive than needed. So i will reduce
-         * default epsilon instead.
-         */
-
-        double unit = (epsilon - 1) / Math.log(epsilon);
-        if (p0 >= 0.5)
-            bpos = (bneg = unit) * p0 / (1 - p0);
-        else
-            bneg = (bpos = unit) * (1 - p0) / p0;
-
+        double bposneg = 2 * (epsilon - 1) / Math.log(epsilon);
+        bpos = bposneg * p0;
+        bneg = bposneg * (1 - p0);
     }
 
     public void resetBias(double p0) {
@@ -185,35 +184,27 @@ public class OnlineCannyBiasedBinomialSummarizer extends OnlineCannyAvgSummarize
 
     protected double addFuture(double x, double t, boolean doUpdate) {
         double pi = this.t == 0 ? 0 : Math.exp((this.t - t) / alpha);
-        double nu = this.t == 0 ? 0 : Math.exp(k * (this.t - t) / alpha / (k - 1));
         double w = pi * this.w;
-        double v = nu * this.v;
         double s = x + pi * this.s;
-        double u = x + nu * this.u;
-
         if (doUpdate) {
             this.w = ++w;
-            this.v = ++v;
             this.s = s;
-            this.u = u;
             this.t = t;
-            return (bpos + k * this.s - (k - 1) * this.u) / (bpos + bneg + k * this.w - (k - 1) * this.v);
+            return (bpos + this.s) / (bpos + bneg + this.w);
         }
-        return (bpos + k * s - (k - 1) * u) / (bpos + bneg + k * w - (k - 1) * v);
+        return (bpos + s) / (bpos + bneg + w);
     }
 
     @Override
     protected double updatePast(double x, double t) {
         super.updatePast(x, t);
-        // this affects only biased estimate returned.
-        return (bpos + k * s - (k - 1) * u) / (bpos + bneg + k * w - (k - 1) * v);
+        return (bpos + s) / (bpos + bneg + w);
     }
 
     @Override
     public String toString() {
-        return "OnlineCannyBiasedBinomialSummarizer [bpos=" + bpos + ", bneg=" + bneg + ", alpha=" + alpha + ", k=" + k
-            + ", w=" + w + ", u=" + u + ", s=" + s + ", v=" + v + ", t=" + t + "]";
+        return "OnlineExpBiasedBinomialSummarizer [bpos=" + bpos + ", bneg=" + bneg + ", w=" + w + ", s=" + s + ", t="
+            + t + ", alpha=" + alpha + "]";
     }
-    
-    
+
 }

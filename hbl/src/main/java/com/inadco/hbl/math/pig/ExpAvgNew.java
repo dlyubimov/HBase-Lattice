@@ -1,4 +1,4 @@
-package com.inadco.math.pig;
+package com.inadco.hbl.math.pig;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -8,7 +8,7 @@ import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 
-import com.inadco.math.aggregators.IrregularSamplingSummarizer;
+import com.inadco.hbl.math.aggregators.IrregularSamplingSummarizer;
 
 /**
  * Creates are requested summarizer with given parameters and empty state.

@@ -26,8 +26,8 @@ import org.apache.pig.data.Tuple;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.inadco.math.aggregators.IrregularSamplingSummarizer;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
+import com.inadco.hbl.math.aggregators.IrregularSamplingSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer;
 
 /**
  * This test needs $INADCO_HOME set.<P>

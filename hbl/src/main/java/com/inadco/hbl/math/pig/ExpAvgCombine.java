@@ -1,4 +1,4 @@
-package com.inadco.math.pig;
+package com.inadco.hbl.math.pig;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -12,7 +12,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 
-import com.inadco.math.aggregators.IrregularSamplingSummarizer;
+import com.inadco.hbl.math.aggregators.IrregularSamplingSummarizer;
 
 /**
  * This function accepts arguments -- bag of byte arrays -- representing

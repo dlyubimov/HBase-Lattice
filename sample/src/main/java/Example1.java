@@ -42,9 +42,9 @@ import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.PreparedAggregateQuery;
 import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.compiler.Pig8CubeIncrementalCompilerBean;
+import com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer;
 import com.inadco.hbl.util.HblUtil;
 import com.inadco.hbl.util.IOUtil;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
 
 /**
  * to run, use hadoop command line

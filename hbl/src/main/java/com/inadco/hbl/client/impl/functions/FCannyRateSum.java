@@ -21,10 +21,10 @@ package com.inadco.hbl.client.impl.functions;
 import java.io.IOException;
 
 import com.inadco.hbl.client.impl.SliceOperation;
+import com.inadco.hbl.math.aggregators.OnlineCannyRateSummarizer;
 import com.inadco.hbl.model.IrregularSample;
 import com.inadco.hbl.protocodegen.Cells.Aggregation;
 import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
-import com.inadco.math.aggregators.OnlineCannyRateSummarizer;
 
 /**
  * Canny function -based aggregation support for rates on fact streams with

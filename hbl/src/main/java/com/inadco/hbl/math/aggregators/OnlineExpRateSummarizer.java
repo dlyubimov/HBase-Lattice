@@ -16,7 +16,7 @@
  *  
  *  
  */
-package com.inadco.math.aggregators;
+package com.inadco.hbl.math.aggregators;
 
 import org.apache.commons.lang.Validate;
 

@@ -1,4 +1,4 @@
-package com.inadco.math.pig;
+package com.inadco.hbl.math.pig;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -11,12 +11,12 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 
-import com.inadco.math.aggregators.IrregularSamplingSummarizer;
-import com.inadco.math.aggregators.OnlineExpBiasedBinomialSummarizer;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
-import com.inadco.math.aggregators.OnlineCannyRateSummarizer;
-import com.inadco.math.aggregators.OnlineExpAvgSummarizer;
-import com.inadco.math.aggregators.OnlineExpRateSummarizer;
+import com.inadco.hbl.math.aggregators.IrregularSamplingSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineCannyRateSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineExpAvgSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineExpBiasedBinomialSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineExpRateSummarizer;
 
 /**
  * Helper to parse/bootstrap stuff

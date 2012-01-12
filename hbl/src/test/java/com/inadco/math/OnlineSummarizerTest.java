@@ -25,10 +25,10 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.inadco.hbl.math.aggregators.OnlineExpBiasedBinomialSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineExpRateSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineMeanSummarizer;
 import com.inadco.hbl.util.IOUtil;
-import com.inadco.math.aggregators.OnlineExpBiasedBinomialSummarizer;
-import com.inadco.math.aggregators.OnlineExpRateSummarizer;
-import com.inadco.math.aggregators.OnlineMeanSummarizer;
 
 public class OnlineSummarizerTest {
 

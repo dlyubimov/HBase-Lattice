@@ -16,7 +16,7 @@
  *  
  *  
  */
-package com.inadco.math.aggregators;
+package com.inadco.hbl.math.aggregators;
 
 /**
  * Summarizer that takes time of the sample taking into account (as in

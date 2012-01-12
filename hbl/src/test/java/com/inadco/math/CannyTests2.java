@@ -3,9 +3,9 @@ package com.inadco.math;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer;
+import com.inadco.hbl.math.aggregators.OnlineCannyRateSummarizer;
 import com.inadco.hbl.util.IOUtil;
-import com.inadco.math.aggregators.OnlineCannyAvgSummarizer;
-import com.inadco.math.aggregators.OnlineCannyRateSummarizer;
 
 public class CannyTests2 {
 
