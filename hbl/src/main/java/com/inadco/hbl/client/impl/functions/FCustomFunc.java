@@ -51,7 +51,7 @@ public abstract class FCustomFunc extends AbstractAggregateFunc {
         else if (cnt > ordinal)
             b.setCustomStates(ordinal, bsVal);
         else {
-            for (int i = cnt; i < ordinal - 1; i++)
+            for (int i = cnt; i < ordinal; i++)
                 b.addCustomStates(ByteString.EMPTY);
             b.addCustomStates(bsVal);
         }
