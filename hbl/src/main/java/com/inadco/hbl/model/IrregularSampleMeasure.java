@@ -59,12 +59,8 @@ public class IrregularSampleMeasure extends SimpleMeasure {
             if (x == null || tobj == null)
                 return null;
 
-            if (tobj instanceof Long)
-                t = (Long) tobj;
-            else if (tobj instanceof Integer)
-                t = ((Integer) tobj).longValue();
-            else if (tobj instanceof Short)
-                t = ((Short) tobj).longValue();
+            if (tobj instanceof Number)
+                t = ((Number) tobj).longValue();
             else
                 throw new RuntimeException(String.format("Unsupported measure sample time type: %s", tobj.getClass()
                     .getName()));
