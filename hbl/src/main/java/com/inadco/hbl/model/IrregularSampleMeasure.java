@@ -43,7 +43,14 @@ public class IrregularSampleMeasure extends SimpleMeasure {
             @SuppressWarnings("unchecked")
             List<Object> l = (List<Object>) value;
 
-            Validate.isTrue(l.size() == 2, "irregular sample facts must be tuple(x,t)");
+            /*
+             * ecoadapters are adding additional attribute, ERROR, to signify
+             * mapping/protobuf deserialization error. That is, a tuple that
+             * looks in protobuf as (x,t) will actually be mapped into
+             * (x,t,ERROR). so we assume x and t are just first two items in a
+             * time series sample.
+             */
+            Validate.isTrue(l.size() >= 2, "irregular sample facts must be tuple(x,t)");
 
             Object x = super.compiler2Fact(l.get(0));
             Object tobj = l.get(1);
