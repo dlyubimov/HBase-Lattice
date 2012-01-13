@@ -63,7 +63,8 @@ public class Example1 extends Configured implements Tool {
 
     // choose ExecType.LOCAL to debug UDFs
     // private static ExecType EXEC_TYPE = ExecType.LOCAL;
-    private static ExecType EXEC_TYPE = ExecType.MAPREDUCE;
+    private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
+    private static final boolean QUERY_ONLY = false;
 
     @Override
     public int run(String[] args) throws Exception {
@@ -74,8 +75,10 @@ public class Example1 extends Configured implements Tool {
         // deploy cube schema (optionally dropping the existing one)
         // WARNING: would drop existing cube!!
         HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-        hblAdmin.dropCube(getConf());
-        hblAdmin.deployCube(getConf());
+        if (!QUERY_ONLY) {
+            hblAdmin.dropCube(getConf());
+            hblAdmin.deployCube(getConf());
+        }
 
         String cubeName = hblAdmin.getCube().getName();
 
@@ -124,7 +127,8 @@ public class Example1 extends Configured implements Tool {
         // ------------- debug: dump the script
         // ////////////////////////////////////
 
-        runScript(script, inputPath);
+        if (!QUERY_ONLY)
+            runScript(script, inputPath);
 
         testClient1(cubeName);
         testClient2(cubeName);
@@ -417,7 +421,7 @@ public class Example1 extends Configured implements Tool {
                                       ar.getObject("impCnt"),
                                       ar.getObject("clickSum"),
                                       ar.getObject("clickCnt"),
-                                      (Long) ar.getObject("clickCnt") / (Double) ar.getObject("clickSum"),
+                                      (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
                                       wctr);
                 }
                 closeables.remove(rs);
@@ -435,10 +439,6 @@ public class Example1 extends Configured implements Tool {
             HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
             closeables.addFirst(queryClient);
 
-            /**
-             * will try to also constrain for half-open [1:00am,3:00am)
-             */
-
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
 
             /*
@@ -451,9 +451,10 @@ public class Example1 extends Configured implements Tool {
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
              */
-            query.prepare("select " + "SUM(impCnt) as impCnt, " + " dim1 " + "from Example1 group by dim1");
+            query.prepare("select SUM(impCnt) as imp, SUM(click) as click, cannyAvg7d(clickTimeSeries) as wctr7d,"
+                + "cannyAvg90d(clickTimeSeries) as wctr90d " + " " + "from Example1 where dim1 in [?]");
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 3; i++) {
 
                 /**
                  * same as client2 but print the summaries separately (no
@@ -462,17 +463,22 @@ public class Example1 extends Configured implements Tool {
                  */
                 query.reset();
 
-                // query.addMeasure("impCnt").addMeasure("click");
-                // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
-                // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+                query.setHblParameter(0, i);
 
                 AggregateResultSet rs = query.execute();
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
-                    System.out.printf("dim1: %032X impCnt %.4f\n",
-                                      new BigInteger(1, (byte[]) ar.getObject("dim1")),
-                                      ar.getObject("impCnt"));
+                    System.out.printf("dim1: %032X impCnt %.4f clickCnt %.4f ctr %.4f wctr 7d %.4f, wctr90d %.4f \n",
+                                      i, /*
+                                          * new BigInteger(1, (byte[])
+                                          * ar.getObject("dim1")),
+                                          */
+                                      ar.getObject("imp"),
+                                      ar.getObject("click"),
+                                      (Double) ar.getObject("click") / (Double) ar.getObject("imp"),
+                                      ((OnlineCannyAvgSummarizer) ar.getObject(/* 2 */"wctr7d")).getValue(),
+                                      ((OnlineCannyAvgSummarizer) ar.getObject("wctr90d")).getValue());
                 }
                 closeables.remove(rs);
                 rs.close();
