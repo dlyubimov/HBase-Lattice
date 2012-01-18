@@ -323,4 +323,35 @@ public class HblUtil {
         return !(i >= offset);
     }
 
+    /**
+     * tests if all bytes in the key are 0s subject to offset and length
+     * 
+     * @param key
+     * @param offset
+     * @param length
+     * @return
+     */
+    public static boolean test0(byte[] key, int offset, int length) {
+        for (int i = offset; i < length; i++)
+            if (key[i] != 0)
+                return false;
+        return true;
+    }
+
+    /**
+     * tests for all bytes in the key being FF (i.e. all bits 1) subject to
+     * offset and length
+     * 
+     * @param key
+     * @param offset
+     * @param length
+     * @return
+     */
+    public static boolean test1(byte[] key, int offset, int length) {
+        for (int i = offset; i < length; i++)
+            if (key[i] != -1)
+                return false;
+        return true;
+    }
+
 }

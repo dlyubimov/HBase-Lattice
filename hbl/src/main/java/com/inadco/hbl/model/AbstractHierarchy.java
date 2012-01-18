@@ -63,7 +63,6 @@ public abstract class AbstractHierarchy extends AbstractDimension implements Hie
     public Range[] optimizeSliceScanWIP(Slice slice, boolean allowComplements) {
         int keylen = getKeyLen();
         byte[] leftKey, rightKey, rightKeyOpen, leftKeyOpen;
-        byte[] innerLeftKey = null, innerRightKey = null;
         int depth = getDepth();
         Range[] result = new Range[(depth - 1) * 2 - 1];
         int scans = 0;
@@ -103,38 +102,56 @@ public abstract class AbstractHierarchy extends AbstractDimension implements Hie
         for (int i = depth - 2; i > 0; i--) {
 
             int subkeyLen = getSubkeyLen(i);
-            innerLeftKey = new byte[keylen];
-            System.arraycopy(leftKeyOpen, 0, innerLeftKey, 0, subkeyLen);
+            byte[] leftInnerClosedKey = getLeftClosedScanKey(leftKeyOpen, subkeyLen);
+            byte[] rightInnerClosedKey = getRightClosedScanKey(rightKeyOpen, subkeyLen);
 
-            HblUtil.incrementKey(innerLeftKey, 0, subkeyLen);
-
-            if (Bytes.compareTo(innerLeftKey, 0, subkeyLen, rightKeyOpen, 0, subkeyLen) == 0) {
+            if (Bytes.compareTo(leftInnerClosedKey, 0, subkeyLen, rightKeyOpen, 0, subkeyLen) == 0) {
 
                 Range r = new Range(leftKey, rightKey, true);
                 r.setKeyLen(keylen);
-                r.setSubkeyLen(getSubkeyLen(i));
+                r.setSubkeyLen(getSubkeyLen(i+1));
+                
+                // TODO: this is wrong in general case, adjust
                 r.setLeftOpen(leftBound == null ? false : slice.isLeftOpen());
                 r.setRightOpen(rightBound == null ? false : slice.isRightOpen());
+                
                 result[scans++] = r;
                 break;
             }
-            innerRightKey = new byte[keylen];
-            System.arraycopy(rightKeyOpen, 0, innerRightKey, 0, subkeyLen);
-            HblUtil.decrementKey(innerRightKey, 0, subkeyLen);
 
             // main scan
-            Range r = new Range(innerLeftKey, innerRightKey, true, false, false);
+            Range r = new Range(leftInnerClosedKey, rightInnerClosedKey, true, false, false);
             r.setKeyLen(subkeyLen);
             result[scans++] = r;
 
             // test for left gap
-            // if ( Arrays.)
+            if ( !HblUtil.test1(leftKeyOpen, subkeyLen, keylen-subkeyLen)) { 
+                // left gap scan TODO
+            }
+            if ( ! HblUtil.test0(rightKeyOpen, subkeyLen, keylen-subkeyLen)) { 
+                // right gap scan
+            }
+            
 
         }
 
         if (scans < result.length)
             result = (Range[]) Arrays.copyOf(result, scans);
-        
+
         return result;
+    }
+
+    private byte[] getLeftClosedScanKey(byte[] leftOpenKey, int subkeyLen) {
+        byte[] l = new byte[leftOpenKey.length];
+        System.arraycopy(leftOpenKey, 0, l, 0, subkeyLen);
+        HblUtil.incrementKey(l, 0, subkeyLen);
+        return l;
+    }
+
+    private byte[] getRightClosedScanKey(byte[] rightOpenKey, int subkeyLen) {
+        byte[] r = new byte[rightOpenKey.length];
+        System.arraycopy(rightOpenKey, 0, r, 0, subkeyLen);
+        HblUtil.decrementKey(r, 0, subkeyLen);
+        return r;
     }
 }

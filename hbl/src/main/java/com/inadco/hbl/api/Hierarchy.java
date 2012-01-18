@@ -59,5 +59,5 @@ public interface Hierarchy extends Dimension {
      * @return key hierarchy depth corresponding to this key.
      */
     int keyDepth(byte[] buff, int offset );
-    int getSubkeyLen(int depth);
+    int getSubkeyLen(int level);
 }

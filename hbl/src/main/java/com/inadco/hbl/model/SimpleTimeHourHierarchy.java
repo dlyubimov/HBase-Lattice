@@ -61,8 +61,8 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     }
 
     @Override
-    public int getSubkeyLen(int depth) {
-        switch (depth) {
+    public int getSubkeyLen(int level) {
+        switch (level) {
         case 0:
             return 0;
         case 1:
