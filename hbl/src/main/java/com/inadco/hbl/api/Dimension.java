@@ -56,7 +56,7 @@ public interface Dimension {
 
     RawComparator<?> getMemberComparator();
 
-    Range[] optimizeSliceScan(Slice slice);
+    Range[] optimizeSliceScan(Slice slice, boolean allowComplements);
     
     Range allRange ();
 

@@ -55,7 +55,7 @@ public abstract class AbstractDimension implements Dimension {
     }
 
     @Override
-    public Range[] optimizeSliceScan(Slice slice) {
+    public Range[] optimizeSliceScan(Slice slice, boolean allowComplements) {
         int keylen = getKeyLen();
         byte[] leftKey = new byte[keylen], rightKey = new byte[keylen];
 

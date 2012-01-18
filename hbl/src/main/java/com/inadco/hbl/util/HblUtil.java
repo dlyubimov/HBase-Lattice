@@ -33,7 +33,7 @@ import com.inadco.hbl.api.Cuboid;
  * Various hbl helpers .
  * 
  * @author dmitriy
- *
+ * 
  */
 public class HblUtil {
 
@@ -128,7 +128,7 @@ public class HblUtil {
 
         return holder;
     }
-    
+
     public static String encodeCuboidPath(Cuboid cuboid) {
         String r = null;
         for (String dim : cuboid.getCuboidPath())
@@ -294,8 +294,8 @@ public class HblUtil {
      * @param key
      * @param offset
      * @param length
-     * @return true if increment resulted in overflow (such as FF->00), so no
-     *         more keys.
+     * @return true if increment resulted in carry-over bit overflow (such as
+     *         FF->00), so no more keys.
      */
     public static boolean incrementKey(byte[] key, int offset, int length) {
         if (length == 0)
@@ -305,6 +305,19 @@ public class HblUtil {
         for (i = offset + length - 1; i >= offset; i--) {
             key[i] = (byte) (1 + key[i]);
             if (key[i] != 0)
+                break;
+        }
+        return !(i >= offset);
+    }
+
+    public static boolean decrementKey(byte[] key, int offset, int length) {
+        if (length == 0)
+            return true;
+
+        int i;
+        for (i = offset + length - 1; i >= offset; i--) {
+            key[i] = (byte) (key[i] - 1);
+            if (key[i] != 0xff)
                 break;
         }
         return !(i >= offset);

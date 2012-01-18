@@ -41,7 +41,7 @@ public interface Hierarchy extends Dimension {
      * <P>
      * 
      */
-    void getKey(Object member, int hierarchyDepth, byte[] buff, int offset);
+    void getKey(Object member, int level, byte[] buff, int offset);
 
     /**
      * returns depth of hierarchy e.g. for time hierachy

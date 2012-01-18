@@ -64,6 +64,7 @@ public class AggregateQueryImpl implements AggregateQuery {
     protected List<String>              groupDimensions = new ArrayList<String>();
     private HTablePool                  tpool;
     protected AggregateFunctionRegistry afr;
+    protected boolean                   allowComplements;
 
     public AggregateQueryImpl(HblQueryClient client, ExecutorService es, HTablePool tpool) {
         super();
@@ -191,6 +192,21 @@ public class AggregateQueryImpl implements AggregateQuery {
 
     }
 
+    @Override
+    public void reset() {
+        dimSlices.clear();
+        measures.clear();
+        groupDimensions.clear();
+    }
+
+    protected boolean isAllowComplements() {
+        return allowComplements;
+    }
+
+    protected void setAllowComplements(boolean allowComplements) {
+        this.allowComplements = allowComplements;
+    }
+
     protected AggregateResultSetImpl createResultSet(final List<ScanSpec> scanSpecs,
                                                      final ExecutorService es,
                                                      final HTablePool tpool,
@@ -199,13 +215,6 @@ public class AggregateQueryImpl implements AggregateQuery {
                                                      final Map<String, Integer> dimName2GroupKeyOffsetMap)
         throws IOException {
         return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2IndexMap, dimName2GroupKeyOffsetMap);
-    }
-
-    @Override
-    public void reset() {
-        dimSlices.clear();
-        measures.clear();
-        groupDimensions.clear();
     }
 
     /**
@@ -255,7 +264,7 @@ public class AggregateQueryImpl implements AggregateQuery {
                 throw new UnsupportedOperationException(
                     "queries to multiple slices of the same dimension are not supported (yet)!");
             Slice slice = slices.iterator().next();
-            Range[] ranges = dim.optimizeSliceScan(slice);
+            Range[] ranges = dim.optimizeSliceScan(slice, allowComplements);
 
             Validate.notEmpty(ranges);
 

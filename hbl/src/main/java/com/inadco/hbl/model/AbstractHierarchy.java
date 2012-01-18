@@ -18,8 +18,14 @@
  */
 package com.inadco.hbl.model;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.inadco.hbl.api.Hierarchy;
 import com.inadco.hbl.api.Range;
+import com.inadco.hbl.client.impl.Slice;
+import com.inadco.hbl.util.HblUtil;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * Abstract Hierarchy support.
@@ -53,4 +59,82 @@ public abstract class AbstractHierarchy extends AbstractDimension implements Hie
         return r;
     }
 
+    // @Override
+    public Range[] optimizeSliceScanWIP(Slice slice, boolean allowComplements) {
+        int keylen = getKeyLen();
+        byte[] leftKey, rightKey, rightKeyOpen, leftKeyOpen;
+        byte[] innerLeftKey = null, innerRightKey = null;
+        int depth = getDepth();
+        Range[] result = new Range[(depth - 1) * 2 - 1];
+        int scans = 0;
+
+        /*
+         * level=0 assumes all range. so it is not interesting here.
+         */
+
+        leftKey = new byte[keylen];
+        rightKey = new byte[keylen];
+
+        Object leftBound = slice.getLeftBound();
+        if (leftBound != null)
+            getKey(leftBound, depth - 1, leftKey, 0);
+
+        Object rightBound = slice.getRightBound();
+        if (rightBound != null)
+            getKey(rightBound, depth - 1, rightKey, 0);
+        else
+            Arrays.fill(rightKey, (byte) 0xff);
+
+        // convert to half-open
+        if (!slice.isLeftOpen()) {
+            leftKeyOpen = Arrays.copyOf(leftKey, keylen);
+            HblUtil.decrementKey(leftKeyOpen, 0, keylen);
+        } else {
+            leftKeyOpen = leftKey;
+        }
+
+        if (!slice.isRightOpen()) {
+            rightKeyOpen = Arrays.copyOf(rightKey, keylen);
+            HblUtil.incrementKey(rightKeyOpen, 0, keylen);
+        } else {
+            rightKeyOpen = rightKey;
+        }
+
+        for (int i = depth - 2; i > 0; i--) {
+
+            int subkeyLen = getSubkeyLen(i);
+            innerLeftKey = new byte[keylen];
+            System.arraycopy(leftKeyOpen, 0, innerLeftKey, 0, subkeyLen);
+
+            HblUtil.incrementKey(innerLeftKey, 0, subkeyLen);
+
+            if (Bytes.compareTo(innerLeftKey, 0, subkeyLen, rightKeyOpen, 0, subkeyLen) == 0) {
+
+                Range r = new Range(leftKey, rightKey, true);
+                r.setKeyLen(keylen);
+                r.setSubkeyLen(getSubkeyLen(i));
+                r.setLeftOpen(leftBound == null ? false : slice.isLeftOpen());
+                r.setRightOpen(rightBound == null ? false : slice.isRightOpen());
+                result[scans++] = r;
+                break;
+            }
+            innerRightKey = new byte[keylen];
+            System.arraycopy(rightKeyOpen, 0, innerRightKey, 0, subkeyLen);
+            HblUtil.decrementKey(innerRightKey, 0, subkeyLen);
+
+            // main scan
+            Range r = new Range(innerLeftKey, innerRightKey, true, false, false);
+            r.setKeyLen(subkeyLen);
+            result[scans++] = r;
+
+            // test for left gap
+            // if ( Arrays.)
+
+        }
+
+        if (scans < result.length)
+            result = (Range[]) Arrays.copyOf(result, scans);
+        
+        return result;
+    }
 }

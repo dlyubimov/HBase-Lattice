@@ -87,8 +87,8 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     }
 
     @Override
-    public void getKey(Object member, int hierarchyDepth, byte[] buff, int offset) {
-        switch (hierarchyDepth) {
+    public void getKey(Object member, int level, byte[] buff, int offset) {
+        switch (level) {
         case 0:
             getAllKey(buff, offset);
             break;
@@ -193,9 +193,9 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     }
 
     @Override
-    public Range[] optimizeSliceScan(Slice slice) {
+    public Range[] optimizeSliceScan(Slice slice, boolean allowComplements) {
         // todo: optimize this better using complement scans.
-        Range[] ranges = super.optimizeSliceScan(slice);
+        Range[] ranges = super.optimizeSliceScan(slice, allowComplements);
         ranges[0].setSubkeyLen(KEYLEN);
         return ranges;
     }
