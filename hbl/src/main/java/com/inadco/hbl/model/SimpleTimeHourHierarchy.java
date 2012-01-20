@@ -46,10 +46,19 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     // so we organize key as [YYYYMM][DDHH] concatenated literals.
     // this, length=6+4=10
 
-    private static final int      YM_KEYLEN = 6;
-    private static final int      DH_KEYLEN = 4;
-    private static final int      KEYLEN    = YM_KEYLEN + DH_KEYLEN;
-    private static final TimeZone UTC       = TimeZone.getTimeZone("UTC");
+    private static final int      YM_KEYLEN             = 6;
+    private static final int      DH_KEYLEN             = 4;
+    private static final int      KEYLEN                = YM_KEYLEN + DH_KEYLEN;
+    private static final TimeZone UTC                   = TimeZone.getTimeZone("UTC");
+
+    /*
+     * if true, don't try to optimize time intervals with monthly key aggregates
+     * and use all hourly keys only. In queries spanning from several months to
+     * several years this yields significant improvement. The only reason to
+     * switch it to true now is probably just to compare results between two
+     * methods to debug current and future multilevel hierarchy optimizations.
+     */
+    private static final boolean  hourlyKeyOptimization = false;
 
     public SimpleTimeHourHierarchy(String name) {
         super(name, new String[] { "ALL", "year-month", "date-hour" });
@@ -127,7 +136,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
         HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.YEAR), 4, buff, offset);
         offset += 4;
         /* month field is 0-11 in GC */
-        HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.MONTH) + 1, 2, buff, offset);
+        HblUtil.fillCompositeKeyWithDec(gcal.get(Calendar.MONTH) - Calendar.JANUARY + 1, 2, buff, offset);
         offset += 2;
         Arrays.fill(buff, offset, offset + DH_KEYLEN, (byte) 0);
     }
@@ -189,15 +198,17 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
             gcal.setTimeInMillis((Long) member);
             return gcal;
         }
-
     }
 
     @Override
     public Range[] optimizeSliceScan(Slice slice, boolean allowComplements) {
-        // todo: optimize this better using complement scans.
-        Range[] ranges = super.optimizeSliceScan(slice, allowComplements);
-        ranges[0].setSubkeyLen(KEYLEN);
-        return ranges;
+        if (hourlyKeyOptimization) {
+            Range[] r = optimizeDimensionSliceScan(slice, allowComplements);
+            r[0].setLevelOffset(YM_KEYLEN);
+            r[0].setLevelLen(DH_KEYLEN);
+            return r;
+        } else
+            return super.optimizeHierarchySliceScan(slice, allowComplements);
     }
 
 }

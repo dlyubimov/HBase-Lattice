@@ -24,7 +24,8 @@ import com.inadco.datastructs.util.NWayMerge;
 
 /**
  * 
- * Merge strategy abstraction. (Not all merges have to be sort merges. Think about it -:)  
+ * Merge strategy abstraction. (Not all merges have to be sort merges. Think
+ * about it -:)
  * 
  * @author dmitriy
  * 
@@ -93,5 +94,15 @@ public interface MergeStrategy<T> {
      * @throws IOException
      */
     void processStep(InputIterator<? extends T>[] inputs, StepResult result) throws IOException;
+
+    /**
+     * Callback to strategy to indicate that one of the inputs was removed.
+     * Stateful strategies (those maintaining internal state with references to
+     * inputs) should clean out the state references to such input.
+     * 
+     * @param input
+     * @throws IOException
+     */
+    void onInputRemoved(InputIterator<? extends T> input) throws IOException;
 
 }

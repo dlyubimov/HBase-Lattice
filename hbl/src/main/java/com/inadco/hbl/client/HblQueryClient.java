@@ -85,6 +85,9 @@ public class HblQueryClient implements Closeable {
             new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
                 DEFAULT_QUEUE_SIZE));
         tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
+        tpe.prestartAllCoreThreads();
+
         init(conf, tpe);
         if (cubeName != null)
             loadCube(cubeName);
@@ -105,6 +108,8 @@ public class HblQueryClient implements Closeable {
             new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
                 DEFAULT_QUEUE_SIZE));
         tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        tpe.prestartAllCoreThreads();
+        closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
         init(conf, tpe);
     }
 
@@ -195,6 +200,8 @@ public class HblQueryClient implements Closeable {
                 new ThreadPoolExecutor(3, DEFAULT_MAX_THREADS, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
                     DEFAULT_QUEUE_SIZE));
             tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+            closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
+            tpe.prestartAllCoreThreads();
             es = tpe;
         }
 

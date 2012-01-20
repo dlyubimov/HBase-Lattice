@@ -171,7 +171,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
             final InputIterator<RawScanResult> groupingScanner =
                 new GroupingIterator<RawScanResult, RawScanResult>(filteredScanner, gsc);
             closeables.addFirst(groupingScanner);
-            inputs[i] = groupingScanner;
+            inputs[i++] = groupingScanner;
         }
         filteringScanners = null;
 

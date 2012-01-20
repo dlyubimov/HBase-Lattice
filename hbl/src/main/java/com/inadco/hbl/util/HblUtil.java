@@ -331,8 +331,9 @@ public class HblUtil {
      * @param length
      * @return
      */
-    public static boolean test0(byte[] key, int offset, int length) {
-        for (int i = offset; i < length; i++)
+    public static boolean test0s(byte[] key, int offset, int length) {
+        int len = offset + length;
+        for (int i = offset; i < len; i++)
             if (key[i] != 0)
                 return false;
         return true;
@@ -347,8 +348,9 @@ public class HblUtil {
      * @param length
      * @return
      */
-    public static boolean test1(byte[] key, int offset, int length) {
-        for (int i = offset; i < length; i++)
+    public static boolean test1s(byte[] key, int offset, int length) {
+        int len = offset + length;
+        for (int i = offset; i < len; i++)
             if (key[i] != -1)
                 return false;
         return true;

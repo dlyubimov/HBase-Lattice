@@ -65,9 +65,13 @@ public class Example1 extends Configured implements Tool {
     // private static ExecType EXEC_TYPE = ExecType.LOCAL;
     private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
     private static final boolean QUERY_ONLY = false;
+    
+    private HblQueryClient queryClient;
+    private Deque<Closeable> closeables = new ArrayDeque<Closeable>();
 
     @Override
     public int run(String[] args) throws Exception {
+        try { 
 
         // script resource
         Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
@@ -130,6 +134,9 @@ public class Example1 extends Configured implements Tool {
         if (!QUERY_ONLY)
             runScript(script, inputPath);
 
+        queryClient = new HblQueryClient(getConf());
+        closeables.addFirst(queryClient);
+        
         testClient1(cubeName);
         testClient2(cubeName);
         testClient3(cubeName);
@@ -138,15 +145,18 @@ public class Example1 extends Configured implements Tool {
         // query based tests
         testClient5(cubeName);
         testClient6(cubeName);
+        testClient7(cubeName);
 
         return 0;
+        
+        } finally { 
+            IOUtil.closeAllQuietly(closeables);
+        }
     }
 
     private void testClient1(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf());
-            closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
             ids[0] = new byte[16];
@@ -187,8 +197,6 @@ public class Example1 extends Configured implements Tool {
     private void testClient2(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf());
-            closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
             ids[0] = new byte[16];
@@ -268,8 +276,6 @@ public class Example1 extends Configured implements Tool {
     private void testClient4(String cubeName) throws IOException, HblException {
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf());
-            closeables.addFirst(queryClient);
 
             AggregateQuery query = queryClient.createQuery();
             query.setCube(cubeName);
@@ -310,6 +316,7 @@ public class Example1 extends Configured implements Tool {
                 query.addClosedSlice("dim1", ids[0], ids[1]).addGroupBy("dim1");
                 query.addHalfOpenSlice("impressionTime", startTime, endTime);
 
+                long ms = System.currentTimeMillis();
                 AggregateResultSet rs = query.execute();
                 while (rs.hasNext()) {
                     rs.next();
@@ -323,6 +330,8 @@ public class Example1 extends Configured implements Tool {
                 }
                 closeables.remove(rs);
                 rs.close();
+
+                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
             }
 
         } finally {
@@ -331,10 +340,11 @@ public class Example1 extends Configured implements Tool {
     }
 
     private void testClient5(String cubeName) throws IOException, HblException {
+
+        System.out.println("Test5:\n\n");
+
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
-            closeables.addFirst(queryClient);
 
             byte ids[][] = new byte[2][];
             ids[0] = new byte[16];
@@ -375,13 +385,13 @@ public class Example1 extends Configured implements Tool {
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
              */
+            long ms = System.currentTimeMillis();
             query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
                 + "COUNT(click) as clickCnt, cannyAvg7d(clickTimeSeries) as ctr " +
 
                 "from Example1 where dim1 in [?] " + ", impressionTime in [?,?) " + ", dim2 in [ '1' ]"
                 + "group by dim1");
-
-            System.out.println("Test5:\n\n");
+            System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
 
             for (int i = 0; i < 5; i++) {
 
@@ -390,6 +400,7 @@ public class Example1 extends Configured implements Tool {
                  * grouping).
                  * 
                  */
+                ms = System.currentTimeMillis();
                 query.reset();
 
                 // demo: can parameterize aliases
@@ -426,6 +437,8 @@ public class Example1 extends Configured implements Tool {
                 }
                 closeables.remove(rs);
                 rs.close();
+
+                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
             }
 
         } finally {
@@ -434,10 +447,11 @@ public class Example1 extends Configured implements Tool {
     }
 
     private void testClient6(String cubeName) throws IOException, HblException {
+
+        System.out.println("Test6:\n\n");
+
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
         try {
-            HblQueryClient queryClient = new HblQueryClient(getConf(), cubeName);
-            closeables.addFirst(queryClient);
 
             PreparedAggregateQuery query = queryClient.createPreparedQuery();
 
@@ -451,8 +465,10 @@ public class Example1 extends Configured implements Tool {
              * reset() implicitly, so if we re-prepared the query, the previous
              * parameter set cannot be used.
              */
+            long ms = System.currentTimeMillis();
             query.prepare("select SUM(impCnt) as imp, SUM(click) as click, cannyAvg7d(clickTimeSeries) as wctr7d,"
                 + "cannyAvg90d(clickTimeSeries) as wctr90d " + " " + "from Example1 where dim1 in [?]");
+            System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
 
             for (int i = 0; i < 3; i++) {
 
@@ -461,6 +477,7 @@ public class Example1 extends Configured implements Tool {
                  * grouping).
                  * 
                  */
+                ms = System.currentTimeMillis();
                 query.reset();
 
                 query.setHblParameter(0, i);
@@ -482,6 +499,123 @@ public class Example1 extends Configured implements Tool {
                 }
                 closeables.remove(rs);
                 rs.close();
+
+                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
+            }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
+    /**
+     * Month - spanning test
+     * 
+     * @param cubeName
+     * @throws IOException
+     * @throws HblException
+     */
+    private void testClient7(String cubeName) throws IOException, HblException {
+
+        System.out.println("Test7:\n\n");
+
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /**
+             * will try to also constrain for half-open [1:00am,3:00am)
+             */
+
+            GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
+            GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
+
+            // our actual example generated facts in utc zone of that day.
+            startTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+            endTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            // flush
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+
+            // modify time-of-day-wise
+            startTime.add(Calendar.HOUR_OF_DAY, 1);
+            endTime.add(Calendar.HOUR_OF_DAY, 3);
+            endTime.add(Calendar.MONTH, 9);
+
+            // recalculate the calendars
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+
+            PreparedAggregateQuery query = queryClient.createPreparedQuery();
+
+            /*
+             * test reuse of the prepared query. Should speedup stuff exactly as
+             * prepared query is supposed to do. we also have an option of
+             * re-preparing query at any time, but we still need to run reset()
+             * to clean out stuff like parameters initialized and execution.
+             * reset() does not necessarily cancel previously existing AST tree
+             * of the query, only prepare() updates that. but prepare does
+             * reset() implicitly, so if we re-prepared the query, the previous
+             * parameter set cannot be used.
+             */
+            long ms = System.currentTimeMillis();
+            query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
+                + "COUNT(click) as clickCnt, cannyAvg7d(clickTimeSeries) as ctr " +
+
+                "from Example1 where impressionTime in [?,?) " + "group by dim1");
+            System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
+
+            for (int i = 0; i < 2; i++) {
+
+                /**
+                 * same as client2 but print the summaries separately (no
+                 * grouping).
+                 * 
+                 */
+                ms = System.currentTimeMillis();
+                query.reset();
+
+                // demo: can parameterize aliases
+                // or measure names in the select expression.
+                query.setHblParameter(0, "impSum");
+                query.setHblParameter(1, "impCnt");
+
+                // query.setHblParameter(2, ids[1]);
+                // query.setHblParameter(3, ids[1]);
+                query.setHblParameter(2, startTime);
+                query.setHblParameter(3, endTime);
+
+                // query.addMeasure("impCnt").addMeasure("click");
+                // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
+                // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+
+                AggregateResultSet rs = query.execute();
+                while (rs.hasNext()) {
+                    rs.next();
+                    PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+
+                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
+                    double wctr = ctrSum == null ? 0 : ctrSum.getValue();
+
+                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
+
+                                      new BigInteger(1, (byte[]) ar.getObject(0)),
+                                      ar.getObject("impSum"),
+                                      ar.getObject("impCnt"),
+                                      ar.getObject("clickSum"),
+                                      ar.getObject("clickCnt"),
+                                      (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
+                                      wctr);
+                }
+                closeables.remove(rs);
+                rs.close();
+
+                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
             }
 
         } finally {
@@ -506,10 +640,9 @@ public class Example1 extends Configured implements Tool {
         Random rnd = new Random();
 
         try {
-            GregorianCalendar start = IOUtil.tryClone(START_BASE);
-            start.setTimeZone(TimeZone.getTimeZone("UTC"));
-            // flush the cal
-            start.getTimeInMillis();
+
+            // how many months to simulate
+            int months = 10;
 
             Path inpFile = new Path(inputDir, "example1");
             fs.mkdirs(inputDir);
@@ -519,22 +652,30 @@ public class Example1 extends Configured implements Tool {
             IntWritable iw = new IntWritable();
             BytesWritable bw = new BytesWritable();
 
-            for (int i = 0; i < N; i++) {
-                for (int k = 0; k < 2; k++) {
-                    for (int j = 0; j < i + k; j++) {
-                        CompilerInput.Builder inp = CompilerInput.newBuilder();
-                        inp.setDim1(id[k]);
-                        inp.setDim2(id[k]);
-                        inp.setDim3(id[k]);
-                        inp.setImpressionTime(start.getTimeInMillis());
-                        inp.setImpCnt(1);
-                        inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
-                        byte[] b = inp.build().toByteArray();
-                        bw.set(b, 0, b.length);
-                        w.append(iw, bw);
+            for (int mo = 0; mo < months; mo++) {
+                GregorianCalendar start = IOUtil.tryClone(START_BASE);
+                start.setTimeZone(TimeZone.getTimeZone("UTC"));
+                // flush the cal
+                start.getTimeInMillis();
+                start.add(Calendar.MONTH, mo);
+
+                for (int i = 0; i < N; i++) {
+                    for (int k = 0; k < 2; k++) {
+                        for (int j = 0; j < i + k + 1; j++) {
+                            CompilerInput.Builder inp = CompilerInput.newBuilder();
+                            inp.setDim1(id[k]);
+                            inp.setDim2(id[k]);
+                            inp.setDim3(id[k]);
+                            inp.setImpressionTime(start.getTimeInMillis());
+                            inp.setImpCnt(1);
+                            inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
+                            byte[] b = inp.build().toByteArray();
+                            bw.set(b, 0, b.length);
+                            w.append(iw, bw);
+                        }
                     }
+                    start.add(Calendar.HOUR_OF_DAY, 1);
                 }
-                start.add(Calendar.HOUR_OF_DAY, 1);
             }
 
         } finally {

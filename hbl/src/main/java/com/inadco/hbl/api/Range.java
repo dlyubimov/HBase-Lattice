@@ -40,7 +40,8 @@ public class Range implements Writable {
 
     private byte[]                   start, end;
     private boolean                  leftOpen, rightOpen;
-    private int                      subkeyLen;
+    private int                      levelOffset;
+    private int                      levelLen;
     private int                      keyLen;
 
     private transient SliceOperation sliceOperation;
@@ -57,7 +58,8 @@ public class Range implements Writable {
             throw new IOException("Unexpected EOF reading range specficiation");
         leftOpen = (stuff & 0x01) != 0;
         rightOpen = (stuff & 0x02) != 0;
-        subkeyLen = HblUtil.readVarUint32(in);
+        levelOffset = HblUtil.readVarUint32(in);
+        levelLen = HblUtil.readVarUint32(in);
 
     }
 
@@ -72,7 +74,8 @@ public class Range implements Writable {
         if (rightOpen)
             stuff |= 0x02;
         out.writeByte(stuff);
-        HblUtil.writeVarUint32(out, subkeyLen);
+        HblUtil.writeVarUint32(out, levelOffset);
+        HblUtil.writeVarUint32(out, levelLen);
     }
 
     public Range() {
@@ -171,11 +174,23 @@ public class Range implements Writable {
     }
 
     public int getSubkeyLen() {
-        return subkeyLen;
+        return levelOffset + levelLen;
     }
 
-    public void setSubkeyLen(int subkeyLen) {
-        this.subkeyLen = subkeyLen;
+    public int getLevelOffset() {
+        return levelOffset;
+    }
+
+    public void setLevelOffset(int levelOffset) {
+        this.levelOffset = levelOffset;
+    }
+
+    public int getLevelLen() {
+        return levelLen;
+    }
+
+    public void setLevelLen(int levelLen) {
+        this.levelLen = levelLen;
     }
 
     public SliceOperation getSliceOperation() {

@@ -81,6 +81,12 @@ public class StatefulHeapSortMergeStrategy<T> implements MergeStrategy<T> {
     }
 
     @Override
+    public void onInputRemoved(InputIterator<? extends T> input) throws IOException {
+        // easy path
+        m_heap = null;
+    }
+
+    @Override
     public void processStep(InputIterator<? extends T>[] inputs, MergeStrategy.StepResult result) throws IOException {
         if (m_heap == null)
             buildHeap(inputs);
@@ -97,7 +103,8 @@ public class StatefulHeapSortMergeStrategy<T> implements MergeStrategy<T> {
     private void buildHeap(InputIterator<? extends T>[] inputs) throws IOException {
         m_heap = new int[inputs.length];
         for (int i = 0; i < inputs.length; i++)
-            m_heap[i] = i;
+            if (inputs[i] != null)
+                m_heap[i] = i;
         heapify(inputs);
 
     }
