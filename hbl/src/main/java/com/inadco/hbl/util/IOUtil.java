@@ -58,7 +58,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 /**
  * common IO utils provided in hope they would be useful
  * 
- * @author lyubimovd
+ * @author dmitriy
  */
 public final class IOUtil {
 

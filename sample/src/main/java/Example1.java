@@ -1,3 +1,22 @@
+/*
+ * 
+ *  Copyright © 2010, 2011 Inadco, Inc. All rights reserved.
+ *  
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *  
+ *  
+ */
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -65,91 +84,96 @@ public class Example1 extends Configured implements Tool {
     // private static ExecType EXEC_TYPE = ExecType.LOCAL;
     private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
     private static final boolean QUERY_ONLY = false;
-    
-    private HblQueryClient queryClient;
-    private Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+
+    private HblQueryClient       queryClient;
+    private Deque<Closeable>     closeables = new ArrayDeque<Closeable>();
 
     @Override
     public int run(String[] args) throws Exception {
-        try { 
-
-        // script resource
-        Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
-
-        // deploy cube schema (optionally dropping the existing one)
-        // WARNING: would drop existing cube!!
-        HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
-        if (!QUERY_ONLY) {
-            hblAdmin.dropCube(getConf());
-            hblAdmin.deployCube(getConf());
-        }
-
-        String cubeName = hblAdmin.getCube().getName();
-
-        // prepare incremental simulated input
-        // and select work dir for the compiler job
-
-        FileSystem dfs = EXEC_TYPE == ExecType.MAPREDUCE ? FileSystem.get(getConf()) : FileSystem.getLocal(getConf());
-        Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
-        Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
-
-        simulateInput(dfs, inputPath);
-
-        // run compiler for the model
-        Pig8CubeIncrementalCompilerBean compiler =
-            new Pig8CubeIncrementalCompilerBean(getConf(), cubeName, new ClassPathResource("example1-preambula.pig"), 5);
-        // test fact compile time exclusion to allow merging different fact
-        // stream sources
-
-        compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
-
-        // or:
-        // compiler.setMeasureInclude(new
-        // HashSet<String>(Arrays.asList("impCnt", "click")));
-
-        /*
-         * this is the version that uses model from resource instead of hbl
-         * system table.
-         */
-        // new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new
-        // ClassPathResource("example1-preambula.pig"), 5);
-
-        String script = compiler.preparePigSource(workPath.toString());
-
-        // ////////////////////////////////////
-        // ------------- debug: dump the script
-        Path dumpDir = new Path(inputPath, "__debug");
-        dfs.mkdirs(dumpDir);
-        Path scriptDumpPath = new Path(dumpDir, "compiler.pig");
-        System.out.printf("script saved at:%s\n", scriptDumpPath.toString());
-        FSDataOutputStream fsdos = dfs.create(scriptDumpPath);
         try {
-            fsdos.writeUTF(script);
+
+            // script resource
+            Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
+
+            // deploy cube schema (optionally dropping the existing one)
+            // WARNING: would drop existing cube!!
+            HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
+            if (!QUERY_ONLY) {
+                hblAdmin.dropCube(getConf());
+                hblAdmin.deployCube(getConf());
+            }
+
+            String cubeName = hblAdmin.getCube().getName();
+
+            // prepare incremental simulated input
+            // and select work dir for the compiler job
+
+            FileSystem dfs =
+                EXEC_TYPE == ExecType.MAPREDUCE ? FileSystem.get(getConf()) : FileSystem.getLocal(getConf());
+            Path workPath = new Path(dfs.getWorkingDirectory(), "hbltemp-" + System.currentTimeMillis());
+            Path inputPath = new Path(dfs.getWorkingDirectory(), "sample1-input" + System.currentTimeMillis());
+
+            simulateInput(dfs, inputPath);
+
+            // run compiler for the model
+            Pig8CubeIncrementalCompilerBean compiler =
+                new Pig8CubeIncrementalCompilerBean(
+                    getConf(),
+                    cubeName,
+                    new ClassPathResource("example1-preambula.pig"),
+                    5);
+            // test fact compile time exclusion to allow merging different fact
+            // stream sources
+
+            compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
+
+            // or:
+            // compiler.setMeasureInclude(new
+            // HashSet<String>(Arrays.asList("impCnt", "click")));
+
+            /*
+             * this is the version that uses model from resource instead of hbl
+             * system table.
+             */
+            // new Pig8CubeIncrementalCompilerBean(cubeModelRsrc, new
+            // ClassPathResource("example1-preambula.pig"), 5);
+
+            String script = compiler.preparePigSource(workPath.toString());
+
+            // ////////////////////////////////////
+            // ------------- debug: dump the script
+            Path dumpDir = new Path(inputPath, "__debug");
+            dfs.mkdirs(dumpDir);
+            Path scriptDumpPath = new Path(dumpDir, "compiler.pig");
+            System.out.printf("script saved at:%s\n", scriptDumpPath.toString());
+            FSDataOutputStream fsdos = dfs.create(scriptDumpPath);
+            try {
+                fsdos.writeUTF(script);
+            } finally {
+                fsdos.close();
+            }
+            // ------------- debug: dump the script
+            // ////////////////////////////////////
+
+            if (!QUERY_ONLY)
+                runScript(script, inputPath);
+
+            queryClient = new HblQueryClient(getConf());
+            closeables.addFirst(queryClient);
+
+            testClient1(cubeName);
+            testClient2(cubeName);
+            testClient3(cubeName);
+            testClient4(cubeName);
+
+            // query based tests
+            testClient5(cubeName);
+            testClient6(cubeName);
+            testClient7(cubeName);
+
+            return 0;
+
         } finally {
-            fsdos.close();
-        }
-        // ------------- debug: dump the script
-        // ////////////////////////////////////
-
-        if (!QUERY_ONLY)
-            runScript(script, inputPath);
-
-        queryClient = new HblQueryClient(getConf());
-        closeables.addFirst(queryClient);
-        
-        testClient1(cubeName);
-        testClient2(cubeName);
-        testClient3(cubeName);
-        testClient4(cubeName);
-
-        // query based tests
-        testClient5(cubeName);
-        testClient6(cubeName);
-        testClient7(cubeName);
-
-        return 0;
-        
-        } finally { 
             IOUtil.closeAllQuietly(closeables);
         }
     }

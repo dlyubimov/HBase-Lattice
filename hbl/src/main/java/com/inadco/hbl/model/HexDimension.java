@@ -40,7 +40,6 @@ import com.inadco.hbl.util.IOUtil;
  */
 
 public class HexDimension extends AbstractDimension {
-    protected String name;
     protected int    keylen;
     protected Object nullkey;
 
