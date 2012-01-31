@@ -239,6 +239,7 @@ public class Example1 extends Configured implements Tool {
             query.setCube(cubeName).addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1", ids[0], ids[1]).addGroupBy("dim1");
             AggregateResultSet rs = query.execute();
+            closeables.addFirst(rs);
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
@@ -278,6 +279,7 @@ public class Example1 extends Configured implements Tool {
             query.setCube(cubeName).addMeasure("impCnt").addMeasure("click");
             query.addClosedSlice("dim1", ids[0], ids[1])/* .addGroupBy("dim1") */;
             AggregateResultSet rs = query.execute();
+            closeables.addFirst(rs);
             while (rs.hasNext()) {
                 rs.next();
                 AggregateResult ar = rs.current();
@@ -311,7 +313,7 @@ public class Example1 extends Configured implements Tool {
                 ids[1] = new byte[16];
                 HblUtil.incrementKey(ids[1], 0, 16);
 
-                /**
+                /*
                  * will try to also constrain for half-open [1:00am,3:00am)
                  */
 
@@ -330,10 +332,9 @@ public class Example1 extends Configured implements Tool {
                 startTime.getTimeInMillis();
                 endTime.getTimeInMillis();
 
-                /**
+                /*
                  * same as client2 but print the summaries separately (no
                  * grouping).
-                 * 
                  */
 
                 query.addMeasure("impCnt").addMeasure("click");
@@ -342,6 +343,7 @@ public class Example1 extends Configured implements Tool {
 
                 long ms = System.currentTimeMillis();
                 AggregateResultSet rs = query.execute();
+                closeables.addFirst(rs);
                 while (rs.hasNext()) {
                     rs.next();
                     AggregateResult ar = rs.current();
@@ -375,7 +377,7 @@ public class Example1 extends Configured implements Tool {
             ids[1] = new byte[16];
             HblUtil.incrementKey(ids[1], 0, 16);
 
-            /**
+            /*
              * will try to also constrain for half-open [1:00am,3:00am)
              */
 
@@ -442,6 +444,7 @@ public class Example1 extends Configured implements Tool {
                 // query.addHalfOpenSlice("impressionTime", startTime, endTime);
 
                 AggregateResultSet rs = query.execute();
+                closeables.addFirst(rs);
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
@@ -496,10 +499,9 @@ public class Example1 extends Configured implements Tool {
 
             for (int i = 0; i < 3; i++) {
 
-                /**
+                /*
                  * same as client2 but print the summaries separately (no
                  * grouping).
-                 * 
                  */
                 ms = System.currentTimeMillis();
                 query.reset();
@@ -507,6 +509,7 @@ public class Example1 extends Configured implements Tool {
                 query.setHblParameter(0, i);
 
                 AggregateResultSet rs = query.execute();
+                closeables.addFirst(rs);
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
@@ -619,6 +622,7 @@ public class Example1 extends Configured implements Tool {
                 // query.addHalfOpenSlice("impressionTime", startTime, endTime);
 
                 AggregateResultSet rs = query.execute();
+                closeables.addFirst(rs);
                 while (rs.hasNext()) {
                     rs.next();
                     PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
