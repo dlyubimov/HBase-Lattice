@@ -21,6 +21,7 @@ package com.inadco.hbl.client.impl.scanner;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.KeyValue;
@@ -30,7 +31,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.util.HblUtil;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * filter for ranges of individual parts of a composite key.
