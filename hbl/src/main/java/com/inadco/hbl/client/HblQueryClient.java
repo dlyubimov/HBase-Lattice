@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,36 +83,24 @@ public class HblQueryClient implements Closeable {
     }
 
     public HblQueryClient(Configuration conf, String cubeName, int maxThreads) throws IOException, HblException {
-        ThreadPoolExecutor tpe =
-            new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
-                DEFAULT_QUEUE_SIZE));
-        tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
-        closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
-        tpe.prestartAllCoreThreads();
 
-        init(conf, tpe);
+        init(conf, null, maxThreads);
         if (cubeName != null)
             loadCube(cubeName);
     }
 
     public HblQueryClient(Configuration conf, String cubeName, ExecutorService es) throws IOException, HblException {
-        init(conf, es);
+        init(conf, es, -1);
         if (cubeName != null)
             loadCube(cubeName);
     }
 
     public HblQueryClient(Configuration conf, ExecutorService es) throws IOException {
-        init(conf, es);
+        init(conf, es, -1);
     }
 
     public HblQueryClient(Configuration conf, int maxThreads) throws IOException {
-        ThreadPoolExecutor tpe =
-            new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
-                DEFAULT_QUEUE_SIZE));
-        tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
-        tpe.prestartAllCoreThreads();
-        closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
-        init(conf, tpe);
+        init(conf, null, maxThreads);
     }
 
     public long getCubeCacheTTL() {
@@ -184,7 +174,7 @@ public class HblQueryClient implements Closeable {
         }
     }
 
-    private void init(Configuration conf, ExecutorService es) throws IOException {
+    private void init(Configuration conf, ExecutorService es, int maxThreads) throws IOException {
         Validate.notNull(conf);
         this.conf = conf;
 
@@ -195,12 +185,29 @@ public class HblQueryClient implements Closeable {
          * them. In fact, this is going to be a big problem until we enable some
          * hierarchical scan advised as batches, not scans.
          */
+        if (maxThreads <= 0)
+            maxThreads = DEFAULT_MAX_THREADS;
+        else if (maxThreads < 3)
+            maxThreads = 3;
+
         if (es == null) {
             ThreadPoolExecutor tpe =
-                new ThreadPoolExecutor(3, DEFAULT_MAX_THREADS, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
+                new ThreadPoolExecutor(3, maxThreads, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
                     DEFAULT_QUEUE_SIZE));
+
             tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
             closeables.addFirst(new IOUtil.ExecutorServiceCloseable(tpe, 30));
+
+            tpe.setThreadFactory(new ThreadFactory() {
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = Executors.defaultThreadFactory().newThread(r);
+                    t.setPriority(Thread.NORM_PRIORITY + 1);
+                    return t;
+                }
+            });
+
             tpe.prestartAllCoreThreads();
             es = tpe;
         }
