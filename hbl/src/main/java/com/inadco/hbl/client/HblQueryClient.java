@@ -57,7 +57,7 @@ import com.inadco.hbl.util.IOUtil;
 public class HblQueryClient implements Closeable {
 
     private static final int                   DEFAULT_MAX_THREADS = 50;
-    private static final int                   DEFAULT_QUEUE_SIZE  = 2;
+    private static final int                   DEFAULT_QUEUE_SIZE  = 3;
 
     private Configuration                      conf;
     private String                             yamlModelStr;

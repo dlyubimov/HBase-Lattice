@@ -83,7 +83,7 @@ public class Example1 extends Configured implements Tool {
     // choose ExecType.LOCAL to debug UDFs
     // private static ExecType EXEC_TYPE = ExecType.LOCAL;
     private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
-    private static final boolean QUERY_ONLY = false;
+    private static final boolean QUERY_ONLY = true;
 
     private HblQueryClient       queryClient;
     private Deque<Closeable>     closeables = new ArrayDeque<Closeable>();
@@ -594,56 +594,57 @@ public class Example1 extends Configured implements Tool {
             query.prepare("select dim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
                 + "COUNT(click) as clickCnt, cannyAvg7d(clickTimeSeries) as ctr " +
 
-                "from Example1 where impressionTime in [?,?) " + "group by dim1");
+                "from Example1 where impressionTime in [?,?), dim1 in [?] " + "group by dim1");
             System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
 
-            for (int i = 0; i < 2; i++) {
+            // warm up helps?
+            for (int k = 0; k < 200; k++) {
 
-                /**
-                 * same as client2 but print the summaries separately (no
-                 * grouping).
-                 * 
-                 */
-                ms = System.currentTimeMillis();
-                query.reset();
+                for (int i = 0; i < 2; i++) {
 
-                // demo: can parameterize aliases
-                // or measure names in the select expression.
-                query.setHblParameter(0, "impSum");
-                query.setHblParameter(1, "impCnt");
+                    /**
+                     * same as client2 but print the summaries separately (no
+                     * grouping).
+                     * 
+                     */
+                    ms = System.currentTimeMillis();
+                    query.reset();
 
-                // query.setHblParameter(2, ids[1]);
-                // query.setHblParameter(3, ids[1]);
-                query.setHblParameter(2, startTime);
-                query.setHblParameter(3, endTime);
+                    // demo: can parameterize aliases
+                    // or measure names in the select expression.
+                    query.setHblParameter(0, "impSum");
+                    query.setHblParameter(1, "impCnt");
 
-                // query.addMeasure("impCnt").addMeasure("click");
-                // query.addClosedSlice("dim1",ids[0],ids[1]).addGroupBy("dim1");
-                // query.addHalfOpenSlice("impressionTime", startTime, endTime);
+                    query.setHblParameter(2, startTime);
+                    query.setHblParameter(3, endTime);
 
-                AggregateResultSet rs = query.execute();
-                closeables.addFirst(rs);
-                while (rs.hasNext()) {
-                    rs.next();
-                    PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+                    query.setHblParameter(4, i);
 
-                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
-                    double wctr = ctrSum == null ? 0 : ctrSum.getValue();
+                    AggregateResultSet rs = query.execute();
+                    closeables.addFirst(rs);
+                    while (rs.hasNext()) {
+                        rs.next();
+                        PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
 
-                    System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
+                        OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
+                        double wctr = ctrSum == null ? 0 : ctrSum.getValue();
 
-                                      new BigInteger(1, (byte[]) ar.getObject(0)),
-                                      ar.getObject("impSum"),
-                                      ar.getObject("impCnt"),
-                                      ar.getObject("clickSum"),
-                                      ar.getObject("clickCnt"),
-                                      (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
-                                      wctr);
+                        System.out
+                            .printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
+
+                                    new BigInteger(1, (byte[]) ar.getObject(0)),
+                                    ar.getObject("impSum"),
+                                    ar.getObject("impCnt"),
+                                    ar.getObject("clickSum"),
+                                    ar.getObject("clickCnt"),
+                                    (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
+                                    wctr);
+                    }
+                    closeables.remove(rs);
+                    rs.close();
+
+                    System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
                 }
-                closeables.remove(rs);
-                rs.close();
-
-                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
             }
 
         } finally {
@@ -651,7 +652,7 @@ public class Example1 extends Configured implements Tool {
         }
     }
 
-    private static final int               N          = 24;
+    private static final int               N          = 24 * 5;
     private static final double            clickRate  = 0.25;
     private static final GregorianCalendar START_BASE = new GregorianCalendar(2011, 8, 1);
 
