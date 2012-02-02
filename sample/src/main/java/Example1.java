@@ -80,8 +80,6 @@ public class Example1 extends Configured implements Tool {
 
     }
 
-    // choose ExecType.LOCAL to debug UDFs
-    // private static ExecType EXEC_TYPE = ExecType.LOCAL;
     private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
     private static final boolean QUERY_ONLY = false;
 
@@ -95,8 +93,10 @@ public class Example1 extends Configured implements Tool {
             // script resource
             Resource cubeModelRsrc = new ClassPathResource("example1.yaml");
 
-            // deploy cube schema (optionally dropping the existing one)
-            // WARNING: would drop existing cube!!
+            /*
+             * deploy cube schema (optionally dropping the existing one)
+             * WARNING: would drop existing cube!!
+             */
             HblAdmin hblAdmin = new HblAdmin(cubeModelRsrc);
             if (!QUERY_ONLY) {
                 hblAdmin.dropCube(getConf());
@@ -105,8 +105,10 @@ public class Example1 extends Configured implements Tool {
 
             String cubeName = hblAdmin.getCube().getName();
 
-            // prepare incremental simulated input
-            // and select work dir for the compiler job
+            /*
+             * prepare incremental simulated input and select work dir for the
+             * compiler job
+             */
 
             FileSystem dfs =
                 EXEC_TYPE == ExecType.MAPREDUCE ? FileSystem.get(getConf()) : FileSystem.getLocal(getConf());
@@ -122,8 +124,10 @@ public class Example1 extends Configured implements Tool {
                     cubeName,
                     new ClassPathResource("example1-preambula.pig"),
                     5);
-            // test fact compile time exclusion to allow merging different fact
-            // stream sources
+            /*
+             * test fact compile time exclusion to allow merging different fact
+             * stream sources
+             */
 
             compiler.setMeasureExclude(new HashSet<String>(Arrays.asList("excludedMeasure")));
 
@@ -627,7 +631,7 @@ public class Example1 extends Configured implements Tool {
                         PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
 
                         OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
-                        double wctr = ctrSum == null ? 0 : ctrSum.getValue();
+                        Double wctr = ctrSum == null ? null : ctrSum.getValue();
 
                         System.out
                             .printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
