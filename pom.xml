@@ -71,6 +71,7 @@
 
   <modules>
     <module>hbl</module>
+    <module>hblr</module>
     <module>sample</module>
     <!--module>distr</module -->
   </modules>
