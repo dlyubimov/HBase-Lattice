@@ -59,7 +59,7 @@ import com.inadco.hbl.model.UTF8CharDimension;
  * @author dmitriy
  * 
  */
-
+@SuppressWarnings("deprecation")
 public final class YamlModelParser {
 
     public static Cube parseYamlModel(InputStream is) throws IOException {
