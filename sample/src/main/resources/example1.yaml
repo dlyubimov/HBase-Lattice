@@ -31,9 +31,9 @@
     
   
   - # measures 
-    - !SimpleMeasure [ impCnt ]
-    - !SimpleMeasure [ click ]
-    - !SimpleMeasure [ excludedMeasure ]
+    - !NumericMeasure [ impCnt ]
+    - !NumericMeasure [ click ]
+    - !NumericMeasure [ excludedMeasure ]
     - !IrregularSampleMeasure [ impTimeSeries ]
     - !IrregularSampleMeasure [ clickTimeSeries ]
     

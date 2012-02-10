@@ -21,19 +21,16 @@ package com.inadco.hbl.model;
 import com.inadco.hbl.api.Measure;
 
 /**
- * Simple double-measure support
- * 
- * @deprecated use {@link NumericMeasure}, bad name for what it does.
+ * Simple double-measure support 
  * 
  * @author dmitriy
- * 
+ *
  */
-@Deprecated
-public class SimpleMeasure implements Measure {
+public class NumericMeasure implements Measure {
 
     protected String name;
-
-    public SimpleMeasure(String name) {
+    
+    public NumericMeasure(String name) {
         super();
         this.name = name;
     }
@@ -63,5 +60,6 @@ public class SimpleMeasure implements Measure {
         else
             throw new RuntimeException(String.format("Unknown measure instance type: %s", value.getClass().getName()));
     }
+
 
 }
