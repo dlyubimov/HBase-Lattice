@@ -58,7 +58,7 @@ public class NumericMeasure implements Measure {
         else if (value instanceof Byte)
             return ((Byte) value).doubleValue();
         else
-            throw new RuntimeException(String.format("Unknown measure instance type: %s", value.getClass().getName()));
+            throw new RuntimeException(String.format("Unknown measure '%s' instance type: %s", name, value.getClass().getName()));
     }
 
 
