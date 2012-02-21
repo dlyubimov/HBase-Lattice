@@ -174,6 +174,7 @@ public class Example1 extends Configured implements Tool {
             testClient5(cubeName);
             testClient6(cubeName);
             testClient7(cubeName);
+            testClient8(cubeName);
 
             return 0;
 
@@ -656,6 +657,113 @@ public class Example1 extends Configured implements Tool {
         }
     }
 
+    private void testClient8(String cubeName) throws IOException, HblException {
+
+        System.out.println("Test8:\n\n");
+
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+
+            byte ids[][] = new byte[2][];
+            ids[0] = new byte[16];
+            ids[1] = new byte[16];
+            HblUtil.incrementKey(ids[1], 0, 16);
+
+            /**
+             * will try to also constrain for half-open [1:00am,3:00am)
+             */
+
+            GregorianCalendar startTime = IOUtil.tryClone(START_BASE);
+            GregorianCalendar endTime = IOUtil.tryClone(START_BASE);
+
+            // our actual example generated facts in utc zone of that day.
+            startTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+            endTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            // flush
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+
+            // modify time-of-day-wise
+            startTime.add(Calendar.HOUR_OF_DAY, 1);
+            endTime.add(Calendar.HOUR_OF_DAY, 3);
+            endTime.add(Calendar.MONTH, 9);
+
+            // recalculate the calendars
+            startTime.getTimeInMillis();
+            endTime.getTimeInMillis();
+
+            PreparedAggregateQuery query = queryClient.createPreparedQuery();
+
+            /*
+             * test reuse of the prepared query. Should speedup stuff exactly as
+             * prepared query is supposed to do. we also have an option of
+             * re-preparing query at any time, but we still need to run reset()
+             * to clean out stuff like parameters initialized and execution.
+             * reset() does not necessarily cancel previously existing AST tree
+             * of the query, only prepare() updates that. but prepare does
+             * reset() implicitly, so if we re-prepared the query, the previous
+             * parameter set cannot be used.
+             */
+            long ms = System.currentTimeMillis();
+            query.prepare("select dim1, charDim1, SUM(impCnt) as ?, COUNT(impCnt) as ?, SUM(click) as clickSum, "
+                + "COUNT(click) as clickCnt, cannyAvg7d(clickTimeSeries) as ctr " +
+
+                "from Example1 where impressionTime in [?,?), dim1 in [?] " + "group by dim1, charDim1");
+            System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
+
+                for (int i = 0; i < 2; i++) {
+
+                    /**
+                     * same as client2 but print the summaries separately (no
+                     * grouping).
+                     * 
+                     */
+                    ms = System.currentTimeMillis();
+                    query.reset();
+
+                    // demo: can parameterize aliases
+                    // or measure names in the select expression.
+                    query.setHblParameter(0, "impSum");
+                    query.setHblParameter(1, "impCnt");
+
+                    query.setHblParameter(2, startTime);
+                    query.setHblParameter(3, endTime);
+
+                    query.setHblParameter(4, i);
+
+                    AggregateResultSet rs = query.execute();
+                    closeables.addFirst(rs);
+                    while (rs.hasNext()) {
+                        rs.next();
+                        PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+
+                        OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
+                        Double wctr = ctrSum == null ? null : ctrSum.getValue();
+
+                        System.out
+                            .printf("%032X (charDim=%s) sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
+
+                                    new BigInteger(1, (byte[]) ar.getObject(0)),
+                                    ar.getObject("charDim1"),
+                                    ar.getObject("impSum"),
+                                    ar.getObject("impCnt"),
+                                    ar.getObject("clickSum"),
+                                    ar.getObject("clickCnt"),
+                                    (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
+                                    wctr);
+                    }
+                    closeables.remove(rs);
+                    rs.close();
+
+                    System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
+                }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
     private static final int               N          = 24 * 5;
     private static final double            clickRate  = 0.25;
     private static final GregorianCalendar START_BASE = new GregorianCalendar(2011, 8, 1);
@@ -697,8 +805,11 @@ public class Example1 extends Configured implements Tool {
                         for (int j = 0; j < i + k + 1; j++) {
                             CompilerInput.Builder inp = CompilerInput.newBuilder();
                             inp.setDim1(id[k]);
+                            inp.setCharDim1("dim1-as-"+(k+1));
                             inp.setDim2(id[k]);
+                            inp.setCharDim2("dim2-as-"+(k+1));
                             inp.setDim3(id[k]);
+                            inp.setCharDim3("dim3-as-"+(k+1));
                             inp.setImpressionTime(start.getTimeInMillis());
                             inp.setImpCnt(1);
                             inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);

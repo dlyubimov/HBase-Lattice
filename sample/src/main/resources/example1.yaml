@@ -9,6 +9,9 @@
     - &dim2 !HexDimension [dim2,16]
     - &dim3 !HexDimension [dim3,16]
     - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime] # params: dimension name
+    - &cdim1 !UTF8CharDimension [ charDim1, 20 ]
+    - &cdim2 !UTF8CharDimension [ charDim2, 20 ]
+    - &cdim3 !UTF8CharDimension [ charDim3, 20 ]
     
   - # cuboids
     # NOTE: since with most use cases querying over time dimension 
@@ -27,9 +30,8 @@
     - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim3, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
+    - !SimpleCuboid [[*dim1, *cdim1, *dim2, *cdim2, *dimImpressionTime]]
     
-    
-  
   - # measures 
     - !NumericMeasure [ impCnt ]
     - !NumericMeasure [ click ]
