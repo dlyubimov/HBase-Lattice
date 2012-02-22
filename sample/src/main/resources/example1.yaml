@@ -9,9 +9,9 @@
     - &dim2 !HexDimension [dim2,16]
     - &dim3 !HexDimension [dim3,16]
     - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime] # params: dimension name
-    - &cdim1 !UTF8CharDimension [ charDim1, 20 ]
-    - &cdim2 !UTF8CharDimension [ charDim2, 20 ]
-    - &cdim3 !UTF8CharDimension [ charDim3, 20 ]
+    - &cdim1 !UTF8CharDimension [ charDim1, 20, true, '' ]
+    - &cdim2 !UTF8CharDimension [ charDim2, 20, true, '' ]
+    - &cdim3 !UTF8CharDimension [ charDim3, 20, true, '' ]
     
   - # cuboids
     # NOTE: since with most use cases querying over time dimension 

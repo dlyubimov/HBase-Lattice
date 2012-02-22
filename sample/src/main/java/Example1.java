@@ -175,6 +175,7 @@ public class Example1 extends Configured implements Tool {
             testClient6(cubeName);
             testClient7(cubeName);
             testClient8(cubeName);
+            testClient9(cubeName);
 
             return 0;
 
@@ -712,52 +713,104 @@ public class Example1 extends Configured implements Tool {
                 "from Example1 where impressionTime in [?,?), dim1 in [?] " + "group by dim1, charDim1");
             System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
 
-                for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 2; i++) {
 
-                    /**
-                     * same as client2 but print the summaries separately (no
-                     * grouping).
-                     * 
-                     */
-                    ms = System.currentTimeMillis();
-                    query.reset();
+                /**
+                 * same as client2 but print the summaries separately (no
+                 * grouping).
+                 * 
+                 */
+                ms = System.currentTimeMillis();
+                query.reset();
 
-                    // demo: can parameterize aliases
-                    // or measure names in the select expression.
-                    query.setHblParameter(0, "impSum");
-                    query.setHblParameter(1, "impCnt");
+                // demo: can parameterize aliases
+                // or measure names in the select expression.
+                query.setHblParameter(0, "impSum");
+                query.setHblParameter(1, "impCnt");
 
-                    query.setHblParameter(2, startTime);
-                    query.setHblParameter(3, endTime);
+                query.setHblParameter(2, startTime);
+                query.setHblParameter(3, endTime);
 
-                    query.setHblParameter(4, i);
+                query.setHblParameter(4, i);
 
-                    AggregateResultSet rs = query.execute();
-                    closeables.addFirst(rs);
-                    while (rs.hasNext()) {
-                        rs.next();
-                        PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+                AggregateResultSet rs = query.execute();
+                closeables.addFirst(rs);
+                while (rs.hasNext()) {
+                    rs.next();
+                    PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
 
-                        OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
-                        Double wctr = ctrSum == null ? null : ctrSum.getValue();
+                    OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
+                    Double wctr = ctrSum == null ? null : ctrSum.getValue();
 
-                        System.out
-                            .printf("%032X (charDim=%s) sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
+                    System.out
+                        .printf("%032X (charDim=%s) sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
 
-                                    new BigInteger(1, (byte[]) ar.getObject(0)),
-                                    ar.getObject("charDim1"),
-                                    ar.getObject("impSum"),
-                                    ar.getObject("impCnt"),
-                                    ar.getObject("clickSum"),
-                                    ar.getObject("clickCnt"),
-                                    (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
-                                    wctr);
-                    }
-                    closeables.remove(rs);
-                    rs.close();
-
-                    System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
+                                new BigInteger(1, (byte[]) ar.getObject(0)),
+                                ar.getObject("charDim1"),
+                                ar.getObject("impSum"),
+                                ar.getObject("impCnt"),
+                                ar.getObject("clickSum"),
+                                ar.getObject("clickCnt"),
+                                (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
+                                wctr);
                 }
+                closeables.remove(rs);
+                rs.close();
+
+                System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
+            }
+
+        } finally {
+            IOUtil.closeAll(closeables);
+        }
+    }
+
+    private void testClient9(String cubeName) throws IOException, HblException {
+
+        System.out.println("Test9:\n\n");
+
+        Deque<Closeable> closeables = new ArrayDeque<Closeable>();
+        try {
+
+            PreparedAggregateQuery query = queryClient.createPreparedQuery();
+
+            /*
+             * test reuse of the prepared query. Should speedup stuff exactly as
+             * prepared query is supposed to do. we also have an option of
+             * re-preparing query at any time, but we still need to run reset()
+             * to clean out stuff like parameters initialized and execution.
+             * reset() does not necessarily cancel previously existing AST tree
+             * of the query, only prepare() updates that. but prepare does
+             * reset() implicitly, so if we re-prepared the query, the previous
+             * parameter set cannot be used.
+             */
+            long ms = System.currentTimeMillis();
+            query.prepare("select dim1, dim2, charDim1, SUM(impCnt) as impCnt "
+                + "from Example1 group by dim1, charDim1,dim2");
+            System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
+
+            ms = System.currentTimeMillis();
+            query.reset();
+
+            // demo: can parameterize aliases
+            // or measure names in the select expression.
+
+            AggregateResultSet rs = query.execute();
+            closeables.addFirst(rs);
+            while (rs.hasNext()) {
+                rs.next();
+                PreparedAggregateResult ar = (PreparedAggregateResult) rs.current();
+
+                System.out.printf("dim1=%032X (cdim1=%s) dim2=%032X\n",
+
+                new BigInteger(1, (byte[]) ar.getObject("dim1")), ar.getObject("charDim1"), new BigInteger(
+                    1,
+                    (byte[]) ar.getObject("dim2")));
+            }
+            closeables.remove(rs);
+            rs.close();
+
+            System.out.printf("query+printout complete in %d ms\n", System.currentTimeMillis() - ms);
 
         } finally {
             IOUtil.closeAll(closeables);
@@ -805,11 +858,12 @@ public class Example1 extends Configured implements Tool {
                         for (int j = 0; j < i + k + 1; j++) {
                             CompilerInput.Builder inp = CompilerInput.newBuilder();
                             inp.setDim1(id[k]);
-                            inp.setCharDim1("dim1-as-"+(k+1));
+                            // inp.setCharDim1("dim1-as-"+(k+1));
+                            inp.clearCharDim1(); // simulate NULL
                             inp.setDim2(id[k]);
-                            inp.setCharDim2("dim2-as-"+(k+1));
+                            inp.setCharDim2("dim2-as-" + (k + 1));
                             inp.setDim3(id[k]);
-                            inp.setCharDim3("dim3-as-"+(k+1));
+                            inp.setCharDim3("dim3-as-" + (k + 1));
                             inp.setImpressionTime(start.getTimeInMillis());
                             inp.setImpCnt(1);
                             inp.setClick(rnd.nextDouble() > clickRate ? 0 : 1);
