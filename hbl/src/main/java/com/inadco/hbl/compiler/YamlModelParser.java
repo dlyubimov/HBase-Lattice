@@ -44,6 +44,7 @@ import com.inadco.hbl.client.impl.functions.FCannyAvgSum;
 import com.inadco.hbl.client.impl.functions.FCannyRateSum;
 import com.inadco.hbl.model.HexDimension;
 import com.inadco.hbl.model.IrregularSampleMeasure;
+import com.inadco.hbl.model.NumericMeasure;
 import com.inadco.hbl.model.SimpleCube;
 import com.inadco.hbl.model.SimpleCuboid;
 import com.inadco.hbl.model.SimpleMeasure;
@@ -58,7 +59,7 @@ import com.inadco.hbl.model.UTF8CharDimension;
  * @author dmitriy
  * 
  */
-
+@SuppressWarnings("deprecation")
 public final class YamlModelParser {
 
     public static Cube parseYamlModel(InputStream is) throws IOException {
@@ -121,6 +122,7 @@ public final class YamlModelParser {
         addTag(UTF8CharDimension.class, c, rp);
         addTag(SimpleTimeHourHierarchy.class, c, rp);
         addTag(SimpleMeasure.class, c, rp);
+        addTag(NumericMeasure.class, c, rp);
         addTag(IrregularSampleMeasure.class, c, rp);
 
         // some additional function support

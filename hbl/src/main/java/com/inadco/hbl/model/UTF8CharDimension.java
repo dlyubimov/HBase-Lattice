@@ -101,8 +101,8 @@ public class UTF8CharDimension extends AbstractDimension {
             if (!autoTruncateFacts && mlen > len)
                 throw new IllegalArgumentException(String.format("fact length exceeds type length for dimension %s.",
                                                                  name));
-            bb.get(buff, 0, mlen);
-            Arrays.fill(buff, mlen, len, (byte) 0);
+            bb.get(buff, offset, mlen);
+            Arrays.fill(buff, offset + mlen, offset + len, (byte) 0);
         } else {
             throw new IllegalArgumentException(String.format("unsupported type/null for a member of dimension %s.",
                                                              name));
@@ -114,7 +114,7 @@ public class UTF8CharDimension extends AbstractDimension {
     public Object getMember(byte[] buff, int offset) throws HblException {
         int l = len - 1;
         for (; l >= 0; l--) {
-            if (buff[l] != (byte) 0x0)
+            if (buff[offset + l] != (byte) 0x0)
                 break;
         }
 

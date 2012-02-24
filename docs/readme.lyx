@@ -535,6 +535,23 @@ Long
  compilation in pig).
 \end_layout
 
+\begin_layout Itemize
+
+\family typewriter
+Utf8CharDimension
+\family default
+.
+ This is almost the same as 
+\family typewriter
+HexDimension 
+\family default
+but expects string type and encodes it in Utf-8 encoding (meaning collation
+ rules of encoded form of Utf8 strings in HBase).
+ It can optionally quietly allow truncation if fact length exceeds defined
+ storage length (see constructor parameters for details).
+ 
+\end_layout
+
 \begin_layout Standard
 Dimension types are assumed to be discrete.
  If dimension is computed over a continuous value in the fact stream (such
@@ -544,9 +561,9 @@ Dimension types are assumed to be discrete.
 \family typewriter
 SimpleTimeHourHierarchy 
 \family default
-copes with continous nature of time by setting up discrete member values
- as hour-long buckets and thus implicitly converts every fact from the fact
- stream into [YEAR-MONTH].[DATE-HOUR] form.
+copes with continuous nature of time by setting up discrete member values
+ as hour-long buckets and thus implicitly converts every time fact from
+ the fact stream into [YEAR-MONTH].[DATE-HOUR] form.
  Obviously, we can make granularity finer and finer so that eventually it
  may go all the way down to a millisecond, and still be able to optimize
  queries with additive and complement scans.
@@ -559,11 +576,21 @@ Handling NULL values for dimensions in the fact stream.
 
 \begin_layout Standard
 At this time, compiler will not accept NULL values for dimensions because
- representation of NULL values is not currently supported in composite hbase
- key structure.
- If it is desirable to consider NULL values as a dimensional coordinate,
- it may be transformed into a reserved non-null value in the compiler's
- preambula.
+ representation of NULL values is not currently supported while representing
+ dimension values as a part of a composite hbase key.
+ If it is desirable to accept quietly NULL values as dimensional values
+ in fact stream, such NULLs may be transformed into a reserved non-null
+ value in the compiler's preambula script.
+ Alternatively, some dimension implementations (
+\family typewriter
+HexDimension
+\family default
+ and 
+\family typewriter
+Utf8CharDimension)
+\family default
+ allow specifying such automatic NULL2non-null substitution as a parameter
+ of their constructors.
 \end_layout
 
 \begin_layout Subsubsection
@@ -588,7 +615,7 @@ yaml
 \emph default
 model this is defined as 
 \family typewriter
-SimpleMeasure
+NumericMeasure
 \family default
 .
  
@@ -1111,7 +1138,11 @@ Aggregating over multidimensional hyperplane (a plane perpendicular to an
 \family typewriter
 where dimension in [?]
 \family default
-'.
+' (
+\emph on
+degenerate 
+\emph default
+dimension interval).
 \end_layout
 
 \begin_layout Standard

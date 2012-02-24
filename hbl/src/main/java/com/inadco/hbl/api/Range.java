@@ -59,7 +59,7 @@ public class Range implements Writable {
         leftOpen = (stuff & 0x01) != 0;
         rightOpen = (stuff & 0x02) != 0;
         levelOffset = HblUtil.readVarUint32(in);
-        levelLen = HblUtil.readVarUint32(in);
+        levelLen = HblUtil.readVarInt32(in);
 
     }
 
@@ -75,7 +75,7 @@ public class Range implements Writable {
             stuff |= 0x02;
         out.writeByte(stuff);
         HblUtil.writeVarUint32(out, levelOffset);
-        HblUtil.writeVarUint32(out, levelLen);
+        HblUtil.writeVarInt32(out, levelLen);
     }
 
     public Range() {

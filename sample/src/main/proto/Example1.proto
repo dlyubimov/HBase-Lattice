@@ -34,4 +34,7 @@ message CompilerInput {
   optional uint64 impressionTime = 4;
   optional uint64 impCnt = 5;
   optional uint64 click = 6;
+  optional string charDim1 = 7;
+  optional string charDim2 = 8;
+  optional string charDim3 = 9;
 }

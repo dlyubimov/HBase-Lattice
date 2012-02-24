@@ -74,7 +74,7 @@ public abstract class AbstractDimension implements Dimension {
             Arrays.fill(rightKey, (byte) 0xff);
         Range r = new Range(leftKey, rightKey, true);
         r.setKeyLen(keylen);
-        r.setLevelLen(keylen);
+        r.setLevelLen(-1);
         r.setLeftOpen(leftBound == null ? false : slice.isLeftOpen());
         r.setRightOpen(rightBound == null ? false : slice.isRightOpen());
         return new Range[] { r };
@@ -87,7 +87,7 @@ public abstract class AbstractDimension implements Dimension {
         byte[] leftKey = new byte[keylen], rightKey = new byte[keylen];
         Arrays.fill(rightKey, (byte) 0xff);
         Range r = new Range(leftKey, rightKey, true, false, false);
-        r.setLevelLen(keylen);
+        r.setLevelLen(-1);
         return r;
     }
 

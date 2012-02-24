@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.util.HblUtil;
 
-
 /**
  * filter for ranges of individual parts of a composite key.
  * <P>
@@ -152,23 +151,31 @@ public class CompositeKeyRowFilter extends FilterBase {
             }
 
             /*
-             * level is greater than ours, we need to skip to the next slice at
-             * our level.
+             * hierarchy stuff
              */
-            if (testLevelGreater(i, buffer, rowKeyOffset)) {
-                setHint2NextHierarchicalLevelKey(i, buffer, rowKeyOffset, rowLength);
-                nextKeyCode = ReturnCode.SEEK_NEXT_USING_HINT;
-                return false;
-            }
 
-            /*
-             * if current key has level less than current level -- just skip it.
-             * This technically is never supposed to happen because less level
-             * keys would be filtered out by low boundary comparison (they
-             * always less than lower boundary).
-             */
-            if (testLevelLess(i, buffer, rowKeyOffset)) {
-                return true;
+            if (r.getLevelLen() >= 0) {
+
+                /*
+                 * level is greater than ours, we need to skip to the next slice
+                 * at our level -- if this a hierarchical key
+                 */
+
+                if (testLevelGreater(i, buffer, rowKeyOffset)) {
+                    setHint2NextHierarchicalLevelKey(i, buffer, rowKeyOffset, rowLength);
+                    nextKeyCode = ReturnCode.SEEK_NEXT_USING_HINT;
+                    return false;
+                }
+
+                /*
+                 * if current key has level less than current level -- just skip
+                 * it. This technically is never supposed to happen because less
+                 * level keys would be filtered out by low boundary comparison
+                 * (they always less than lower boundary).
+                 */
+                if (testLevelLess(i, buffer, rowKeyOffset)) {
+                    return true;
+                }
             }
 
         }

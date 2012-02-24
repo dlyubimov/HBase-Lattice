@@ -13,7 +13,7 @@
 
   <groupId>com.inadco.hbl</groupId>
   <artifactId>hbl-parent</artifactId>
-  <version>0.1.14-SNAPSHOT</version>
+  <version>0.1.19-SNAPSHOT</version>
   <name>HBase Lattice :: Parent</name>
 
   <packaging>pom</packaging>
@@ -93,7 +93,7 @@
 
       <properties>
 
-        <ecoadapters.version>0.3.16-SNAPSHOT</ecoadapters.version>
+        <ecoadapters.version>0.3.17</ecoadapters.version>
 
       </properties>
     </profile>
