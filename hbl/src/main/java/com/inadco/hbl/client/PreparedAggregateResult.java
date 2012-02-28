@@ -18,6 +18,8 @@
  */
 package com.inadco.hbl.client;
 
+import java.util.List;
+
 /**
  * if you were Using {@link PreparedAggregateQuery} then this is the result
  * interface you can cast to. It provides additional capabilities of retrieving
@@ -49,5 +51,21 @@ public interface PreparedAggregateResult extends AggregateResult {
      * @throws HblException
      */
     Object getObject(int index) throws HblException;
+
+    /**
+     * Return all aliases listed in the query.
+     * 
+     * @return
+     * @throws HblException
+     */
+    List<String> getAliases() throws HblException;
+
+    /**
+     * get field count in the data set
+     * 
+     * @return
+     * @throws HblException
+     */
+    int getFieldCount() throws HblException;
 
 }

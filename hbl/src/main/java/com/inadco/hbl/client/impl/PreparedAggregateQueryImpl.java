@@ -20,6 +20,7 @@ package com.inadco.hbl.client.impl;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -63,7 +64,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
     private Tree                 selectAST;
     private Map<Integer, Object> parameters        = new HashMap<Integer, Object>();
     private Map<Integer, Object> resultDefsByIndex = new HashMap<Integer, Object>();
-    private Map<String, Object>  resultDefsByAlias = new HashMap<String, Object>();
+    private Map<String, Object>  resultDefsByAlias = new LinkedHashMap<String, Object>();
 
     public PreparedAggregateQueryImpl(HblQueryClient client, ExecutorService es, HTablePool tpool) {
         super(client, es, tpool);
