@@ -18,7 +18,10 @@ source("hblr.R")
 
 
 test1 <- function () {
-	hbl.init()
+	
+	q <- hbl.hblquery("select dim1, COUNT(impCnt) as impCnt from Example1 group by dim1")
+	df <- hbl.execute(q); df
+	
 }
 
 

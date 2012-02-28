@@ -1,4 +1,4 @@
-# TODO: Add comment
+# TODO: R wrapper for running hbl queries etc. using rJava
 # 
 # Author: dmitriy
 ###############################################################################
@@ -95,12 +95,22 @@ hbl.init <- function () {
 	
 }
 
+
+#############################################
+# hbl query methods for R class "hblquery"  #
+#############################################
+
+#Use to re-prepare query obtained thru hbl.hblquery() 
 hbl.prepare <- function (x, ...) UseMethod("prepare")
+#set parameters (there's some todo here probably still)
 hbl.setParameter <- function (x, ...) UseMethod("setParameter")
+#execute query
 hbl.execute <- function (x, ...) UseMethod ("execute")
+#reset prepared query for the next execution
+hbl.reset <- function (x, ... ) UseMethod ("reset")
 
 
-# prepared query class 
+# prepared query class constructor  
 hbl.hblquery <- function ( qstr = NULL ) {
 	q <- list() 
 	class(q) <- "hblquery"
@@ -130,25 +140,49 @@ setParameter.hblquery <- function (q, paramIndex, value ) {
 	q
 }
 
+reset.hblquery <- function (q ) {
+	q$q$reset()
+}
+
 execute.hblquery <- function (q ) {
 	rs <- q$q$execute() 
-	r <- data.frame()
-	aliases <- rs$aliases
+	aliases <- sapply ( rs$getAliases(), function(alias) as.character(alias$toString()))
 	
 	if (! rs$hasNext() ) {
 		#todo: is there a more efficient way of doing this?
+		r <- data.frame(stringsAsFactors=F)
 		for (alias in aliases) r[[alias]] <- character(0)
 		return(r)
 	}
 	
+	r <- NULL
+	rs$"next"() 
+	datarow <- hbl._convertRS(aliases,rs$current())
+	r <- data.frame(datarow, stringsAsFactors=F)
+
 	while ( rs$hasNext() ) {
-		row <- rs$current()
-		datarow <- list()
-		datarow[[aliases]] <- row$getObject(aliases)
-		rbind(r,datarow)
+		rs$"next"()
+		datarow <- hbl._convertRS(aliases,rs$current())
+		r<- rbind(r,datarow)
 	}
-	r
+	
+	rs$close()
+	r 
 }
 
+# convert a result set row to a list of values 
+# denoted by 
+hbl._convertRS <- function (aliases, hblrow ) {
+	sapply(aliases, function(alias) { 
+				a <- hblrow$getObject(alias)
+				if ( mode(a)=='raw') 
+					# handling hex dimension values, byte arrays
+					a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
+				if ( mode(a) =='S4')
+					a<- a$toString()
+				a
+		},
+		simplify=F)
+}
 
 hbl.init()
