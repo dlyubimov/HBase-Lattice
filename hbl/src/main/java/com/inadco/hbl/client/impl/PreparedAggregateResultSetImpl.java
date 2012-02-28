@@ -19,6 +19,8 @@
 package com.inadco.hbl.client.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -43,15 +45,16 @@ public class PreparedAggregateResultSetImpl extends AggregateResultSetImpl imple
 
     private Map<String, Object>  resultDefByAlias;
     private Map<Integer, Object> resultDefByIndex;
+    private List<String>         aliasCache;
 
     PreparedAggregateResultSetImpl(List<ScanSpec> scanSpecs,
-                           ExecutorService es,
-                           HTablePool tpool,
-                           AggregateFunctionRegistry afr,
-                           Map<String, Integer> measureName2IndexMap,
-                           Map<String, Integer> dimName2GroupKeyOffsetMap,
-                           Map<Integer, Object> resultDefByIndex,
-                           Map<String, Object> resultDefByAlias) throws IOException {
+                                   ExecutorService es,
+                                   HTablePool tpool,
+                                   AggregateFunctionRegistry afr,
+                                   Map<String, Integer> measureName2IndexMap,
+                                   Map<String, Integer> dimName2GroupKeyOffsetMap,
+                                   Map<Integer, Object> resultDefByIndex,
+                                   Map<String, Object> resultDefByAlias) throws IOException {
         super(scanSpecs, es, tpool, afr, measureName2IndexMap, dimName2GroupKeyOffsetMap);
         this.resultDefByAlias = resultDefByAlias;
         this.resultDefByIndex = resultDefByIndex;
@@ -82,7 +85,19 @@ public class PreparedAggregateResultSetImpl extends AggregateResultSetImpl imple
         // otherwise it is a dimension group member request
         String dim = (String) def;
         return super.getGroupMember(dim);
+    }
 
+    @Override
+    public List<String> getAliases() throws HblException {
+        if (aliasCache == null) {
+            aliasCache = Collections.unmodifiableList(new ArrayList<String>(resultDefByAlias.keySet()));
+        }
+        return aliasCache;
+    }
+
+    @Override
+    public int getFieldCount() throws HblException {
+        return resultDefByIndex.size();
     }
 
 }
