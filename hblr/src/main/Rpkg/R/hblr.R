@@ -178,4 +178,60 @@ hbl._convertRS <- function (aliases, hblrow ) {
 		simplify=F)
 }
 
+##################################
+# HblAdmin                       #
+##################################
+
+#generic admin functions
+hbl.dropCube <- function (x,...) UseMethod("dropCube")
+hbl.deployCube <- function (x,...) UseMethod("deployCube")
+hbl.saveModel <- function (x,...) UseMethod("saveModel")
+
+hbl.admin.fromYaml <- function (model.yaml) {
+  admin <- list()
+  class(admin) <- "hbladmin"
+  yaml <- paste(as.character(model.yaml),collapse='\n')
+  
+  bytes <- new (J("java.lang.String"),yaml)$getBytes('utf-8')
+
+  resource <- new(J("org.springframework.core.io.ByteArrayResource"), 
+    .jarray(bytes))
+
+  admin$adm <- new(J("com.inadco.hbl.client.HblAdmin"),resource)
+  
+  admin
+} 
+
+hbl.admin.fromYamlFile <- function (model.file.name) {
+  f <- file(model.file.name,'r')
+  s <- readLines(f)
+  close(f)
+  hbl.admin.fromYaml(s)
+}
+
+hbl.admin.fromCube <- function (cube.name ) {
+  admin <- list()
+  class(admin) <- "hbladmin"
+  admin$adm <- new (J("com.inadco.hbl.client.HblAdmin"), 
+      as.character(cube.name),
+      hbl$conf
+      )
+  admin
+}
+
+dropCube.hbladmin <- function(admin) {
+  admin$dropCube(hbl$conf)
+} 
+
+deployCube.hbladmin <- function(admin) { 
+  admin$deployCube(hbl$conf)
+}
+
+saveModel.hbladmin <- function(admin) {
+  admin$saveModel(hbl$conf)
+}
+
+##################################
+# initialization                 #
+##################################
 hbl.init()
