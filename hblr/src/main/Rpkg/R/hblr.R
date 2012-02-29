@@ -77,9 +77,7 @@ hbl.init <- function () {
 	hbaseConf <- paste(hbl$options$HBASE_HOME,"conf",sep="/")
 	
 
-    hbl$classpath <- c(cp1,cp2,cp3,core,hb_core, hconf,hbaseConf)
-	
-	
+  hbl$classpath <- c(cp1,cp2,cp3,core,hb_core, hconf,hbaseConf)
 	
 	.jinit(classpath = hbl$classpath )	
 
@@ -106,8 +104,6 @@ hbl.prepare <- function (x, ...) UseMethod("prepare")
 hbl.setParameter <- function (x, ...) UseMethod("setParameter")
 #execute query
 hbl.execute <- function (x, ...) UseMethod ("execute")
-#reset prepared query for the next execution
-hbl.reset <- function (x, ... ) UseMethod ("reset")
 
 
 # prepared query class constructor  
@@ -129,7 +125,7 @@ prepare.hblquery <- function (q, value) {
 	q$q$prepare(qstr)
 	
 	#debug
-	cat ("query prepared:", qstr)
+	#cat ("query prepared:", qstr)
 	
 	q
 } 
@@ -140,12 +136,9 @@ setParameter.hblquery <- function (q, paramIndex, value ) {
 	q
 }
 
-reset.hblquery <- function (q ) {
-	q$q$reset()
-}
-
 execute.hblquery <- function (q ) {
 	rs <- q$q$execute() 
+  on.exit(rs$close(), add=T)
 	aliases <- sapply ( rs$getAliases(), function(alias) as.character(alias$toString()))
 	
 	if (! rs$hasNext() ) {
@@ -166,7 +159,7 @@ execute.hblquery <- function (q ) {
 		r<- rbind(r,datarow)
 	}
 	
-	rs$close()
+	
 	r 
 }
 
