@@ -81,7 +81,7 @@ public class Example1 extends Configured implements Tool {
     }
 
     private static ExecType      EXEC_TYPE  = ExecType.MAPREDUCE;
-    private static final boolean QUERY_ONLY = true;
+    private static final boolean QUERY_ONLY = false;
 
     private HblQueryClient       queryClient;
     private Deque<Closeable>     closeables = new ArrayDeque<Closeable>();
