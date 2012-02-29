@@ -17,6 +17,7 @@ hbl.init <- function () {
     hbl$options$HBL_HOME <- Sys.getenv("HBL_HOME");
 	hbl$options$HADOOP_HOME <- Sys.getenv("HADOOP_HOME");
 	hbl$options$HBASE_HOME <- Sys.getenv("HBASE_HOME");
+	hbl$options$PIG_HOME <- Sys.getenv("PIG_HOME");
 	
 	if ( nchar(hbl$options$HADOOP_HOME) ==0 )
 		stop ("HADOOP_HOME not set");
@@ -26,6 +27,8 @@ hbl.init <- function () {
 	
 	if ( nchar(hbl$options$HBASE_HOME)==0 ) 
 		stop("HBASE_HOME not set");
+	
+	
 	
 	
 	cp1 <- list.files(
@@ -61,6 +64,13 @@ hbl.init <- function () {
 						))
 	}
 	
+	pigcp <- if ( length(hbl$PIG_HOME)>0 ) 
+		list.files(
+				paste(hbl$PIG_HOME,"lib",sep="/"),
+				full.names=T,
+				pattern = "\\.jar$"
+				)
+	
 	
 	hb_core <- list.files (
 			hbl$options$HBASE_HOME,
@@ -77,7 +87,7 @@ hbl.init <- function () {
 	hbaseConf <- paste(hbl$options$HBASE_HOME,"conf",sep="/")
 	
 
-  hbl$classpath <- c(cp1,cp2,cp3,core,hb_core, hconf,hbaseConf)
+  	hbl$classpath <- c(cp1,cp2,cp3,core,hb_core, hconf,hbaseConf, pigcp)
 	
 	.jinit(classpath = hbl$classpath )	
 

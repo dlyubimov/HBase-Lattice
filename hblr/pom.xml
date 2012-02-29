@@ -69,7 +69,7 @@
                 <configuration>
                   <artifacts>
                     <artifact>
-                      <file>${baseDir}/hblR-${project.version}-rpkg.tar.gz</file>
+                      <file>${basedir}/target/hblR-${project.version}-rpkg.tar.gz</file>
                       <type>tar.gz</type>
                       <classifier>rpkg</classifier>
                     </artifact>
