@@ -313,7 +313,6 @@ public class Example1 extends Configured implements Tool {
             query.setCube(cubeName);
             for (int i = 0; i < 5; i++) {
 
-                query.reset();
                 byte ids[][] = new byte[2][];
                 ids[0] = new byte[16];
                 ids[1] = new byte[16];
@@ -433,7 +432,6 @@ public class Example1 extends Configured implements Tool {
                  * 
                  */
                 ms = System.currentTimeMillis();
-                query.reset();
 
                 // demo: can parameterize aliases
                 // or measure names in the select expression.
@@ -510,7 +508,6 @@ public class Example1 extends Configured implements Tool {
                  * grouping).
                  */
                 ms = System.currentTimeMillis();
-                query.reset();
 
                 query.setHblParameter(0, i);
 
@@ -614,7 +611,6 @@ public class Example1 extends Configured implements Tool {
                      * 
                      */
                     ms = System.currentTimeMillis();
-                    query.reset();
 
                     // demo: can parameterize aliases
                     // or measure names in the select expression.
@@ -721,7 +717,6 @@ public class Example1 extends Configured implements Tool {
                  * 
                  */
                 ms = System.currentTimeMillis();
-                query.reset();
 
                 // demo: can parameterize aliases
                 // or measure names in the select expression.
@@ -790,7 +785,6 @@ public class Example1 extends Configured implements Tool {
             System.out.printf("query prepared in %d ms\n", System.currentTimeMillis() - ms);
 
             ms = System.currentTimeMillis();
-            query.reset();
 
             // demo: can parameterize aliases
             // or measure names in the select expression.
