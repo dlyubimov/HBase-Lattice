@@ -102,8 +102,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         parameters.put(param, value);
     }
 
-    @Override
-    public void reset() {
+    protected void reset() {
         super.reset();
         parameters.clear();
 
@@ -113,10 +112,15 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
          * unfortunately i have to keep construction of the result set attribute
          * map a part of execute() and reset it here for each new use of the
          * query.
+         * 
+         * Actually we kind of lent this to the result set, so we just need to
+         * create a new one. Of course in reality since the query is prepared,
+         * this never has to change... but current AST walker initializes it
+         * anyway.
          */
 
-        resultDefsByAlias.clear();
-        resultDefsByIndex.clear();
+        resultDefsByAlias = new LinkedHashMap<String, Object>();
+        resultDefsByIndex = new HashMap<Integer, Object>();
 
     }
 
@@ -136,8 +140,8 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
 
         try {
             prepper.select();
-            if ( prepperErrors.getErrors().size()>0 ) 
-                throw new HblException (prepperErrors.formatErrors());
+            if (prepperErrors.getErrors().size() > 0)
+                throw new HblException(prepperErrors.formatErrors());
         } catch (RecognitionException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

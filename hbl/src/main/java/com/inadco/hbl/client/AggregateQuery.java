@@ -137,8 +137,4 @@ public interface AggregateQuery {
      */
     AggregateResultSet execute() throws HblException;
 
-    /**
-     * reset for re-use
-     */
-    void reset();
 }

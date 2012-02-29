@@ -188,12 +188,13 @@ public class AggregateQueryImpl implements AggregateQuery {
             return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
+        } finally {
+            reset();
         }
 
     }
 
-    @Override
-    public void reset() {
+    protected void reset() {
         dimSlices.clear();
         measures.clear();
         groupDimensions.clear();
