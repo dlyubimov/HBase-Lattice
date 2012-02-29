@@ -23,6 +23,69 @@
 
   <packaging>jar</packaging>
 
+  <profiles>
+
+    <profile>
+      <id>R</id>
+
+      <build>
+
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>generate-sources</id>
+                <phase>compile</phase>
+                <configuration>
+                  <tasks>
+                    <exec executable="${basedir}/build/buildR.sh"
+                      failonerror="true" dir="${basedir}/build">
+                      <!-- R pkg name -->
+                      <arg value="hblR" />
+                      <!-- maven version -->
+                      <arg value="${project.version}" />
+                    </exec>
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <groupId>org.codehaus.mojo</groupId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>r-attach</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <artifacts>
+                    <artifact>
+                      <file>${baseDir}/hblR-${project.version}-rpkg.tar.gz</file>
+                      <type>tar.gz</type>
+                      <classifier>rpkg</classifier>
+                    </artifact>
+                  </artifacts>
+                </configuration>
+              </execution>
+            </executions>
+
+          </plugin>
+        </plugins>
+
+      </build>
+
+    </profile>
+  </profiles>
+
   <build>
 
     <plugins>
@@ -40,9 +103,8 @@
         <artifactId>antlr3-maven-plugin</artifactId>
       </plugin>
 
+
     </plugins>
-
-
   </build>
 
   <dependencies>
