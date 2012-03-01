@@ -7,6 +7,15 @@
 library("rJava");
 hbl <- list()
 
+##########################
+# generic initialization #
+##########################
+
+# we assume that hadoop, hbase and HBL 
+# homes are required and PIG_HOME is 
+# optional (but if pig is not installed 
+# then compiler functions will not work
+# in this session).
 hbl.init <- function () {
 	
 	hbl <- list()
@@ -103,6 +112,13 @@ hbl.init <- function () {
 	
 }
 
+.checkInit <- function() if ( !exists(hbl) ) hbl.init()
+
+.checkPig <- function() { 
+	.checkInit()
+	if ( length(hbl$PIG_HOME) == 0 )
+		stop("pig access is not initialized in this session (have you set PIG_HOME?)")
+}
 
 #############################################
 # hbl query methods for R class "hblquery"  #
@@ -118,6 +134,9 @@ hbl.execute <- function (x, ...) UseMethod ("execute")
 
 # prepared query class constructor  
 hbl.hblquery <- function ( qstr = NULL ) {
+	
+	.checkInit()
+	
 	q <- list() 
 	class(q) <- "hblquery"
 	q$queryClient <- hbl$queryClient
@@ -160,22 +179,20 @@ execute.hblquery <- function (q ) {
 	
 	r <- NULL
 	rs$"next"() 
-	datarow <- hbl._convertRS(aliases,rs$current())
+	datarow <- .convertRS(aliases,rs$current())
 	r <- data.frame(datarow, stringsAsFactors=F)
 
 	while ( rs$hasNext() ) {
 		rs$"next"()
-		datarow <- hbl._convertRS(aliases,rs$current())
+		datarow <- .convertRS(aliases,rs$current())
 		r<- rbind(r,datarow)
 	}
-	
-	
 	r 
 }
 
 # convert a result set row to a list of values 
 # denoted by 
-hbl._convertRS <- function (aliases, hblrow ) {
+.convertRS <- function (aliases, hblrow ) {
 	sapply(aliases, function(alias) { 
 				a <- hblrow$getObject(alias)
 				if ( mode(a)=='raw') 
@@ -198,50 +215,58 @@ hbl.deployCube <- function (x,...) UseMethod("deployCube")
 hbl.saveModel <- function (x,...) UseMethod("saveModel")
 
 hbl.admin.fromYaml <- function (model.yaml) {
-  admin <- list()
-  class(admin) <- "hbladmin"
-  yaml <- paste(as.character(model.yaml),collapse='\n')
+	
+	.checkInit()
+	
+  	admin <- list()
+  	class(admin) <- "hbladmin"
+  	yaml <- paste(as.character(model.yaml),collapse='\n')
   
-  bytes <- new (J("java.lang.String"),yaml)$getBytes('utf-8')
+  	bytes <- new (J("java.lang.String"),yaml)$getBytes('utf-8')
 
-  resource <- new(J("org.springframework.core.io.ByteArrayResource"), 
-    .jarray(bytes))
+  	resource <- new(J("org.springframework.core.io.ByteArrayResource"), 
+    	.jarray(bytes))
 
-  admin$adm <- new(J("com.inadco.hbl.client.HblAdmin"),resource)
+  	admin$adm <- new(J("com.inadco.hbl.client.HblAdmin"),resource)
   
-  admin
+  	admin
 } 
 
 hbl.admin.fromYamlFile <- function (model.file.name) {
-  f <- file(model.file.name,'r')
-  s <- readLines(f)
-  close(f)
-  hbl.admin.fromYaml(s)
+	
+  	f <- file(model.file.name,'r')
+   	s <- readLines(f)
+   	close(f)
+   	hbl.admin.fromYaml(s)
 }
 
 hbl.admin.fromCube <- function (cube.name ) {
-  admin <- list()
-  class(admin) <- "hbladmin"
-  admin$adm <- new (J("com.inadco.hbl.client.HblAdmin"), 
-      as.character(cube.name),
-      hbl$conf
-      )
-  admin
+	.checkInit()
+	
+  	admin <- list()
+  	class(admin) <- "hbladmin"
+  	admin$adm <- new (J("com.inadco.hbl.client.HblAdmin"), 
+      	as.character(cube.name),
+      	hbl$conf
+      	)
+  	admin
 }
 
 dropCube.hbladmin <- function(admin) {
-  admin$dropCube(hbl$conf)
+  	admin$dropCube(hbl$conf)
 } 
 
 deployCube.hbladmin <- function(admin) { 
-  admin$deployCube(hbl$conf)
+  	admin$deployCube(hbl$conf)
 }
 
 saveModel.hbladmin <- function(admin) {
-  admin$saveModel(hbl$conf)
+  	admin$saveModel(hbl$conf)
 }
 
-##################################
-# initialization                 #
-##################################
-hbl.init()
+###################################
+# incremental compilation         # 
+###################################
+
+
+
