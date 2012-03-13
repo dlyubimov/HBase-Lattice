@@ -11,7 +11,7 @@
 
     <dependencySet>
       <unpack>false</unpack>
-      <outputDirectory>/java</outputDirectory>
+      <outputDirectory>/inst/java</outputDirectory>
       <scope>runtime</scope>
     </dependencySet>
 

@@ -3,10 +3,8 @@
 # Author: dmitriy
 ###############################################################################
 
-
-library("rJava");
-hbl <- list()
-
+.onLoad <- function (libname=NULL,pkgname=NULL) .hbl.init(libname,pkgname, pkgInit=T)
+.onUnload <- function(libpath) rm(hbl) 
 ##########################
 # generic initialization #
 ##########################
@@ -16,107 +14,50 @@ hbl <- list()
 # optional (but if pig is not installed 
 # then compiler functions will not work
 # in this session).
-hbl.init <- function () {
+.hbl.init <- function (pkgname,libname=NULL,pkgInit=F) {
+	
+	library(rJava,ecor)
+	
+	if ( length(pkgname) == 0 ) pkgname <- "ecor"
 	
 	hbl <- list()
 	hbl$options <- list()
 	hbl$consts <- list()
 	hbl$consts$HBASE_CONNECTION_PER_CONFIG <- "hbase.connection.per.config"
-	
-    hbl$options$HBL_HOME <- Sys.getenv("HBL_HOME");
-	hbl$options$HADOOP_HOME <- Sys.getenv("HADOOP_HOME");
-	hbl$options$HBASE_HOME <- Sys.getenv("HBASE_HOME");
-	hbl$options$PIG_HOME <- Sys.getenv("PIG_HOME");
-	
-	if ( nchar(hbl$options$HADOOP_HOME) ==0 )
-		stop ("HADOOP_HOME not set");
-	
-	if ( nchar(hbl$options$HBL_HOME) == 0 ) 
-		stop("HBL_HOME not set");
-	
-	if ( nchar(hbl$options$HBASE_HOME)==0 ) 
-		stop("HBASE_HOME not set");
-	
-	
-	
-	
-	cp1 <- list.files(
-			paste( hbl$options$HADOOP_HOME, "lib", sep="/" ), 
-			full.names = T,
+
+	hbl$HOME <- system.file(package=pkgname,lib.loc=libname)
+	hbl$cp <- list.files(system.file("java", package=pkgname), full.names=T,
 			pattern="\\.jar$")
-	
-	core <- list.files (
-			hbl$options$HADOOP_HOME,
-			full.names=T,
-			pattern=".*core.*\\.jar"
-			)
-	
-	cp2 <- list.files (
-			paste(hbl$options$HBL_HOME, "lib", sep="/"),
-			full.names = T,
-			pattern="\\.jar$"
-			)
-		
-	cp3 <- character(0)
-	
-	for ( assemblyDir in list.files (
-			paste(hbl$options$HBL_HOME,"hbl/target",sep="/"),
-			full.names=T,
-			pattern="hbl-.*-dist$",
-			include.dirs=T
-			)) {  
-				
-		cp3 <- c(cp3, list.files(
-						paste(assemblyDir, "lib", sep="/"),
-						full.names=T,
-						pattern="\\.jar$"
-						))
-	}
-	
-	pigcp <- if ( length(hbl$PIG_HOME)>0 ) 
-		list.files(
-				paste(hbl$PIG_HOME,"lib",sep="/"),
-				full.names=T,
-				pattern = "\\.jar$"
-				)
-	
-	
-	hb_core <- list.files (
-			hbl$options$HBASE_HOME,
-			full.names=T,
-			pattern=".*hbase.*\\.jar")
-	
-	# TODO: pig classpath, too?
-	
-	hconf <- Sys.getenv("HADOOP_CONF")
-	
-	if (hconf == "")
-		hconf <- paste(hbl$options$HADOOP_HOME,"conf",sep="/")
-	
-	hbaseConf <- paste(hbl$options$HBASE_HOME,"conf",sep="/")
-	
 
-  	hbl$classpath <- c(cp1,cp2,cp3,core,hb_core, hconf,hbaseConf, pigcp)
-	
-	.jinit(classpath = hbl$classpath )	
+	hbasecp <- ecor.hBaseClassPath()
+	pigcp <- NULL
+	hbl$pig <- F
 
-	hbl$conf <- new(J("org.apache.hadoop.conf.Configuration"))
-	hbl$conf <- J("org.apache.hadoop.hbase.HBaseConfiguration")$create(hbl$conf)
+	tryCatch({
+				pigcp <- ecor.pigClassPath()
+				hbl$pig <- T
+			}, 
+			error = function (e) {
+				cat("Warning: pig installation was not found, set PIG_HOME. some functionality will not be available.\n",
+						as.character(e))
+			}
+			)
+			
+	.jpackage(pkgname, morePaths = c(hbasecp,pigcp), lib.loc = libname)	
+	
+	hbl$jconf <- J("org.apache.hadoop.hbase.HBaseConfiguration")$create(ecor$jconf)
 	
 	# chd3u3 or later requred
-	hbl$conf$setBoolean(hbl$consts$HBASE_CONNECTION_PER_CONFIG,F)
+	hbl$jconf$setBoolean(hbl$consts$HBASE_CONNECTION_PER_CONFIG,F)
 	
-	hbl$queryClient <- new(J("com.inadco.hbl.client.HblQueryClient"),hbl$conf)
+	hbl$queryClient <- new(J("com.inadco.hbl.client.HblQueryClient"),hbl$jconf)
 	
 	hbl <<- hbl
 	
 }
 
-.checkInit <- function() if ( !exists(hbl) ) hbl.init()
-
 .checkPig <- function() { 
-	.checkInit()
-	if ( length(hbl$PIG_HOME) == 0 )
+	if ( !hbl$pig  )
 		stop("pig access is not initialized in this session (have you set PIG_HOME?)")
 }
 
@@ -216,8 +157,6 @@ hbl.saveModel <- function (x,...) UseMethod("saveModel")
 
 hbl.admin.fromYaml <- function (model.yaml) {
 	
-	.checkInit()
-	
   	admin <- list()
   	class(admin) <- "hbladmin"
   	yaml <- paste(as.character(model.yaml),collapse='\n')
@@ -241,7 +180,6 @@ hbl.admin.fromYamlFile <- function (model.file.name) {
 }
 
 hbl.admin.fromCube <- function (cube.name ) {
-	.checkInit()
 	
   	admin <- list()
   	class(admin) <- "hbladmin"

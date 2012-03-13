@@ -64,17 +64,19 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
-                <id>generate-sources</id>
+                <id>generate-R-sources</id>
                 <phase>compile</phase>
                 <configuration>
                   <tasks>
-                    <mkdir dir="${basedir}/target/generated-sources/R" />
+                    <mkdir dir="${basedir}/target/generated-sources/R/Rpkg" />
                     <exec executable="${basedir}/build/genDescription.sh"
                       failonerror="true" dir="${basedir}/build">
                       <!-- R pkg name -->
                       <arg value="${rpkg-name}" />
                       <!-- maven version -->
                       <arg value="${project.version}" />
+                      <!-- output file -->
+                      <arg value="${basedir}/target/generated-sources/R/Rpkg/DESCRIPTION"/>
                     </exec>
                   </tasks>
                 </configuration>
