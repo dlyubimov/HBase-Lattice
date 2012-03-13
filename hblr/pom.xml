@@ -27,10 +27,39 @@
 
     <profile>
       <id>R</id>
+      <activation>
+        <property>
+          <name>R</name>
+        </property>
+      </activation>
+
+      <properties>
+        <rpkg-name>hblr</rpkg-name>
+      </properties>
 
       <build>
 
         <plugins>
+
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/dist.xml</descriptor>
+              </descriptors>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+
+          </plugin>
+
+
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -39,10 +68,11 @@
                 <phase>compile</phase>
                 <configuration>
                   <tasks>
-                    <exec executable="${basedir}/build/buildR.sh"
+                    <mkdir dir="${basedir}/target/generated-sources/R" />
+                    <exec executable="${basedir}/build/genDescription.sh"
                       failonerror="true" dir="${basedir}/build">
                       <!-- R pkg name -->
-                      <arg value="hblR" />
+                      <arg value="${rpkg-name}" />
                       <!-- maven version -->
                       <arg value="${project.version}" />
                     </exec>
@@ -51,6 +81,34 @@
                 <goals>
                   <goal>run</goal>
                 </goals>
+              </execution>
+
+              <execution>
+                <id>r-package</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <tasks>
+                    <exec executable="R" failonerror="true"
+                      dir="${basedir}/target">
+                      <arg value="CMD" />
+                      <arg value="build" />
+                      <arg
+                        value="${basedir}/target/${project.artifactId}-${project.version}-rpkg" />
+                    </exec>
+                    <!-- rename to maven-sensible artifact name since we 
+                      want to upload it into mvn repo with "rpkg" classifier -->
+                    <move
+                      tofile="${basedir}/target/${project.artifactId}-${project.version}-rpkg.tar.gz">
+                      <fileset dir="${basedir}/target">
+                        <include name="${rpkg-name}_*tar.gz" />
+                      </fileset>
+                    </move>
+
+                  </tasks>
+                </configuration>
               </execution>
             </executions>
           </plugin>
@@ -69,7 +127,8 @@
                 <configuration>
                   <artifacts>
                     <artifact>
-                      <file>${basedir}/target/hblR-${project.version}-rpkg.tar.gz</file>
+                      <file>${basedir}/target/${project.artifactId}-${project.version}-rpkg.tar.gz
+                      </file>
                       <type>tar.gz</type>
                       <classifier>rpkg</classifier>
                     </artifact>
@@ -84,28 +143,38 @@
       </build>
 
     </profile>
+
+    <profile>
+      <id>default</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>R</name>
+        </property>
+      </activation>
+
+      <build>
+
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+          </plugin>
+
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+          </plugin>
+
+          <plugin>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr3-maven-plugin</artifactId>
+          </plugin>
+
+
+        </plugins>
+      </build>
+    </profile>
   </profiles>
-
-  <build>
-
-    <plugins>
-
-      <plugin>
-        <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr3-maven-plugin</artifactId>
-      </plugin>
-
-
-    </plugins>
-  </build>
 
   <dependencies>
 

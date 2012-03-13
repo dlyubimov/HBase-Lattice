@@ -21,8 +21,4 @@ rver=`sed 's/-SNAPSHOT\$/-00000000/' <<< $mver`
 echo $ver
 
 sed "s/^Version:/& ${rver}/" DESCRIPTION.tmpl | sed "s/^Date:/& ${d}/" | \
-sed "s/^Package:/& ${pkgName}/" > ../src/main/Rpkg/DESCRIPTION && \
-pushd ../target && \
-R CMD build ../src/main/Rpkg && \
-mv ${pkgName}_${rver}.tar.gz ${pkgName}-${mver}-rpkg.tar.gz && \
-popd
+sed "s/^Package:/& ${pkgName}/" > ../src/main/Rpkg/DESCRIPTION 
