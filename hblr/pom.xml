@@ -15,7 +15,7 @@
   <parent>
     <groupId>com.inadco.hbl</groupId>
     <artifactId>hbl-parent</artifactId>
-    <version>0.1.19-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
   </parent>
 
   <name>HBase-Lattice :: hbl-R</name>
