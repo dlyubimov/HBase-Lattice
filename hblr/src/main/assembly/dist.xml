@@ -18,10 +18,6 @@
   </dependencySets>
   <fileSets>
     <fileSet>
-      <directory>src/main/Rpkg</directory>
-      <outputDirectory>/</outputDirectory>
-    </fileSet>
-    <fileSet>
       <directory>target/generated-sources/R/Rpkg</directory>
       <outputDirectory>/</outputDirectory>
     </fileSet>

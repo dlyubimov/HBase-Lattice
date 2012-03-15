@@ -75,8 +75,10 @@
                       <arg value="${rpkg-name}" />
                       <!-- maven version -->
                       <arg value="${project.version}" />
-                      <!-- output file -->
-                      <arg value="${basedir}/target/generated-sources/R/Rpkg/DESCRIPTION"/>
+                      <!-- pkg src -->
+                      <arg value="${basedir}/src/main/Rpkg"/>
+                      <!-- output R pkg -->
+                      <arg value="${basedir}/target/generated-sources/R/Rpkg"/>
                     </exec>
                   </tasks>
                 </configuration>
@@ -185,6 +187,44 @@
       <artifactId>hbl</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.inadco.ecoadapters</groupId>
+      <artifactId>ecoadapters</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>  
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>  
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- pig -->
+    <dependency>
+      <groupId>org.apache.pig</groupId>
+      <artifactId>pig</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- test -->
     <dependency>

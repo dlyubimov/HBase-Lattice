@@ -1,7 +1,14 @@
-# TODO: R wrapper for running hbl queries etc. using rJava
-# 
-# Author: dmitriy
-###############################################################################
+#' R wrapper for running hbl queries etc. using rJava
+#' 
+#' @docType package
+#' @name hblr
+#' @import ecor
+#' @import rJava
+#' @exportPattern "^hbl\\."
+#'  
+#'
+NULL 
+
 
 .onLoad <- function (libname=NULL,pkgname=NULL) .hbl.init(libname,pkgname, pkgInit=T)
 .onUnload <- function(libpath) rm(hbl) 
@@ -16,9 +23,10 @@
 # in this session).
 .hbl.init <- function (pkgname,libname=NULL,pkgInit=F) {
 	
-	library(rJava,ecor)
+	library(rJava)
+	library(ecor)
 	
-	if ( length(pkgname) == 0 ) pkgname <- "ecor"
+	if ( length(pkgname) == 0 ) pkgname <- "hblr"
 	
 	hbl <- list()
 	hbl$options <- list()
@@ -29,6 +37,7 @@
 	hbl$cp <- list.files(system.file("java", package=pkgname), full.names=T,
 			pattern="\\.jar$")
 
+	hadoopcp <- ecor.hadoopClassPath()
 	hbasecp <- ecor.hBaseClassPath()
 	pigcp <- NULL
 	hbl$pig <- F
@@ -43,20 +52,25 @@
 			}
 			)
 			
-	.jpackage(pkgname, morePaths = c(hbasecp,pigcp), lib.loc = libname)	
+	.jpackage(pkgname, morePaths = c(hadoopcp, hbasecp, pigcp), lib.loc = libname)	
+	
+	hbl <<- hbl
+	
+	.hbl.createHblClient()
+}
+
+.hbl.createHblClient <- function () {
 	
 	hbl$jconf <- J("org.apache.hadoop.hbase.HBaseConfiguration")$create(ecor$jconf)
 	
-	# chd3u3 or later requred
+	# cdh3u3 or later requred
 	hbl$jconf$setBoolean(hbl$consts$HBASE_CONNECTION_PER_CONFIG,F)
 	
 	hbl$queryClient <- new(J("com.inadco.hbl.client.HblQueryClient"),hbl$jconf)
 	
-	hbl <<- hbl
-	
 }
 
-.checkPig <- function() { 
+.hbl.checkPig <- function() { 
 	if ( !hbl$pig  )
 		stop("pig access is not initialized in this session (have you set PIG_HOME?)")
 }
@@ -65,18 +79,36 @@
 # hbl query methods for R class "hblquery"  #
 #############################################
 
-#Use to re-prepare query obtained thru hbl.hblquery() 
+#' 
+#' Use to re-prepare query obtained thru hbl.hblquery()
+#' 
+#' d
+#' 
+#' @param x 
+#' 
 hbl.prepare <- function (x, ...) UseMethod("prepare")
-#set parameters (there's some todo here probably still)
+
+#'
+#' set parameters (there's some todo here probably still)
+#' 
 hbl.setParameter <- function (x, ...) UseMethod("setParameter")
-#execute query
+
+#'
+#' execute prepared HBL query
+#' @param x the prepared query object 
+#' 
+
 hbl.execute <- function (x, ...) UseMethod ("execute")
 
-
-# prepared query class constructor  
+#' prepared query class constructor
+#' 
+#' d
+#' 
+#' @param qstr the query string to prepare.
+#' @S3class hblquery, if specified, then query also will be prepared.
+#' @return new hblquery object, prepared.
+#'  
 hbl.hblquery <- function ( qstr = NULL ) {
-	
-	.checkInit()
 	
 	q <- list() 
 	class(q) <- "hblquery"
@@ -88,10 +120,16 @@ hbl.hblquery <- function ( qstr = NULL ) {
 	q
 }
 
-
-prepare.hblquery <- function (q, value) {
+#' prepare hbl query 
+#' 
+#' d
+#' 
+#' @method prepare hblquery
+#' @param q query object
+#' @param qstr query string 
+prepare.hblquery <- function (q, qstr) {
 	
-	qstr <- as.character(value)
+	qstr <- as.character(qstr)
 	q$q$prepare(qstr)
 	
 	#debug
@@ -151,10 +189,20 @@ execute.hblquery <- function (q ) {
 ##################################
 
 #generic admin functions
+
+#' generic drop function
+#' 
+#' drop (hbl) cube 
+#' 
+#' @param x cube to use 
 hbl.dropCube <- function (x,...) UseMethod("dropCube")
 hbl.deployCube <- function (x,...) UseMethod("deployCube")
 hbl.saveModel <- function (x,...) UseMethod("saveModel")
 
+#' produce admin object from yaml. 
+#' 
+#' @S3class hbladmin
+#' @return hbladmin object
 hbl.admin.fromYaml <- function (model.yaml) {
 	
   	admin <- list()
