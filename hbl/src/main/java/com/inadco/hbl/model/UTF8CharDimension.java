@@ -22,13 +22,12 @@ package com.inadco.hbl.model;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import org.apache.commons.lang.Validate;
 
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.util.IOUtil;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * Due to popular demand... character type dimension.

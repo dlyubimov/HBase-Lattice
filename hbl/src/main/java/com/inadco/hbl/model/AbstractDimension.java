@@ -18,6 +18,8 @@
  */
 package com.inadco.hbl.model;
 
+import java.util.Arrays;
+
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.RawComparator;
@@ -25,8 +27,6 @@ import org.apache.hadoop.io.RawComparator;
 import com.inadco.hbl.api.Dimension;
 import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.impl.Slice;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * Abstract dimension -- common defautl stuff for all dimensions.

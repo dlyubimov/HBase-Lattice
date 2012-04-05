@@ -21,23 +21,24 @@ NULL
 # optional (but if pig is not installed 
 # then compiler functions will not work
 # in this session).
-.hbl.init <- function (pkgname,libname=NULL,pkgInit=F) {
+.hbl.init <- function (libname=NULL,pkgname=NULL,pkgInit=F) {
 	
 	library(rJava)
 	library(ecor)
 	
 	if ( length(pkgname) == 0 ) pkgname <- "hblr"
 	
-	hbl <- list()
+	hbl <- new.env()
 	hbl$options <- list()
 	hbl$consts <- list()
 	hbl$consts$HBASE_CONNECTION_PER_CONFIG <- "hbase.connection.per.config"
 
 	hbl$HOME <- system.file(package=pkgname,lib.loc=libname)
-	hbl$cp <- list.files(system.file("java", package=pkgname), full.names=T,
-			pattern="\\.jar$")
-
-	hadoopcp <- ecor.hadoopClassPath()
+	
+	cp <- list.files(system.file("java",package=pkgname,lib.loc=libname),
+			full.names=T, pattern ="\\.jar$")
+	hbl$cp <- cp
+	
 	hbasecp <- ecor.hBaseClassPath()
 	pigcp <- NULL
 	hbl$pig <- F
@@ -52,7 +53,7 @@ NULL
 			}
 			)
 			
-	.jpackage(pkgname, morePaths = c(hadoopcp, hbasecp, pigcp), lib.loc = libname)	
+	.jpackage(pkgname, morePaths = c(hbasecp, pigcp), lib.loc = libname)	
 	
 	hbl <<- hbl
 	
@@ -79,74 +80,81 @@ NULL
 # hbl query methods for R class "hblquery"  #
 #############################################
 
-#' 
-#' Use to re-prepare query obtained thru hbl.hblquery()
-#' 
-#' d
-#' 
-#' @param x 
-#' 
-hbl.prepare <- function (x, ...) UseMethod("prepare")
-
-#'
-#' set parameters (there's some todo here probably still)
-#' 
-hbl.setParameter <- function (x, ...) UseMethod("setParameter")
-
-#'
-#' execute prepared HBL query
-#' @param x the prepared query object 
-#' 
-
-hbl.execute <- function (x, ...) UseMethod ("execute")
-
 #' prepared query class constructor
 #' 
 #' d
 #' 
 #' @param qstr the query string to prepare.
-#' @S3class hblquery, if specified, then query also will be prepared.
-#' @return new hblquery object, prepared.
+#' @method initialize HblQuery
+#' @return none
 #'  
-hbl.hblquery <- function ( qstr = NULL ) {
+initialize.HblQuery <- function ( qstr = NULL ) {
 	
-	q <- list() 
-	class(q) <- "hblquery"
-	q$queryClient <- hbl$queryClient
-	q$q <- q$queryClient$createPreparedQuery()
+	queryClient <<- hbl$queryClient
+	q <<- queryClient$createPreparedQuery()
 	if ( length(qstr) > 0 ) {
-		prepare.hblquery(q, qstr)
+		prepare(qstr)
 	}
-	q
+	
 }
 
+#' @title
 #' prepare hbl query 
 #' 
-#' d
+#' @description 
+#' (Re-)prepare HBL query by supplying a new query string.
 #' 
-#' @method prepare hblquery
-#' @param q query object
+#' @details
+#' this method parses query into AST tree so that parsing is not 
+#' repeated again every time prepared query executes. 
+#' 
+#' @method prepare HblQuery
 #' @param qstr query string 
-prepare.hblquery <- function (q, qstr) {
+prepare.HblQuery <- function (qstr) {
 	
 	qstr <- as.character(qstr)
-	q$q$prepare(qstr)
-	
-	#debug
-	#cat ("query prepared:", qstr)
-	
-	q
+	q$prepare(qstr)
 } 
 
-setParameter.hblquery <- function (q, paramIndex, value ) {
+#' @title 
+#' setParameter.
+#' 
+#' @description
+#' set hbl query parameter
+#' 
+#' @details 
+#' hbl query parameters are denoted by '?' symbol in the query string. 
+#' Substitution with actual values should happen after preparing query 
+#' but before execution. 
+#' 
+#' @param paramIndex ordinal index of the parameter in the query (0-based). 
+#' This is identical to JDBC's interpretation of positional query parameters.
+#' @param value the actual value for the parameter.
+#'  
+setParameter.HblQuery <- function (paramIndex, value ) {
 	# rely on rJava conversions at this point
-	q$q$setHblParameter(paramIndex,value);
-	q
+	q$setHblParameter(paramIndex,value);
 }
 
-execute.hblquery <- function (q ) {
-	rs <- q$q$execute() 
-  on.exit(rs$close(), add=T)
+#' @title 
+#' execute
+#' 
+#' @description 
+#' execute hbl query
+#' 
+#' @details 
+#' Once hbl query is prepared and all parameters are set with \link{setParameter} method, 
+#' the query can be executed.\cr\cr
+#' 
+#' The query can be executed multiple times (and with different parameters if desired) 
+#' without having to re-prepare it.
+#' 
+#' @return data frame corresponding to query results. Data frame names correspond to the 
+#' aliases used in the query. 
+#' 
+execute.HblQuery <- function ( ) {
+	rs <- q$execute() 
+    on.exit(rs$close(), add=T)
 	aliases <- sapply ( rs$getAliases(), function(alias) as.character(alias$toString()))
 	
 	if (! rs$hasNext() ) {
@@ -156,103 +164,137 @@ execute.hblquery <- function (q ) {
 		return(r)
 	}
 	
-	r <- NULL
-	rs$"next"() 
-	datarow <- .convertRS(aliases,rs$current())
-	r <- data.frame(datarow, stringsAsFactors=F)
-
+	r <- data.frame(stringsAsFactors=F)
+	
+	nextRow <- 1
 	while ( rs$hasNext() ) {
 		rs$"next"()
-		datarow <- .convertRS(aliases,rs$current())
-		r<- rbind(r,datarow)
+		hblrow <- rs$current()
+		for (alias in aliases) {
+			a <- hblrow$getObject(alias)
+			if ( mode(a)=='raw') { 
+				# handling hex dimension values, byte arrays
+				a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
+				
+			} else if ( mode(a) =='S4') {
+				a<- a$toString()
+			}
+			r[nextRow,alias] <- a
+		}
 	}
 	r 
 }
 
-# convert a result set row to a list of values 
-# denoted by 
-.convertRS <- function (aliases, hblrow ) {
-	sapply(aliases, function(alias) { 
-				a <- hblrow$getObject(alias)
-				if ( mode(a)=='raw') 
-					# handling hex dimension values, byte arrays
-					a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
-				if ( mode(a) =='S4')
-					a<- a$toString()
-				a
-		},
-		simplify=F)
-}
+
+
+#' HblQuery class 
+#' 
+#' R5 class implementing HBL query object.
+hbl.HblQuery <- setRefClass("HblQuery",
+		fields=list(
+				q="jobjRef",
+				queryClient="jobjRef"
+		),
+		methods=list(
+				initialize = initialize.HblQuery,
+				prepare = prepare.HblQuery,
+				setParameter = setParameter.HblQuery,
+				execute = execute.HblQuery
+		)
+)
+
 
 ##################################
 # HblAdmin                       #
 ##################################
 
-#generic admin functions
-
-#' generic drop function
+#'@title 
+#' Initialize HblAdmin object 
 #' 
-#' drop (hbl) cube 
+#' @description
 #' 
-#' @param x cube to use 
-hbl.dropCube <- function (x,...) UseMethod("dropCube")
-hbl.deployCube <- function (x,...) UseMethod("deployCube")
-hbl.saveModel <- function (x,...) UseMethod("saveModel")
-
-#' produce admin object from yaml. 
+#' Initialize an HblAdmin object with cube model in one of several ways 
+#' presented. 
+#'  
+#' @details
 #' 
-#' @S3class hbladmin
-#' @return hbladmin object
-hbl.admin.fromYaml <- function (model.yaml) {
+#' \strong{Only one of} \code{model.yaml}, \code{model.file.name} or 
+#' \code{cube.name} should be given. \cr\cr
+#' 
+#' If \code{model.yaml} is given, then it is coerced to a single character 
+#' string (if vector has more than one entry, they are separated by \\n) 
+#' and that string is parsed to build & instantiate cube model.\cr\cr
+#' 
+#' If \code{model.file.name} is given, then model is loaded from that file 
+#' and then initialization proceeds the same as per above paragraph.\cr\cr
+#' 
+#' if \code{cube.name} is given (as a single-item character vector) 
+#' then the model is loaded from an HBL 'system' table in HBase and the cube name 
+#' is used to locate the model in the system table.\cr\cr
+#' 
+#' @param model.yaml character vector containing hbl model's description in yaml.
+#' @param model.file.name file name containing hbl model's description in yaml.
+#' @param cube.name cube name in HBL HBase 'system' table to load from.
+#'   
+#' 
+initialize.HblAdmin <- function (model.yaml=NULL, model.file.name=NULL, cube.name = NULL ) {
 	
-  	admin <- list()
-  	class(admin) <- "hbladmin"
-  	yaml <- paste(as.character(model.yaml),collapse='\n')
-  
-  	bytes <- new (J("java.lang.String"),yaml)$getBytes('utf-8')
+	if ( length(model.yaml) > 0 ) {
+		
+		yaml <- paste(as.character(model.yaml),collapse='\n')
+		
+		bytes <- new (J("java.lang.String"),yaml)$getBytes('utf-8')
+		
+		resource <- new(J("org.springframework.core.io.ByteArrayResource"), 
+				.jarray(bytes))
+		
+		adm <<- new(J("com.inadco.hbl.client.HblAdmin"),resource)
+		
+	} else if ( length( model.file.name)==1 ) {
+		
+		f <- file(model.file.name,'r')
+		tryCatch(
+			s <- readLines(f),
+			finally=close(f))
+		initialize.HblAdmin(model.yaml=s)
+		
+	} else if ( length(cube.name)==1 ) {
+		
+		adm <<- new (J("com.inadco.hbl.client.HblAdmin"), 
+				as.character(cube.name),
+				hbl$jconf)
 
-  	resource <- new(J("org.springframework.core.io.ByteArrayResource"), 
-    	.jarray(bytes))
+	} else {
+		stop("invalid arguments to initialize hblAdmin instance.")
+	}
 
-  	admin$adm <- new(J("com.inadco.hbl.client.HblAdmin"),resource)
-  
-  	admin
+}
+
+dropCube.HblAdmin <- function() {
+  	adm$dropCube(hbl$conf)
 } 
 
-hbl.admin.fromYamlFile <- function (model.file.name) {
-	
-  	f <- file(model.file.name,'r')
-   	s <- readLines(f)
-   	close(f)
-   	hbl.admin.fromYaml(s)
+deployCube.HblAdmin <- function() { 
+  	adm$deployCube(hbl$conf)
 }
 
-hbl.admin.fromCube <- function (cube.name ) {
-	
-  	admin <- list()
-  	class(admin) <- "hbladmin"
-  	admin$adm <- new (J("com.inadco.hbl.client.HblAdmin"), 
-      	as.character(cube.name),
-      	hbl$conf
-      	)
-  	admin
+saveModel.HblAdmin <- function() {
+  	adm$saveModel(hbl$conf)
 }
 
-dropCube.hbladmin <- function(admin) {
-  	admin$dropCube(hbl$conf)
-} 
-
-deployCube.hbladmin <- function(admin) { 
-  	admin$deployCube(hbl$conf)
-}
-
-saveModel.hbladmin <- function(admin) {
-  	admin$saveModel(hbl$conf)
-}
+hbl.HblAdmin <- setRefClass("HblAdmin",
+		fields=list(
+				adm="jobjRef"),
+		methods=list(
+				initialize=initialize.HblAdmin,
+				dropCube=dropCube.HblAdmin,
+				deployCube=deployCube.HblAdmin,
+				saveModel=saveModel.HblAdmin
+		))
 
 ###################################
 # incremental compilation         # 
 ###################################
 
-
+#To be contd...
 

@@ -5,8 +5,7 @@
 # maven antrun.
 # param #1 -> R pkg version
 # param #2 -> build version 
-# param #3 -> package source dir
-# param #4 -> output pkgdir
+# param #3 -> output pkgdir
 
 if [ $# -ne 4 ]; then 
   echo 'usage: genDescription.sh <r-package> <maven-version> <R pkg input dir> <output-generated-sources-path>'
@@ -23,8 +22,10 @@ descrFile=$outdir/DESCRIPTION
 
 d=`date +%F`
 
+h=`date +%Y%m%d%H%M%S`
+
 # strip -SNAPSHOT things that create problems 
-rver=`sed 's/-SNAPSHOT\$/-00000000/' <<< $mver`
+rver=`sed "s/-SNAPSHOT\$/-$h/" <<< $mver`
 
 echo $ver
 

@@ -18,6 +18,8 @@
  */
 package com.inadco.hbl.model;
 
+import java.util.Arrays;
+
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.inadco.hbl.api.Hierarchy;
@@ -25,8 +27,6 @@ import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.impl.Slice;
 import com.inadco.hbl.client.impl.SliceOperation;
 import com.inadco.hbl.util.HblUtil;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * Abstract Hierarchy support.
