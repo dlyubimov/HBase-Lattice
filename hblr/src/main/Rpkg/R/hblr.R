@@ -157,30 +157,30 @@ execute.HblQuery <- function ( ) {
     on.exit(rs$close(), add=T)
 	aliases <- sapply ( rs$getAliases(), function(alias) as.character(alias$toString()))
 	
-	if (! rs$hasNext() ) {
-		#todo: is there a more efficient way of doing this?
-		r <- data.frame(stringsAsFactors=F)
-		for (alias in aliases) r[[alias]] <- character(0)
-		return(r)
-	}
 	
 	r <- data.frame(stringsAsFactors=F)
 	
-	nextRow <- 1
-	while ( rs$hasNext() ) {
-		rs$"next"()
-		hblrow <- rs$current()
+	nextRow <- 0
+	while ( .jcall(rs,"Z","hasNext", simplify=T) ) {
+		nextRow <- nextRow+1 
+		.jcall(rs,"V","next")
+		hblrow <- .jcall(rs,"Ljava/lang/Object;","current")
 		for (alias in aliases) {
-			a <- hblrow$getObject(alias)
+			a <- .jcall(hblrow,"Ljava/lang/Object;","getObject", alias, evalArray=T, simplify = T, use.true.class=T)
 			if ( mode(a)=='raw') { 
 				# handling hex dimension values, byte arrays
 				a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
 				
-			} else if ( mode(a) =='S4') {
-				a<- a$toString()
+			} else if ( as.character(class(a)) =='jobjRef') {
+				a<- .jcall(a,"Ljava/lang/String;","toString",simplify = T)
 			}
 			r[nextRow,alias] <- a
 		}
+	}
+	if ( nextRow == 0 ) { 
+			#todo: is there a more efficient way of doing this?
+			r <- data.frame(stringsAsFactors=F)
+			for (alias in aliases) r[[alias]] <- character(0)
 	}
 	r 
 }

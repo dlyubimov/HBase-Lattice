@@ -11,8 +11,8 @@ test1 <- function () {
 	dframe <- q$execute() 
 	dframe
   
-    hblAdmin <- HblAdmin$new(model.file.name="~/projects/github/hbase-lattice/sample/src/main/resources/example1.yaml")
-    hblAdmin <- HblAdmin$new(cube.name="Example1")
+    hblAdmin <- hbl.HblAdmin$new(model.file.name="~/projects/github/hbase-lattice/sample/src/main/resources/example1.yaml")
+    hblAdmin <- hbl.HblAdmin$new(cube.name="Example1")
 	
 }
 
