@@ -113,6 +113,8 @@ initialize.HblQuery <- function ( qstr = NULL ) {
 prepare.HblQuery <- function (qstr) {
 	
 	qstr <- as.character(qstr)
+	if ( length(qstr)>1 ) 
+		qstr <- paste(qstr,collapse="")
 	q$prepare(qstr)
 } 
 
@@ -132,8 +134,18 @@ prepare.HblQuery <- function (qstr) {
 #' @param value the actual value for the parameter.
 #'  
 setParameter.HblQuery <- function (paramIndex, value ) {
-	# rely on rJava conversions at this point
-	q$setHblParameter(paramIndex,value);
+	
+	clazz <- class(value)
+	if ( clazz == "POSIXct" || clazz == "POSIXlt" ) { 
+		#convert R time to long 
+		value <- .jnew("java.lang.Long", .jlong(as.numeric(value)*1000))
+	} else if (clazz =="raw") {
+		value <- .jarray(value)
+	}
+	
+	# rely on rJava conversions at this point..
+	# which is,heh, slow... 
+	q$setHblParameter(as.integer(paramIndex),.jcast(value,"java.lang.Object"))
 }
 
 #' @title 
@@ -149,6 +161,7 @@ setParameter.HblQuery <- function (paramIndex, value ) {
 #' The query can be executed multiple times (and with different parameters if desired) 
 #' without having to re-prepare it.
 #' 
+#' @method execute HblQuery
 #' @return data frame corresponding to query results. Data frame names correspond to the 
 #' aliases used in the query. 
 #' 
@@ -256,7 +269,7 @@ initialize.HblAdmin <- function (model.yaml=NULL, model.file.name=NULL, cube.nam
 		tryCatch(
 			s <- readLines(f),
 			finally=close(f))
-		initialize.HblAdmin(model.yaml=s)
+		.self$initialize(model.yaml=s)
 		
 	} else if ( length(cube.name)==1 ) {
 		
@@ -271,15 +284,15 @@ initialize.HblAdmin <- function (model.yaml=NULL, model.file.name=NULL, cube.nam
 }
 
 dropCube.HblAdmin <- function() {
-  	adm$dropCube(hbl$conf)
+  	adm$dropCube(hbl$jconf)
 } 
 
 deployCube.HblAdmin <- function() { 
-  	adm$deployCube(hbl$conf)
+  	adm$deployCube(hbl$jconf)
 }
 
 saveModel.HblAdmin <- function() {
-  	adm$saveModel(hbl$conf)
+  	adm$saveModel(hbl$jconf)
 }
 
 hbl.HblAdmin <- setRefClass("HblAdmin",
