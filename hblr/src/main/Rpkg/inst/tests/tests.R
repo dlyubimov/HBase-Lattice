@@ -58,9 +58,9 @@ test2 <- function() {
 	
 	#plot timeseries graph over that period
 	try(dev.off())
-	ggplot( data=dframe, aes(time, impCnt ))+
+	ggplot( data=dframe)+
 			facet_wrap(~dim1,ncol=1)+
-			geom_path()
+			geom_histogram(aes(x=time, weight=impCnt),binwidth=24*3600)
 	
 	
 	
@@ -69,7 +69,7 @@ test2 <- function() {
 
 
 # test admin functions 
-test2 <- function () { 
+test3 <- function () { 
 
 	# deploy/update HBL cube model from file
 	hblAdmin <- hbl.HblAdmin$new(model.file.name="~/projects/github/hbase-lattice/sample/src/main/resources/example1.yaml")

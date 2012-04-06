@@ -643,7 +643,68 @@ dframe
 1 00000000000000000000000000000001  14760 
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Standard
+Another test in the R sample code produces time series histogram over entire
+ range of simulated data (which in Example1 simulates only few days in each
+ month, progressively simulating increased impression log entries day-to-day)
+ spanning several months worth of impression counts (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:R-histogram-of"
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename /home/dmitriy/Documents/Example1-R-hist.pdf
+	width 90col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:R-histogram-of"
+
+\end_inset
+
+R histogram of impression counts in simulated logs spanning several months
+ worth of simulated data.
+ 
+\begin_inset Newline newline
+\end_inset
+
+The binning queries time and plotting time will not depend on actual count
+ of impressions happened during that period since the cube already does
+ data weighting for us.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
 
 \end_layout
 
