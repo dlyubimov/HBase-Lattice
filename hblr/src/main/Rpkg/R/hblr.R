@@ -136,7 +136,7 @@ prepare.HblQuery <- function (qstr) {
 setParameter.HblQuery <- function (paramIndex, value ) {
 	
 	clazz <- as.character(class(value))
-	if ( clazz == "POSIXct" || clazz == "POSIXlt" ) { 
+	if ( any(clazz == "POSIXct") ) { 
 		#convert R time to long 
 		value <- .jnew("java.lang.Long", .jlong(as.numeric(value)*1000))
 	} else if (clazz =="raw") {
@@ -194,7 +194,11 @@ execute.HblQuery <- function ( ) {
 				a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
 				
 			} else if ( as.character(class(a)) =='jobjRef') {
-				a<- .jcall(a,"Ljava/lang/String;","toString",simplify = T)
+				if ( a%instanceof%"java.lang.Number") {
+					a<-.jcall(a,"D","doubleValue",simplify=T)	
+				} else {
+					a<- .jcall(a,"Ljava/lang/String;","toString",simplify = T)
+				}
 			}
 			r[nextRow,alias] <- a
 		}
