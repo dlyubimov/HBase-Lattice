@@ -153,9 +153,10 @@ Cassandra is OLTP, HBase is OLAP
 Big underlying fact stream
 \series default
 .
- Billions, perhaps trillions of facts to process which we want to cope with
- by parallelizing the compilation with the help of MapReduce.
- 
+ Billions, perhaps trillions of facts a day to process which we want to
+ cope with by parallelizing the compilation with the help of MapReduce.
+ We also want to scale storage and querying capacity along with it horizontally
+ on demand.
 \end_layout
 
 \begin_layout Itemize
@@ -167,8 +168,8 @@ Low query TTLB
  Our goal was to answer queries over any period of time and whatever other
  slice specifications very quickly with a single hbase table access and
  a very limited amount of iterations in a scan.
- (TTLB <~ 1ms on hbase side, assuming the tablet data is in memory, + whatever
- network overhead).
+ (TTLB <~ 1ms for the scanning code itself, +whatever overhead of currently
+ configured HBase cache, + whatever network overhead).
 \end_layout
 
 \begin_layout Itemize
@@ -179,6 +180,7 @@ Next to realtime data availability for querying
 .
  Use of incremental updates to cuboid projections in the lattice means there's
  no need to recompile the whole cube for the past 90 days or whatever.
+ Thus, cube data is not an immutable entity.
  New fact data becomes available within single number of minutes after the
  fact actually happened, as soon as incremental compiler iteration is complete.
  Once compiled, the data remains continuously available unless thrown out
@@ -318,6 +320,13 @@ Quick Howto
 
 \begin_layout Subsection
 Overview of the dev workflow
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Overview-of-the"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -395,6 +404,259 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
  code generation.
 \end_layout
 
+\begin_layout Subsubsection
+R approach to the workflow.
+\end_layout
+
+\begin_layout Standard
+Starting with hbl-0.2.0, R package 'hblr' is available to perform all workflow
+ tasks except for running incremental cube compilation (step 3 and 4 in
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Overview-of-the"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Package 
+\begin_inset Quotes eld
+\end_inset
+
+hblr
+\begin_inset Quotes erd
+\end_inset
+
+ is using R5 reference classes to describe query and HBL admin classes.
+\end_layout
+
+\begin_layout Standard
+Package 
+\begin_inset Quotes eld
+\end_inset
+
+hblr
+\begin_inset Quotes erd
+\end_inset
+
+ requires two packages: 
+\begin_inset Quotes eld
+\end_inset
+
+rJava
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+ecor
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The latter is a non-standard package from ecoadapters project which is
+ dependency of the HBL.
+ If compiled and installed from sources (see 
+\emph on
+ecor/install.sh
+\emph default
+ script for an example how to compile and install binary R package from
+ sources) then another package, 
+\begin_inset Quotes eld
+\end_inset
+
+roxygen2
+\begin_inset Quotes erd
+\end_inset
+
+ and its dependencies is needed to generate R help files from the source
+ annotations.
+\end_layout
+
+\begin_layout Paragraph
+Deploying/updating cube model from an R script.
+\end_layout
+
+\begin_layout Standard
+The following is an example of deploying/updating Example1 model using R
+ script.
+ 
+\family typewriter
+HblAdmin
+\emph on
+ 
+\family default
+\emph default
+R5 class is defining HBL admin functions.
+\end_layout
+
+\begin_layout LyX-Code
+# deploy/update HBL cube model from file 	
+\end_layout
+
+\begin_layout LyX-Code
+hblAdmin <- hbl.HblAdmin$new(model.file.name=
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+"~/projects/github/hbase-lattice/sample/src/main/resources/example1.yaml")
+ 	
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+hblAdmin$deployCube() 
+\end_layout
+
+\begin_layout Paragraph
+Running prepared hbl query from an R script.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Quotes eld
+\end_inset
+
+hblr
+\begin_inset Quotes erd
+\end_inset
+
+ package provides ability to run a prepared hbl query in an R script and
+ convert result to a dataframe.
+ 
+\family typewriter
+HblQuery
+\emph on
+ 
+\family default
+\emph default
+is the R5 class defining prepared HBL query api.
+ The following is an example how to query 
+\begin_inset Quotes eld
+\end_inset
+
+example1
+\begin_inset Quotes erd
+\end_inset
+
+ compiled data for particular date/time interval and dimension :
+\end_layout
+
+\begin_layout LyX-Code
+library(hblr) 
+\end_layout
+
+\begin_layout LyX-Code
+q <- hbl.HblQuery$new(c("select dim1, COUNT(impCnt) ", 							
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+"as impCnt from Example1 ", 							
+\end_layout
+
+\begin_layout LyX-Code
+"where impressionTime in [?,?) ", 							
+\end_layout
+
+\begin_layout LyX-Code
+\begin_inset Quotes eld
+\end_inset
+
+,dim1 in [?] 
+\begin_inset Quotes eld
+\end_inset
+
+, 							
+\end_layout
+
+\begin_layout LyX-Code
+"group by dim1")); 
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+timerange <- strptime(c("2011/9/1", "2011/11/1"), 			
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+"%Y/%m/%d") 
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+q$setParameter(0,timerange[1]) 	
+\end_layout
+
+\begin_layout LyX-Code
+q$setParameter(1,timerange[2]) 	
+\end_layout
+
+\begin_layout LyX-Code
+q$setParameter(2,"1") 
+\end_layout
+
+\begin_layout LyX-Code
+system.time(dframe <- q$execute())  
+\end_layout
+
+\begin_layout LyX-Code
+dframe 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
+                              dim1 impCnt 
+\end_layout
+
+\begin_layout LyX-Code
+1 00000000000000000000000000000001  14760 
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout Standard
+'s not much more details at this point other than in this example.
+ Further and up-to-date details could be found in R help system for the
+ 
+\emph on
+hblr
+\emph default
+ package.
+\end_layout
+
 \begin_layout Subsection
 Specifying a model.
 \end_layout
@@ -449,7 +711,12 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
 
 \end_inset
 
- in sample module for the example of embedded approach).
+ in sample module for the example of embedded approach and javadoc for the
+ 
+\family typewriter
+HblAdmin
+\family default
+ class).
 \end_layout
 
 \begin_layout Standard
@@ -803,13 +1070,13 @@ TODO: command line utility to run compiler bean to generate the pig script
 \end_layout
 
 \begin_layout Subsection
-Deploying querying capabilities
+Deploying HBL custom HBase filters
 \end_layout
 
 \begin_layout Standard
-Since custom filters are used, one jar (hbl-0.1.2.jar as of the time of this
- writing) should be deployed to region servers (perhaps with a rolling restart
- afterwards).
+Since custom filters are used for querying, one jar (hbl-0.1.2.jar as of the
+ time of this writing) should be deployed to region servers (perhaps with
+ a rolling restart afterwards).
  With CDH distribution it turns out it is enought just to drop hbl.jar into
  $HBASE_HOME/lib folder at the region servers.
  Only querying part depends on this, incremental compiler does not depend
