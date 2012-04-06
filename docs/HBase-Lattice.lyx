@@ -487,8 +487,8 @@ roxygen2
 \begin_inset Quotes erd
 \end_inset
 
- and its dependencies is needed to generate R help files from the source
- annotations.
+ and its dependencies are required in order to generate R help files from
+ the source annotations.
 \end_layout
 
 \begin_layout Paragraph
@@ -648,7 +648,7 @@ dframe
 \end_layout
 
 \begin_layout Standard
-'s not much more details at this point other than in this example.
+There is not much more details at this point other than in this example.
  Further and up-to-date details could be found in R help system for the
  
 \emph on
