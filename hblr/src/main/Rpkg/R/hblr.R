@@ -135,12 +135,21 @@ prepare.HblQuery <- function (qstr) {
 #'  
 setParameter.HblQuery <- function (paramIndex, value ) {
 	
-	clazz <- class(value)
+	clazz <- as.character(class(value))
 	if ( clazz == "POSIXct" || clazz == "POSIXlt" ) { 
 		#convert R time to long 
 		value <- .jnew("java.lang.Long", .jlong(as.numeric(value)*1000))
 	} else if (clazz =="raw") {
 		value <- .jarray(value)
+	} else if ( clazz=="character") {
+		value <- .jnew("java.lang.String", value)
+	} else if ( class=="numeric") {
+		value <- .jnew("java.lang.Double", value)
+	} else if ( class=="integer") {
+		value <- .jnew("java.lang.Integer", value)
+	} else if ( class=="jobjRef") { 
+	} else {
+		stop(sprintf("Don't know how to convert parameter class %s",clazz))
 	}
 	
 	# rely on rJava conversions at this point..

@@ -11,6 +11,7 @@ test1 <- function () {
 			q <- hbl.HblQuery$new(c("select dim1, COUNT(impCnt) ",
 							"as impCnt from Example1 ",
 							"where impressionTime in [?,?) ",
+							',dim1 in [?] ',
 							"group by dim1")));
 	
 	timerange <- strptime(c("2011/9/1", "2011/11/1"),
@@ -18,6 +19,7 @@ test1 <- function () {
 	
 	q$setParameter(0,timerange[1])
 	q$setParameter(1,timerange[2])
+	q$setParameter(2,"1")
 	
 	system.time(dframe <- q$execute()) 
 	
