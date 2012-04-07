@@ -135,8 +135,10 @@ prepare.HblQuery <- function (qstr) {
 #'  
 setParameter.HblQuery <- function (paramIndex, value ) {
 	
+	timeclasses=c("POSIXct","POSIXlt")
+	
 	clazz <- as.character(class(value))
-	if ( any(clazz == "POSIXct") ) { 
+	if ( any(clazz %in% timeclasses) ) { 
 		#convert R time to long 
 		value <- .jnew("java.lang.Long", .jlong(as.numeric(value)*1000))
 	} else if (clazz =="raw") {
