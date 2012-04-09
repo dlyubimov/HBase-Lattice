@@ -216,6 +216,7 @@ public class HblQueryClient implements Closeable {
 
         this.es = es;
         tpool = new HTablePool(conf, 400);
+        closeables.addFirst(tpool);
 
     }
 }
