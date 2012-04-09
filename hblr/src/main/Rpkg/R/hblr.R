@@ -156,7 +156,7 @@ setParameter.HblQuery <- function (paramIndex, value ) {
 	
 	# rely on rJava conversions at this point..
 	# which is,heh, slow... 
-	q$setHblParameter(as.integer(paramIndex),.jcast(value,"java.lang.Object"))
+	.jcall(q,"V","setHblParameter",as.integer(paramIndex),.jcast(value,"java.lang.Object"))
 }
 
 #' @title 
