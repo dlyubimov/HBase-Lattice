@@ -202,7 +202,7 @@ execute.HblQuery <- function ( ) {
 					a<- .jcall(a,"Ljava/lang/String;","toString",simplify = T)
 				}
 			}
-			r[nextRow,alias] <- a
+			r[nextRow,alias] <- ifelse(is.null(a),NA,a)
 		}
 	}
 	if ( nextRow == 0 ) { 
