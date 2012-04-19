@@ -5,6 +5,9 @@
 \textclass article
 \begin_preamble
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\usepackage{color}
+\definecolor{tentative}{rgb}{0.4,0.6,0.7}
+\definecolor{comment}{rgb}{0.7,0.4,0.4}
 \end_preamble
 \use_default_options true
 \maintain_unincluded_children false
@@ -120,6 +123,73 @@ I scanned surroundings and noticed at least 2 such attempts which for various
 Like some MOLAP solutions, HBase-Lattice copes with aggregate queries by
  prebuilding certain cuboids in a cube lattice models.
  
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Notations.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+Tentative or experimental material
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+Comment
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\strikeout on
+
+\begin_inset Newline newline
+\end_inset
+
+Tentative deletion
 \end_layout
 
 \begin_layout Section
@@ -406,9 +476,54 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
 
 \begin_layout Subsubsection
 R approach to the workflow.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+as of hbl-0.2.0-SNAPSHOT, ecoadapters-0.4.0-SNAPSHOT
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
 Starting with hbl-0.2.0, R package 'hblr' is available to perform all workflow
  tasks except for running incremental cube compilation (step 3 and 4 in
  
@@ -472,11 +587,14 @@ ecor
 \end_inset
 
 .
- The latter is a non-standard package from ecoadapters project which is
- dependency of the HBL.
+ The latter is a non-standard package from 
+\emph on
+ecoadapters 
+\emph default
+project which is the dependency of the HBL.
  If compiled and installed from sources (see 
 \emph on
-ecor/install.sh
+hblr/install.sh
 \emph default
  script for an example how to compile and install binary R package from
  sources) then another package, 
@@ -506,6 +624,17 @@ HblAdmin
 \family default
 \emph default
 R5 class is defining HBL admin functions.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -532,6 +661,19 @@ Running prepared hbl query from an R script.
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -558,6 +700,17 @@ example1
 \end_inset
 
  compiled data for particular date/time interval and dimension :
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout LyX-Code
@@ -644,6 +797,18 @@ dframe
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
 Another test in the R sample code produces time series histogram over entire
  range of simulated data (which in Example1 simulates only few days in each
  month, progressively simulating increased impression log entries day-to-day)
@@ -661,11 +826,11 @@ reference "fig:R-histogram-of"
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Graphics
-	filename /home/dmitriy/Documents/Example1-R-hist.pdf
+	filename Example1-R-hist.pdf
 	width 90col%
 
 \end_inset
@@ -716,6 +881,17 @@ There is not much more details at this point other than in this example.
 hblr
 \emph default
  package.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -816,8 +992,8 @@ enced data.
 byte[]
 \family default
  and its Pig equivalent (in context of compilation).
- Now also accepts any numbers and converts them to key using Big Endian
- conversion.
+ Now also accepts any Pig numerical types and converts them to key using
+ Big Endian conversion.
  Results returned from queries are always of 
 \family typewriter
 byte[]
@@ -831,8 +1007,18 @@ byte[]
 HexDimension
 \family default
  is initialized with the value length.
- The fact stream will accept all values shorter or equal in length to the
- one specified in model.
+ Slice parameters and fact streams can now also have it as strings encoded
+ in hex (equivalent to output of 
+\family typewriter
+hex() 
+\family default
+function in 
+\emph on
+MySQL
+\emph default
+).
+ The fact stream compiler will accept all values shorter or equal in length
+ to the one specified in model.
  
 \end_layout
 
@@ -877,7 +1063,8 @@ but expects string type and encodes it in Utf-8 encoding (meaning collation
  rules of encoded form of Utf8 strings in HBase).
  It can optionally quietly allow truncation if fact length exceeds defined
  storage length (see constructor parameters for details).
- 
+ Care should be taken to ensure uniform distribution of queries for this
+ dimension if it is used first in a cuboid to scale up hbase query volume.
 \end_layout
 
 \begin_layout Standard
@@ -980,6 +1167,14 @@ See example for the usage details.
 \end_inset
 
 .
+ 
+\family typewriter
+IrregularSampleMeasure 
+\family default
+type is useful when aggregate function wants to handle time series without
+ binning limitations assumed by time dimension hierarchies.
+ Still, such function has to adhere to combine and (optionally) complement
+ contracts to be able to merge its state.
 \end_layout
 
 \begin_layout Paragraph
@@ -1099,9 +1294,16 @@ Preambula is also an opportunity to massage fact stream data a little bit
  the logging application or a separate preprocessing MR job.
 \end_layout
 
+\begin_layout Subsubsection
+Fact stream Pig schema requirements
+\end_layout
+
 \begin_layout Standard
-The requirements for HBL_INPUT relation produced by preambula is as follows:
- 
+The requirements for HBL_INPUT relation must have a 
+\emph on
+Pig schema
+\emph default
+ and such schema must satisfy the following: 
 \end_layout
 
 \begin_layout Itemize
@@ -1111,8 +1313,11 @@ It must have all defined dimensions.
 \end_layout
 
 \begin_layout Itemize
-It must have at least one measure fact (currently, of either long or double
- type only).
+It must have at least one measure fact
+\strikeout on
+ (currently, of either long or double type only)
+\strikeout default
+.
  The measure is recognized by having the same name as in model description.
  The scope of measures may be reduced by using exclude/include api on the
  compiler bean (see sample module for an example).
@@ -1123,11 +1328,41 @@ It must have at least one measure fact (currently, of either long or double
  
 \end_layout
 
-\begin_layout Standard
+\begin_layout Itemize
+Fact stream items should have Pig types supported by their respective dimension
+ and measure types.
+\end_layout
 
-\emph on
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
 TODO: command line utility to run compiler bean to generate the pig script
  into a file.
+
+ Perhaps same for R hblr package.
+\lang english
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -1149,7 +1384,30 @@ Query API
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
 TODO
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1163,6 +1421,36 @@ SUM().
 Double
 \family default
  in queries.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+As per conventions in Pig and SQL, this pig will return NULL for empty groups
+ (groups with no single fact encountered).
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+ Formally: 
+\begin_inset Formula $\mbox{sum}\left(X\right)=\sum_{i=1}^{N}x_{i}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Itemize
@@ -1172,6 +1460,35 @@ COUNT().
 Long
 \family default
  in queries.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+ For empty groups, returns 0L.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+ Formaly: 
+\begin_inset Formula $\mbox{count}\left(X\right)=\sum_{i=1}^{n}x_{i}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Itemize
@@ -1213,32 +1530,166 @@ Exponentially (or, rather, Canny function) weighted rate for facts with
 \end_layout
 
 \begin_layout Itemize
-SUM_SQ() sum of squares
+SUM_SQ() sum of squares: 
+\begin_inset Formula $\mbox{sumsq}\left(X\right)=\sum_{i=1}^{N}x_{i}^{2}$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
-AVG() 
+AVG() mean: 
+\begin_inset Formula $\mu=\frac{1}{N}\sum_{i=1}^{N}x_{i}$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
-SD() standard deviation (todo: add sample deviation)
+SD() standard deviation: 
+\begin_inset Formula $\sigma=\sqrt[]{\frac{1}{N}\sum_{i=1}^{N}\left(x_{i}-\mu\right)^{2}}$
+\end_inset
+
+.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+(todo: add sample deviation with Bessel correction; but see variance for
+ a workaround formula).
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
-VAR() standard variance (todo: add sample variance)
+VAR() standard variance: 
+\begin_inset Formula $\mbox{var}\left(X\right)=\frac{1}{N}\sum_{i=1}^{N}\left(x_{i}-\mu\right)^{2}$
+\end_inset
+
+.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+(todo: add sample variance with Bessel correction, but as workaround, Bessel
+ correction can be obtained now by client performing 
+\begin_inset Formula $N\leftarrow\mbox{count}\left(X\right)$
+\end_inset
+
+; 
+\begin_inset Formula $\mbox{var}_{B}\left(X\right)=\frac{N}{N-1}\cdot\mbox{var}\left(X\right)$
+\end_inset
+
+.)
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
 MIN() 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+ Returns NULL for empty groups.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+ Formally: 
+\begin_inset Formula $f\left(X\right)=\underset{i\in\left[1,N\right]}{\min}\left(x_{i}\right)$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Itemize
-MAX()
+MAX() 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+ Returns NULL for empty groups.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+ Formally: 
+\begin_inset Formula $f\left(X\right)=\underset{i\in\left[1,N\right]}{\max}\left(x_{i}\right)$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Api allows to add new custom functions easily, it's just all we needed at
- the moment.
+Api allows to add new custom aggregate functions fairly easily, it's just
+ all we needed at the moment.
 \end_layout
 
 \begin_layout Subsection
