@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -80,11 +82,13 @@ public class Pig8CubeIncrementalCompilerBean {
     protected Resource         pigPreambula;
     protected String           inputRelationName;
     protected int              parallel                        = 2;
+    protected List<Cuboid>     compilationCuboids;
 
     protected Cube             cube;
     protected String           cubeModelYamlStr;
     protected Set<String>      measureInclude;
     protected Set<String>      measureExclude;
+    protected Set<String>      cuboidGroupsInclude;
 
     /**
      * non-spring version
@@ -219,6 +223,21 @@ public class Pig8CubeIncrementalCompilerBean {
         this.measureExclude = measureExclude;
     }
 
+    public Set<String> getCuboidGroupsInclude() {
+        return cuboidGroupsInclude;
+    }
+
+    /**
+     * Set the cuboid groups to include in this compilation run only. NULL or
+     * empty set means include all cuboids.
+     * 
+     * @param cuboidGroupsInclude
+     *            cuboids group to include
+     */
+    public void setCuboidGroupsInclude(Set<String> cuboidGroupsInclude) {
+        this.cuboidGroupsInclude = cuboidGroupsInclude;
+    }
+
     @PostConstruct
     public void init() throws IOException {
         Validate.notNull(cubeModel);
@@ -236,17 +255,6 @@ public class Pig8CubeIncrementalCompilerBean {
 
     }
 
-    // public void initJobParams(Configuration confTo) throws IOException {
-    // Validate.notNull(cubeModel);
-    // InputStream is = cubeModel.getInputStream();
-    // Validate.notNull(is, "cube model resource not found");
-    // try {
-    // YamlModelParser.initCubeModel(fromStream(is, "utf-8"), confTo);
-    // } finally {
-    // is.close();
-    // }
-    // }
-
     public String preparePigSource(String workDir) throws IOException {
 
         Deque<Closeable> closeables = new ArrayDeque<Closeable>();
@@ -263,6 +271,23 @@ public class Pig8CubeIncrementalCompilerBean {
             substitutes.put("inputRelation", inputRelationName);
             substitutes.put("parallel", "" + parallel);
             substitutes.put("cubeName", cube.getName());
+
+            /*
+             * generate list of cuboids included in this compilation run
+             */
+
+            compilationCuboids = new LinkedList<Cuboid>();
+            if (cuboidGroupsInclude == null || cuboidGroupsInclude.size() == 0)
+                compilationCuboids.addAll(cube.getCuboids());
+            else
+                for (Cuboid cuboid : cube.getCuboids()) {
+                    String group = cuboid.getCompilerGroup();
+                    if (group != null && compilationCuboids.contains(group))
+                        compilationCuboids.add(cuboid);
+                }
+
+            Validate.isTrue(compilationCuboids.size() > 0,
+                            "no cuboids found to compile (perhaps due to compilation group filtering?)");
 
             // preambula
             generatePreambula(substitutes, closeables);
@@ -350,7 +375,8 @@ public class Pig8CubeIncrementalCompilerBean {
         throws IOException {
 
         StringBuffer sb = new StringBuffer();
-        for (Cuboid cuboid : cube.getCuboids())
+        // for (Cuboid cuboid : cube.getCuboids())
+        for (Cuboid cuboid : compilationCuboids)
             sb.append(generateCuboidStorageDef(cube, cuboid));
         substitutes.put("cuboidStoreDefs", sb.toString());
 
@@ -389,7 +415,8 @@ public class Pig8CubeIncrementalCompilerBean {
 
         Map<String, String> bodySubstitutes = new HashMap<String, String>();
         StringBuffer sbBody = new StringBuffer();
-        for (Cuboid c : cube.getCuboids()) {
+        // for (Cuboid c : cube.getCuboids()) {
+        for (Cuboid c : compilationCuboids) {
             bodySubstitutes.clear();
             bodySubstitutes.putAll(substitutes);
             generateCuboidBody(bodySubstitutes, closeables, c);

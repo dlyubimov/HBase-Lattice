@@ -52,31 +52,31 @@ public class SimpleCuboid implements Cuboid {
 
     // hbase attributes as properties only
 
-    protected int             hbaseTTL = 3600 * 24 * 90;
+    protected int             hbaseTTL               = 3600 * 24 * 90;
 
-    protected boolean         hbaseInMemory             = true;
+    protected boolean         hbaseInMemory          = true;
 
-    protected int             hbaseMaxVersions       = 1; 
-    
+    protected int             hbaseMaxVersions       = 1;
+
     protected Cube            parentCube;
 
-    
-    
+    protected String          compilerGroup;
+
     public SimpleCuboid() {
         super();
     }
 
     public SimpleCuboid(Dimension[] path) {
         super();
-        setDimensions (path);
+        setDimensions(path);
     }
-    
+
     /**
      * Dimensions must be configured!
      * 
      * @param path
      */
-    public void setDimensions (Dimension[] path) { 
+    public void setDimensions(Dimension[] path) {
         for (Dimension d : path) {
             this.path.add(d.getName());
             dimensions.add(d);
@@ -84,7 +84,6 @@ public class SimpleCuboid implements Cuboid {
         }
     }
 
-    
     public Cube getParentCube() {
         return parentCube;
     }
@@ -128,6 +127,14 @@ public class SimpleCuboid implements Cuboid {
 
     public void setTablePrefix(String tablePrefix) {
         this.tablePrefix = tablePrefix;
+    }
+    
+    public String getCompilerGroup() {
+        return compilerGroup;
+    }
+
+    public void setCompilerGroup(String compilerGroup) {
+        this.compilerGroup = compilerGroup;
     }
 
     @Override
