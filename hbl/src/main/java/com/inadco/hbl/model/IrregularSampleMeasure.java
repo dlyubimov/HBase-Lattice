@@ -29,7 +29,7 @@ import org.apache.commons.lang.Validate;
  * @author dmitriy
  * 
  */
-public class IrregularSampleMeasure extends SimpleMeasure {
+public class IrregularSampleMeasure extends NumericMeasure {
 
     public IrregularSampleMeasure(String name) {
         super(name);
