@@ -1348,10 +1348,7 @@ color{comment}
 
 TODO: command line utility to run compiler bean to generate the pig script
  into a file.
-
  Perhaps same for R hblr package.
-\lang english
-
 \begin_inset ERT
 status open
 
@@ -1547,7 +1544,7 @@ AVG() mean:
 
 \begin_layout Itemize
 SD() standard deviation: 
-\begin_inset Formula $\sigma=\sqrt[]{\frac{1}{N}\sum_{i=1}^{N}\left(x_{i}-\mu\right)^{2}}$
+\begin_inset Formula $\sigma=\sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(x_{i}-\mu\right)^{2}}$
 \end_inset
 
 .
@@ -2179,7 +2176,389 @@ Hence, it follows that we should model a hierarchy in a way so that its
 \end_layout
 
 \begin_layout Section
-TODOs and FIXMEs
+Optimization and known deficiencies to watch for
+\end_layout
+
+\begin_layout Subsection
+Suitable cuboid
+\end_layout
+
+\begin_layout Standard
+If a query slices by set of dimensions 
+\begin_inset Formula $S$
+\end_inset
+
+ and groups by set of dimensions 
+\begin_inset Formula $G$
+\end_inset
+
+ then a suitable cuboid with dimensions 
+\begin_inset Formula $C$
+\end_inset
+
+ is such that 
+\begin_inset Formula $S\cup G\in C$
+\end_inset
+
+ 
+\bar under
+and
+\bar default
+ 
+\begin_inset Formula $G$
+\end_inset
+
+ dimensions are in the lead positions of 
+\begin_inset Formula $C$
+\end_inset
+
+ (in any order).
+ 
+\end_layout
+
+\begin_layout Subsection
+Shorter cuboids
+\end_layout
+
+\begin_layout Standard
+If an often-run query groups by A and B, it can be served by any of cuboisd
+ with dimensions (A,B), (A,B,C), (A,B,C,D) but will ran fastest with (A,B).
+ Optimizer will make the right choice but only if (A,B) is actually available.
+\end_layout
+
+\begin_layout Subsection
+Slicing vs.
+ grouping 
+\end_layout
+
+\begin_layout Standard
+If an often-run query groups by A and B and slices by A, it can be served
+ by both cuboids with dimensions of (A, B,...) and (B, A, ...) but the former
+ will run faster.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+Currently optimizer does not support discerning between those cases (mostly
+ because it is unusual to have both) so it is recommended to make only one
+ of those choices available.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Example 1.
+ 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+select A,B, SUM(M) from cube where B in [?] group by A,B
+\end_layout
+
+\begin_layout Standard
+is best optimized by a presence of cuboid with dimensions (B,A) (unless
+ B is a non-uniform key like time).
+\end_layout
+
+\begin_layout Standard
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Example 2.
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+select A,B, SUM(M) from cube where C in [?,?] group by A,B
+\end_layout
+
+\begin_layout Standard
+is best optimized by a presence of one of cuboids with dimensions (A,B,C)
+ or (B,A,C).
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+Actually, in case where slicing by C is using a degenerate interval 
+\begin_inset Formula $\left[a,a\right]$
+\end_inset
+
+ then the best execution plan would perhaps arguably be over a cuboid (C,A,B)
+ or (C,B,A).
+ However, this case is, sadly, not presently supported.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ Further considerations include whether A or B more uniformly distributed
+ to cater to better query load distribution among region servers (but not
+ running time per se) -- see below.
+\end_layout
+
+\begin_layout Subsection
+Uniformity of key distribution
+\end_layout
+
+\begin_layout Standard
+Per HBase tactics, it is important to maintain uniform key distribution
+ (at least within certain range) in order to provide uniform query distribution
+ as well.
+ In hbl, cuboid dimensions are used as cuboid composite keys.
+ Therefore, it is important to have a dimension with more or less uniform
+ member distribution in a certain range in the lead position of a cuboid
+ (typically, a hash or random key value).
+ By the same logic, it is almost never useful to put time related hierarchies
+ into the lead position unless the nature of application provides uniform
+ interest over the entire time period analyzed.
+\end_layout
+
+\begin_layout Subsection
+Long dimension values
+\end_layout
+
+\begin_layout Standard
+Per HBase schema design, it is quite deficient to use big keys and small
+ values because the row and column names are stored (and even communicated
+ over the wire) within each cell.
+ In HB-L, a cell content is a measure with a number of aggregated states
+ of such a measure and the key is the dimensional slice for which the aggregates
+ are precompiled.
+ Hence, this HBase imposed deficiency (or perhaps 
+\begin_inset Quotes eld
+\end_inset
+
+feature
+\begin_inset Quotes erd
+\end_inset
+
+, it's not quite clear to me at this point), translates into deficiencies
+ when long dimensional values are used with HBase-Lattice.
+ To add insult to injury, HBL dimensional values are stored as a zero-padded
+ fixed length type (similarly to char(N) type in databases) to ensure proper
+ composite key parsing and collation rules for efficient custom filtering.
+ 
+\end_layout
+
+\begin_layout Standard
+That means that if dimesion type is declared to have a length of 3000, the
+ same amount of bytes is used to store the dimension value in a cuboid record
+ (before compression) and it is also multiplied by number of cells (i.e.
+ measures).
+ Also, hierarchies generate one distinct key per level (e.g.
+ time-hour hierarchy generates one lifetime key, one mohthly key, and one
+ hour-of-day key) so several rows may be generated per just a row of input.
+ This makes the case of long dimension values quite bad in a geometric proportio
+n.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+There currently no remedy for this in HBase-Lattice.
+ A workaround is to use hashes instead of values for long documents that
+ are desired to be used as a dimension.
+ The implication of this is also lack of practically useful collate semantics
+ of such values for the purposes of querying by interval other than a degenerate
+ interval ([?]) since the byte-order hbase collation is imposed over hashes
+ rather than actual dimension values.
+ Current thought is to incorporate that workaround
+ into HBL compiler by means of mantaining membership tables and dimension
+ member properties and using so-called 'blob' dimensions.
+ However, resolving hashes into actual values yanked from a member table
+ would result in one additional 
+\emph on
+get 
+\emph default
+per each returned blob key, imposing additional latency overhead.
+ To some degree, this can be somewhat helped by MultiGet facitlity.
+ 
+\lang english
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Dimensions with large membership count
+\end_layout
+
+\begin_layout Standard
+If the membership count is large and incremental cycles are short, it may
+ turn out that incremental data chunks aggregate poorly accross cuboids
+ and you may find that compilation generates hbase traffic that is proportional
+ to the number of facts.
+ The sign of this is 
+\begin_inset Quotes eld
+\end_inset
+
+slow
+\begin_inset Quotes erd
+\end_inset
+
+ running reducers of the first MR job of the compiler cycle.
+ 
+\end_layout
+
+\begin_layout Standard
+Adding more reducer tasks in this case will not help much because the bottleneck
+ is hbase traffic i.e.
+ I/O from reducer's point of view, and it probably will make things worse
+ by creating a possiblity of overloading HBase in some cases.
+ My educated and anecdotally verified guess about # of reducers is about
+ 120% of the total number of region servers in the system, provided lead
+ cuboid keys are uniformly distributed.
+ 
+\end_layout
+
+\begin_layout Standard
+The remedy to that is one of 
+\end_layout
+
+\begin_layout Itemize
+consider using better aggregating cuboids, or 
+\end_layout
+
+\begin_layout Itemize
+increase the period of compilation so the data aggregates perhaps better,
+ or 
+\end_layout
+
+\begin_layout Itemize
+scale out HBase itself to be able to handle increased query traffic (combining
+ existing counters with the added group counts), or
+\end_layout
+
+\begin_layout Itemize
+a combination of the above.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+It is also possible to split same cube incremental compilation cycle into
+ several cycles with different periods.
+ I.e.
+ it is possible to compile cuboids that aggregate better with more frequency
+ than those that require to accumulate more data (i.e.
+ time) to aggregate better, in several distinct compiler runs using compiler
+ groups.
+ The data will be 
+\begin_inset Quotes eld
+\end_inset
+
+eventually
+\begin_inset Quotes erd
+\end_inset
+
+ consistent among cuboids, although it would take different time to get
+ results into cube.
+ Another thing to think about in this case is to use coarser time hierarchies
+ for cuboids that compile less often (unless finer granularity is still
+ important even that availability exceeds it by a respectful margin).
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+TODOs and FIXME
+\end_layout
+
+\begin_layout Subsection
+Assorted issues
 \end_layout
 
 \begin_layout Standard

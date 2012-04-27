@@ -25,6 +25,7 @@
       hbaseTTL: 7776000  # default: 90 days
       hbaseInMemory: true # default: true
       hbaseMaxVersions: 1 # default: 1 
+      compilerGroup: realtime
       
       # also a way to configure thru constructor only (dimensions)
     - !SimpleCuboid [[*dim2, *dimImpressionTime ]]
