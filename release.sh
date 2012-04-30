@@ -11,7 +11,7 @@ git checkout $DEV_BRANCH && git pull $REMOTE && \
 git checkout -b $REL_BRANCH-$REL_VERSION && git push -u $REMOTE $REL_BRANCH-$REL_VERSION  && \
 mvn -e  release:clean org.apache.maven.plugins:maven-release-plugin:2.2.1:prepare -DlocalCheckout=true -DreleaseVersion=$REL_VERSION -Dtag=tag-$REL_VERSION \
 -DpushChanges=false && \
-mvn org.apache.maven.plugins:maven-release-plugin:2.2.1:perform -Darguments="-DaltDeploymentRepository=$MVN_GITHUB_RELEASE_REPO" -Prelease -PR -DlocalCheckout=true -Dmaven.test.skip=true \
+mvn org.apache.maven.plugins:maven-release-plugin:2.2.1:perform -Darguments="-DaltDeploymentRepository=$MVN_GITHUB_RELEASE_REPO -DR" -DlocalCheckout=true -Dmaven.test.skip=true \
 -DpushChanges=false && \
 git checkout $DEV_BRANCH && \
 git merge $REL_BRANCH-$REL_VERSION && \
