@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <!-- Copyright © 2010, 2011 Inadco, Inc. All rights reserved. Licensed 
     under the Apache License, Version 2.0 (the "License"); you may not use this 
     file except in compliance with the License. You may obtain a copy of the 
@@ -15,7 +14,7 @@
   <parent>
     <groupId>com.inadco.hbl</groupId>
     <artifactId>hbl-parent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.2.0</version>
   </parent>
 
   <name>HBase-Lattice :: hbl-R</name>
@@ -69,16 +68,15 @@
                 <configuration>
                   <tasks>
                     <mkdir dir="${basedir}/target/generated-sources/R/Rpkg" />
-                    <exec executable="${basedir}/build/genDescription.sh"
-                      failonerror="true" dir="${basedir}/build">
+                    <exec executable="${basedir}/build/genDescription.sh" failonerror="true" dir="${basedir}/build">
                       <!-- R pkg name -->
                       <arg value="${rpkg-name}" />
                       <!-- maven version -->
                       <arg value="${project.version}" />
                       <!-- pkg src -->
-                      <arg value="${basedir}/src/main/Rpkg"/>
+                      <arg value="${basedir}/src/main/Rpkg" />
                       <!-- output R pkg -->
-                      <arg value="${basedir}/target/generated-sources/R/Rpkg"/>
+                      <arg value="${basedir}/target/generated-sources/R/Rpkg" />
                     </exec>
                   </tasks>
                 </configuration>
@@ -95,17 +93,14 @@
                 </goals>
                 <configuration>
                   <tasks>
-                    <exec executable="R" failonerror="true"
-                      dir="${basedir}/target">
+                    <exec executable="R" failonerror="true" dir="${basedir}/target">
                       <arg value="CMD" />
                       <arg value="build" />
-                      <arg
-                        value="${basedir}/target/${project.artifactId}-${project.version}-rpkg" />
+                      <arg value="${basedir}/target/${project.artifactId}-${project.version}-rpkg" />
                     </exec>
                     <!-- rename to maven-sensible artifact name since we 
                       want to upload it into mvn repo with "rpkg" classifier -->
-                    <move
-                      tofile="${basedir}/target/${project.artifactId}-${project.version}-rpkg.tar.gz">
+                    <move tofile="${basedir}/target/${project.artifactId}-${project.version}-rpkg.tar.gz">
                       <fileset dir="${basedir}/target">
                         <include name="${rpkg-name}_*tar.gz" />
                       </fileset>
