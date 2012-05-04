@@ -96,12 +96,17 @@ hbl.getQuorum <- function()	hbl$jconf$get("hbase.zookeeper.quorum")
 #' 
 #' @param quorumString new hbase quorum string to use (comma-separated addresses 
 #' of zookeeper nodes)
+#' @return old zk quorum string
 hbl.setQuorum <- function(quorumString)  {
+	orig <- hbl.getQuorum()
+	
 	if ( is.null(quorumString) || "character" != class(quorumString))
 		stop ("illegal quorum string argument")
-	hbl$jconf$set("hbase.zookeeper.quorum",zookeeperQuorumString)
+	hbl$jconf$set("hbase.zookeeper.quorum",quorumString)
 	hbl$queryClient$close()
 	hbl$queryClient <- new(J("com.inadco.hbl.client.HblQueryClient"),hbl$jconf)
+	
+	orig
 }
 
 #############################################
