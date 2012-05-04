@@ -76,6 +76,34 @@ NULL
 		stop("pig access is not initialized in this session (have you set PIG_HOME?)")
 }
 
+#' @title 
+#' get Quorum
+#' 
+#' @description 
+#' Obtain HBase zookeeper quorum setting used to identify HBase cluster.
+#' 
+#' @return zookeeper quorum setting used by hbl 
+#'  
+hbl.getQuorum <- function()	hbl$jconf$get("hbase.zookeeper.quorum")
+
+#' @title setQuorum
+#' 
+#' @description
+#' set a new quorum string for HBase 
+#' 
+#' @details 
+#' Will set a new quorum setting and create a new query client .
+#' 
+#' @param quorumString new hbase quorum string to use (comma-separated addresses 
+#' of zookeeper nodes)
+hbl.setQuorum <- function(quorumString)  {
+	if ( is.null(quorumString) || "character" != class(quorumString))
+		stop ("illegal quorum string argument")
+	hbl$jconf$set("hbase.zookeeper.quorum",zookeeperQuorumString)
+	hbl$queryClient$close()
+	hbl$queryClient <- new(J("com.inadco.hbl.client.HblQueryClient"),hbl$jconf)
+}
+
 #############################################
 # hbl query methods for R class "hblquery"  #
 #############################################
