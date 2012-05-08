@@ -1,4 +1,4 @@
-DEV_BRANCH=dev-0.2.x
+DEV_BRANCH=dev-0.2.0-hotfix
 REL_BRANCH=rel
-REL_VERSION=0.2.0
+REL_VERSION=0.2.0+1
 REMOTE=origin
