@@ -97,9 +97,13 @@ public class UTF8CharDimension extends AbstractDimension {
             ByteBuffer bb = utf8.encode(cs.toString());
 
             int mlen = bb.remaining();
-            if (!autoTruncateFacts && mlen > len)
-                throw new IllegalArgumentException(String.format("fact length exceeds type length for dimension %s.",
-                                                                 name));
+            if (mlen > len) {
+                if (autoTruncateFacts)
+                    mlen = len;
+                else
+                    throw new IllegalArgumentException(
+                        String.format("fact length exceeds type length for dimension %s.", name));
+            }
             bb.get(buff, offset, mlen);
             Arrays.fill(buff, offset + mlen, offset + len, (byte) 0);
         } else {
