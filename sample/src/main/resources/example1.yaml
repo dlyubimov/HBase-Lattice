@@ -8,7 +8,7 @@
     - &dim1 !HexDimension [dim1,16] # HexDimension's params: name, key length in bytes
     - &dim2 !HexDimension [dim2,16]
     - &dim3 !HexDimension [dim3,16]
-    - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime] # params: dimension name
+    - &dimImpressionTime !SimpleTimeHourHierarchy [impressionTime, 0] # params: dimension name
     - &cdim1 !UTF8CharDimension [ charDim1, 20, true, '' ]
     - &cdim2 !UTF8CharDimension [ charDim2, 20, true, '' ]
     - &cdim3 !UTF8CharDimension [ charDim3, 20, true, '' ]

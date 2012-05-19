@@ -869,6 +869,17 @@ public class Example1 extends Configured implements Tool {
                     start.add(Calendar.HOUR_OF_DAY, 1);
                 }
             }
+            
+            // simulate deficient input
+            // simulate empty time, should be substituted 
+            // by 01/01/1970 00:00:00 
+            CompilerInput.Builder inp = CompilerInput.newBuilder();
+            inp.setDim1(id[0]);
+            inp.setDim2(id[0]);
+            inp.setDim3(id[0]);
+            byte[] b= inp.build().toByteArray();
+            bw.set(b,0,b.length);
+            w.append(iw,bw);
 
         } finally {
             IOUtil.closeAll(closeables);
