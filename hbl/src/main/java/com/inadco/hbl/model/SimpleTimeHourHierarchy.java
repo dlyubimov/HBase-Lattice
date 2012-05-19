@@ -30,6 +30,7 @@ import com.inadco.hbl.api.Range;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.impl.Slice;
 import com.inadco.hbl.util.HblUtil;
+import com.inadco.hbl.util.IOUtil;
 
 /**
  * standard time hierarchy supporting [ALL].[year-month].[date-hour] buckets.
@@ -60,8 +61,15 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
      */
     private static final boolean  hourlyKeyOptimization = false;
 
+    protected Object              nullkey;
+
     public SimpleTimeHourHierarchy(String name) {
+        this(name, null);
+    }
+
+    public SimpleTimeHourHierarchy(String name, Object nullkey) {
         super(name, new String[] { "ALL", "year-month", "date-hour" });
+        this.nullkey = nullkey == null ? null : IOUtil.tryClone(nullkey);
     }
 
     @Override
@@ -87,6 +95,11 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     @Override
     public void getKey(Object member, byte[] buff, int offset) {
+
+        if (member == null) {
+            member = nullkey;
+        }
+
         if (member instanceof HierarchyMember) {
             HierarchyMember hm = (HierarchyMember) member;
             getKey(hm.getMember(), hm.getDepth(), buff, offset);
@@ -97,6 +110,11 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     @Override
     public void getKey(Object member, int level, byte[] buff, int offset) {
+        if (member == null) {
+            member = nullkey;
+            Validate.isTrue(member != null, "null is invalid member for a dimension member");
+        }
+
         switch (level) {
         case 0:
             getAllKey(buff, offset);
@@ -192,11 +210,14 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
             GregorianCalendar gcal = new GregorianCalendar(UTC);
             gcal.setTimeInMillis(((GregorianCalendar) member).getTimeInMillis());
             return gcal;
-        } else {
+        } else if (member instanceof Number) {
             // assume epoch milliseconds
             GregorianCalendar gcal = new GregorianCalendar(UTC);
-            gcal.setTimeInMillis((Long) member);
+            gcal.setTimeInMillis(((Number) member).longValue());
             return gcal;
+        } else {
+            Validate.isTrue(false, "Unsupported time hierarchy member object type");
+            return null;
         }
     }
 
