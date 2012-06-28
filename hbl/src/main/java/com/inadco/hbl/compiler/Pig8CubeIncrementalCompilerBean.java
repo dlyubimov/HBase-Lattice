@@ -282,7 +282,7 @@ public class Pig8CubeIncrementalCompilerBean {
             else
                 for (Cuboid cuboid : cube.getCuboids()) {
                     String group = cuboid.getCompilerGroup();
-                    if (group != null && compilationCuboids.contains(group))
+                    if (group != null && cuboidGroupsInclude.contains(group))
                         compilationCuboids.add(cuboid);
                 }
 

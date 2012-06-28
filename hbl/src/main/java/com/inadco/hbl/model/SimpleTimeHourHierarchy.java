@@ -47,10 +47,10 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     // so we organize key as [YYYYMM][DDHH] concatenated literals.
     // this, length=6+4=10
 
-    private static final int      YM_KEYLEN             = 6;
-    private static final int      DH_KEYLEN             = 4;
-    private static final int      KEYLEN                = YM_KEYLEN + DH_KEYLEN;
-    private static final TimeZone UTC                   = TimeZone.getTimeZone("UTC");
+    private static final int      YM_KEYLEN               = 6;
+    private static final int      DH_KEYLEN               = 4;
+    private static final int      KEYLEN                  = YM_KEYLEN + DH_KEYLEN;
+    private static final TimeZone UTC                     = TimeZone.getTimeZone("UTC");
 
     /*
      * if true, don't try to optimize time intervals with monthly key aggregates
@@ -59,7 +59,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
      * switch it to true now is probably just to compare results between two
      * methods to debug current and future multilevel hierarchy optimizations.
      */
-    private static final boolean  hourlyKeyOptimization = false;
+    private static final boolean  HOURLY_KEY_OPTIMIZATION = false;
 
     protected Object              nullkey;
 
@@ -94,7 +94,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     }
 
     @Override
-    public void getKey(Object member, byte[] buff, int offset) {
+    public void getKey(Object member, final byte[] buff, final int offset) {
 
         if (member == null) {
             member = nullkey;
@@ -109,7 +109,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
     }
 
     @Override
-    public void getKey(Object member, int level, byte[] buff, int offset) {
+    public void getKey(Object member, final int level, final byte[] buff, final int offset) {
         if (member == null) {
             member = nullkey;
             Validate.isTrue(member != null, "null is invalid member for a dimension member");
@@ -137,7 +137,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
         return 3;
     }
 
-    public void getAllKey(byte[] buff, int offset) {
+    public void getAllKey(final byte[] buff, final int offset) {
         Arrays.fill(buff, offset, offset + KEYLEN, (byte) 0);
     }
 
@@ -223,7 +223,7 @@ public class SimpleTimeHourHierarchy extends AbstractHierarchy {
 
     @Override
     public Range[] optimizeSliceScan(Slice slice, boolean allowComplements) {
-        if (hourlyKeyOptimization) {
+        if (HOURLY_KEY_OPTIMIZATION) {
             Range[] r = optimizeDimensionSliceScan(slice, allowComplements);
             r[0].setLevelOffset(YM_KEYLEN);
             r[0].setLevelLen(DH_KEYLEN);
