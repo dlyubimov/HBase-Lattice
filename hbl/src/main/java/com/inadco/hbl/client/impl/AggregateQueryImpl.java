@@ -143,7 +143,7 @@ public class AggregateQueryImpl implements AggregateQuery {
             Validate.notNull(cube, "A cube not set");
             Cuboid cuboid = findCuboid();
 
-            Validate.notNull(cuboid, "Unable find suitable cuboid for the slice query.");
+            Validate.notNull(cuboid, "Unable to find a suitable cuboid for the slice query.");
 
             /*
              * FIXME, TODO: check slices for overlapping. otherwise, if slices
@@ -330,9 +330,25 @@ public class AggregateQueryImpl implements AggregateQuery {
             // now check group dimensions that must be stacked on the left.
             int cnt = groupDimensions.size();
             for (String dimName : cPath) {
-                if (!groupDimensions.contains(dimName))
-                    break;
-                cnt--;
+                if (groupDimensions.contains(dimName)) {
+                    cnt--;
+                } else {
+                    /*
+                     * easy but still quite effective optimization is that if
+                     * slices are degenerate, their dimension could be pushed
+                     * left in the cuboid without breaking inline grouping
+                     * prerequisites. This is surprisingly much more often the
+                     * case as degenerate slicing is quite common.
+                     */
+                    List<Slice> slices = dimSlices.get(dimName);
+                    if (slices == null || slices.size() != 1)
+                        break; // clearly not degenerate
+
+                    Slice slice = slices.get(0);
+                    if (slice.isLeftOpen() || slice.isRightOpen()
+                        || !slice.getLeftBound().equals(slice.getRightBound()))
+                        break; // not degenerate.
+                }
             }
             if (cnt > 0)
                 continue;
