@@ -13,6 +13,15 @@
       <unpack>false</unpack>
       <outputDirectory>/inst/java</outputDirectory>
       <scope>runtime</scope>
+      <excludes>
+        <!-- this stuff is in ecor which is our dependency. No need to dupe. -->
+        <exclude>log4j:*</exclude>
+        <exclude>aopalliance:*</exclude>
+        <exclude>org.springframework*:*</exclude>
+        <exclude>commons:commons-lang</exclude>
+        <exclude>commons:commons-cli</exclude>
+        <exclude>commons:commons-logging</exclude>
+      </excludes>
     </dependencySet>
 
   </dependencySets>
