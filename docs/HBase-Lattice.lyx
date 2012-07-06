@@ -2205,7 +2205,7 @@ If a query slices by set of dimensions
 and
 \bar default
  
-\begin_inset Formula $G$
+\begin_inset Formula $G\cup S_{d}$
 \end_inset
 
  dimensions are in the lead positions of 
@@ -2213,7 +2213,17 @@ and
 \end_inset
 
  (in any order).
- 
+ Here, 
+\begin_inset Formula $S_{d}\subset S$
+\end_inset
+
+ is subset of slicing dimentions where degenerate slicing interval is used
+ ( i.e.
+ closed degenerate interval such as 
+\begin_inset Formula $\left[a,a\right]$
+\end_inset
+
+).
 \end_layout
 
 \begin_layout Subsection
