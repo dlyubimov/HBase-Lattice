@@ -2217,7 +2217,7 @@ and
 \begin_inset Formula $S_{d}\subset S$
 \end_inset
 
- is subset of slicing dimentions where degenerate slicing interval is used
+ is subset of slicing dimensions where degenerate slicing interval is used
  ( i.e.
  closed degenerate interval such as 
 \begin_inset Formula $\left[a,a\right]$
