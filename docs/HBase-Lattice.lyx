@@ -2308,7 +2308,7 @@ select A,B, SUM(M) from cube where C in [?,?] group by A,B
 is best optimized by a presence of one of cuboids with dimensions (A,B,C)
  or (B,A,C).
 \begin_inset Foot
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset ERT
@@ -2329,7 +2329,9 @@ Actually, in case where slicing by C is using a degenerate interval
 
  then the best execution plan would perhaps arguably be over a cuboid (C,A,B)
  or (C,B,A).
- However, this case is, sadly, not presently supported.
+ Pushing dimension slicing over degenerate interval up the cuboid key chain
+ over grouping dimension is now supported as of most recent 0.2.x release
+ tag.
 \begin_inset ERT
 status open
 
@@ -2426,9 +2428,9 @@ There currently no remedy for this in HBase-Lattice.
  of such values for the purposes of querying by interval other than a degenerate
  interval ([?]) since the byte-order hbase collation is imposed over hashes
  rather than actual dimension values.
- Current thought is to incorporate that workaround
- into HBL compiler by means of mantaining membership tables and dimension
- member properties and using so-called 'blob' dimensions.
+ Current thought is to incorporate that workaround into HBL compiler by
+ means of mantaining membership tables and dimension member properties and
+ using so-called 'blob' dimensions.
  However, resolving hashes into actual values yanked from a member table
  would result in one additional 
 \emph on
@@ -2437,8 +2439,6 @@ get
 per each returned blob key, imposing additional latency overhead.
  To some degree, this can be somewhat helped by MultiGet facitlity.
  
-\lang english
-
 \begin_inset ERT
 status open
 
