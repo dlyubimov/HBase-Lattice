@@ -61,6 +61,9 @@ public class FSum extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        // sum is undefined on empty groups 
+        if (source == null)
+            return null;
         return source.hasSum() ? source.getSum() : 0.0;
     }
 

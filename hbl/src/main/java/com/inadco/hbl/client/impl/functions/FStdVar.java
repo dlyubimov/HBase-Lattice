@@ -43,6 +43,12 @@ public class FStdVar extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        /*
+         * undefined on the empty group
+         */
+        if (source == null)
+            return null;
+
         initDependencies();
         Number avg = (Number) avgFunc.getAggrValue(source);
         if (avg == null)

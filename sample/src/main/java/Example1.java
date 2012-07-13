@@ -456,6 +456,13 @@ public class Example1 extends Configured implements Tool {
                     OnlineCannyAvgSummarizer ctrSum = (OnlineCannyAvgSummarizer) ar.getObject("ctr");
                     double wctr = ctrSum == null ? 0 : ctrSum.getValue();
 
+                    Double impSum = (Double) ar.getObject("impSum");
+                    if (impSum == null)
+                        impSum = new Double(0);
+                    Double clickSum = (Double) ar.getObject("clickSum");
+                    if (clickSum == null)
+                        clickSum = new Double(0);
+
                     System.out.printf("%032X sum/cnt: impCnt %.4f/%d, click %.4f/%d, ctr: %.4f, weighted ctr: %.4f \n",
 
                                       new BigInteger(1, (byte[]) ar.getObject(0)),
@@ -463,7 +470,7 @@ public class Example1 extends Configured implements Tool {
                                       ar.getObject("impCnt"),
                                       ar.getObject("clickSum"),
                                       ar.getObject("clickCnt"),
-                                      (Double) ar.getObject("clickSum") / (Double) ar.getObject("impSum"),
+                                      clickSum / impSum,
                                       wctr);
                 }
                 closeables.remove(rs);

@@ -39,6 +39,12 @@ public class FStdDev extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        /*
+         * undefined on the empty group
+         */
+        if (source == null)
+            return null;
+
         initDependencies();
         Number variance = (Number) varFunc.getAggrValue(source);
         return variance == null ? null : Math.sqrt(variance.doubleValue());

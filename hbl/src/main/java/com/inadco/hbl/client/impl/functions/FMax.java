@@ -68,7 +68,13 @@ public class FMax extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasMin() ? source.getMin() : null;
+        /*
+         * undefined on the empty group
+         */
+        if (source == null)
+            return null;
+
+        return source.hasMax() ? source.getMax() : null;
     }
 
 }

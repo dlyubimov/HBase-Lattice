@@ -258,7 +258,7 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                 result[index] = b == null ? null : (measureAggr = b.build()); // cache
             }
 
-            return measureAggr == null ? null : af.getAggrValue(measureAggr);
+            return af.getAggrValue(measureAggr);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         }

@@ -59,6 +59,9 @@ public class FCount extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        // COUNT on empty group must return 0
+        if (source == null)
+            return 0;
         return source.hasCnt() ? source.getCnt() : 0;
     }
 

@@ -38,8 +38,9 @@ import com.inadco.hbl.protocodegen.Cells.Aggregation.Builder;
  * time.
  * <P>
  * 
- * <b>Warning</b>: complement is fundamentally difficult with rate summarizer, 
- * so we report complement as unavailable functionality for rates.<P>
+ * <b>Warning</b>: complement is fundamentally difficult with rate summarizer,
+ * so we report complement as unavailable functionality for rates.
+ * <P>
  * 
  * 
  * @author dmitriy
@@ -132,6 +133,12 @@ public class FCannyRateSum extends FCustomFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        /*
+         * undefined on the empty group
+         */
+        if (source == null)
+            return null;
+
         try {
             /*
              * since we don't have control over result object lifecycle in this

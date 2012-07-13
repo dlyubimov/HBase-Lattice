@@ -60,13 +60,15 @@ public class FSumSq extends AbstractAggregateFunc {
         double dmeasure = ((Number) measure).doubleValue();
 
         sq += dmeasure * dmeasure;
-        
+
         result.setSum(sq);
     }
 
     @Override
     public Object getAggrValue(Aggregation source) {
-        return source.hasSum() ? source.getSum() : 0.0;
+        if (source == null)
+            return null;
+        return source.hasSumSq() ? source.getSumSq() : 0.0;
     }
 
 }

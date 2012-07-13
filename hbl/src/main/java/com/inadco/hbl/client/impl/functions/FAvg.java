@@ -40,6 +40,9 @@ public class FAvg extends AbstractAggregateFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        // avg is not defined on nulls since sum is not defined, either.
+        if (source == null)
+            return null;
         initDependencies();
         Number sum = (Number) sumFunc.getAggrValue(source);
         if (sum == null)

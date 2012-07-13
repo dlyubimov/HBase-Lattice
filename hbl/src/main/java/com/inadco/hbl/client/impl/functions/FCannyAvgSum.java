@@ -127,6 +127,11 @@ public class FCannyAvgSum extends FCustomFunc {
 
     @Override
     public Object getAggrValue(Aggregation source) {
+        /*
+         * undefined on the empty group
+         */
+        if (source == null)
+            return null;
         try {
             /*
              * since we don't have control over result object lifecycle in this
