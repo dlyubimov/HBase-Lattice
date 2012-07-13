@@ -13,7 +13,7 @@
 
   <groupId>com.inadco.hbl</groupId>
   <artifactId>hbl-parent</artifactId>
-  <version>0.2.8-SNAPSHOT</version>
+  <version>0.2.8</version>
   <name>HBase Lattice :: Parent</name>
 
   <packaging>pom</packaging>
