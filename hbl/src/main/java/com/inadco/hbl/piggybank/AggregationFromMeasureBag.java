@@ -70,13 +70,14 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
      *            whatever is acceptable by particular measure's conversion by
      *            {@link Measure#compiler2Fact(Object)}.
      * @param accumulator
+     * @return true if non-degenerate accumulation
      * @throws ExecException
      */
-    private static void accumulateFromBag(Cube cube,
-                                          String measureName,
-                                          AggregateFunctionRegistry afr,
-                                          Tuple bag,
-                                          Aggregation.Builder accumulator) throws ExecException {
+    private static boolean accumulateFromBag(Cube cube,
+                                             String measureName,
+                                             AggregateFunctionRegistry afr,
+                                             Tuple bag,
+                                             Aggregation.Builder accumulator) throws ExecException {
         Validate.notNull(bag, "bag argument is null");
 
         DataBag db = DataType.toBag(bag.get(0));
@@ -84,11 +85,17 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         Aggregation.Builder source;
 
+        boolean nonDegenerate = false;
+
         for (Tuple tup : db) {
             Object d = compiler2Fact(cube, measureName, tup);
-            afr.applyAll(source = Aggregation.newBuilder(), d);
-            afr.mergeAll(accumulator, source.build(), SliceOperation.ADD);
+            if (d != null) {
+                afr.applyAll(source = Aggregation.newBuilder(), d);
+                afr.mergeAll(accumulator, source.build(), SliceOperation.ADD);
+                nonDegenerate = true;
+            }
         }
+        return nonDegenerate;
     }
 
     /**
@@ -100,16 +107,18 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
      *            of {@link DataByteArray} members containing serialized
      *            {@link Aggregation} representation
      * @param accumulator
+     * @preturn true if non-generate combining
      * @throws ExecException
      */
-    private static void combineFromBag(Cube cube,
-                                       String measureName,
-                                       AggregateFunctionRegistry afr,
-                                       Tuple bag,
-                                       Aggregation.Builder accumulator) throws ExecException {
+    private static boolean combineFromBag(Cube cube,
+                                          String measureName,
+                                          AggregateFunctionRegistry afr,
+                                          Tuple bag,
+                                          Aggregation.Builder accumulator) throws ExecException {
         Validate.notNull(bag, "bag argument is null");
         DataBag db = DataType.toBag(bag.get(0));
         Validate.notNull(db, "bag argument is null");
+        boolean nonDegenerate = false;
         try {
             for (Tuple tup : db) {
                 byte[] msg = DataType.toBytes(tup.get(0));
@@ -117,7 +126,9 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
                     continue; // should not happen.
                 Aggregation source = Aggregation.parseFrom(msg);
                 afr.mergeAll(accumulator, source, SliceOperation.ADD);
+                nonDegenerate = true;
             }
+            return nonDegenerate;
         } catch (InvalidProtocolBufferException exc) {
             throw new ExecException(exc);
         }
@@ -180,6 +191,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
+        protected boolean                   nonDegenerate;
         protected AggregateFunctionRegistry afr;
         protected boolean                   combine;
 
@@ -196,15 +208,17 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         @Override
         public void accumulate(Tuple b) throws IOException {
+
             if (!combine)
-                accumulateFromBag(cube, measureName, afr, b, accumulator);
+                nonDegenerate = accumulateFromBag(cube, measureName, afr, b, accumulator);
             else
-                combineFromBag(cube, measureName, afr, b, accumulator);
+                nonDegenerate = combineFromBag(cube, measureName, afr, b, accumulator);
         }
 
         @Override
         public Tuple getValue() {
-            return TupleFactory.getInstance().newTuple(new DataByteArray(accumulator.build().toByteArray()));
+            return nonDegenerate ? TupleFactory.getInstance().newTuple(new DataByteArray(accumulator.build()
+                .toByteArray())) : null;
         }
 
         @Override
@@ -227,7 +241,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         @Override
         public void accumulate(Tuple b) throws IOException {
-            combineFromBag(cube, measureName, afr, b, accumulator);
+            nonDegenerate = combineFromBag(cube, measureName, afr, b, accumulator);
         }
     }
 
@@ -235,6 +249,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         protected String                    measureName;
         protected Aggregation.Builder       accumulator = Aggregation.newBuilder();
+        protected boolean                   nonDegenerate;
         protected AggregateFunctionRegistry afr;
 
         public Final() {
@@ -249,7 +264,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         @Override
         public void accumulate(Tuple b) throws IOException {
-            combineFromBag(cube, measureName, afr, b, accumulator);
+            nonDegenerate = combineFromBag(cube, measureName, afr, b, accumulator);
         }
 
         @Override
@@ -259,7 +274,7 @@ public class AggregationFromMeasureBag extends EvalFunc<DataByteArray> implement
 
         @Override
         public DataByteArray getValue() {
-            return new DataByteArray(accumulator.build().toByteArray());
+            return nonDegenerate ? new DataByteArray(accumulator.build().toByteArray()) : null;
         }
 
         @Override
