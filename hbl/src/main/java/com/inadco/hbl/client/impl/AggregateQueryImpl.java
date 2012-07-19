@@ -156,21 +156,23 @@ public class AggregateQueryImpl implements AggregateQuery {
 
             List<Range> partialSpec = new ArrayList<Range>();
 
-            // int numGroupKeys = groupDimensions.size();
-            int groupKeyLen = 0;
+            int groupKeyLen = 0, curKeyLen = 0;
 
             Map<String, Integer> dimName2GroupKeyOffsetMap = new HashMap<String, Integer>();
 
-            for ( Dimension dim: cuboid.getCuboidDimensions()) {
-                dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
-                groupKeyLen += dim.getKeyLen();
+            for (Dimension dim : cuboid.getCuboidDimensions()) {
+                String dimName = dim.getName();
+                dimName2GroupKeyOffsetMap.put(dimName, curKeyLen);
+                curKeyLen += dim.getKeyLen();
+                if (groupDimensions.contains(dim.getName()))
+                    groupKeyLen = curKeyLen;
             }
-            
-//            for (int i = 0; i < numGroupKeys; i++) {
-//                Dimension dim = cuboid.getCuboidDimensions().get(i);
-//                dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
-//                groupKeyLen += dim.getKeyLen();
-//            }
+
+            // for (int i = 0; i < numGroupKeys; i++) {
+            // Dimension dim = cuboid.getCuboidDimensions().get(i);
+            // dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
+            // groupKeyLen += dim.getKeyLen();
+            // }
 
             byte[][] measureQualifiers = new byte[measures.size()][];
             Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
