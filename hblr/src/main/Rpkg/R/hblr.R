@@ -178,11 +178,11 @@ setParameter.HblQuery <- function (paramIndex, value ) {
 		value <- .jarray(value)
 	} else if ( clazz=="character") {
 		value <- .jnew("java.lang.String", value)
-	} else if ( class=="numeric") {
+	} else if ( clazz=="numeric") {
 		value <- .jnew("java.lang.Double", value)
-	} else if ( class=="integer") {
+	} else if ( clazz=="integer") {
 		value <- .jnew("java.lang.Integer", value)
-	} else if ( class=="jobjRef") { 
+	} else if ( clazz=="jobjRef") { 
 	} else {
 		stop(sprintf("Don't know how to convert parameter class %s",clazz))
 	}
