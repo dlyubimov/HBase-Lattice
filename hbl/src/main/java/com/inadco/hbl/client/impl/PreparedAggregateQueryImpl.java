@@ -34,7 +34,6 @@ import org.apache.commons.lang.Validate;
 import org.apache.hadoop.hbase.client.HTablePool;
 
 import com.inadco.hbl.api.AggregateFunctionRegistry;
-import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.PreparedAggregateQuery;
@@ -123,10 +122,10 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         resultDefsByIndex = new HashMap<Integer, Object>();
 
     }
+    
+    
 
-    @Override
-    public AggregateResultSet execute() throws HblException {
-
+    void assignASTParams() throws HblException {
         Validate.notNull(selectAST, "statement not prepared");
         if (prepper == null) {
             prepper = new HBLQueryPrep(new CommonTreeNodeStream(selectAST));
@@ -146,7 +145,13 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
             throw new HblException(exc.getMessage(), exc);
         }
 
-        return super.execute();
+    }
+    
+    @Override
+    public List<ScanSpec> generateScanSpecs(Map<String, Integer> dimName2GroupKeyOffsetMap,
+                                            Map<String, Integer> measureName2indexMap) throws IOException, HblException {
+        assignASTParams();
+        return super.generateScanSpecs(dimName2GroupKeyOffsetMap, measureName2indexMap);
     }
 
     @Override

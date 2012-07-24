@@ -137,60 +137,67 @@ public class AggregateQueryImpl implements AggregateQuery {
         return this;
     }
 
+    public List<ScanSpec> generateScanSpecs(Map<String, Integer> dimName2GroupKeyOffsetMap,
+                                            Map<String, Integer> measureName2indexMap) throws IOException, HblException {
+        Validate.notNull(cube, "A cube not set");
+        Cuboid cuboid = findCuboid();
+
+        Validate.notNull(cuboid, "Unable to find a suitable cuboid for the slice query.");
+
+        /*
+         * FIXME, TODO: check slices for overlapping. otherwise, if slices
+         * overlap, not only we'd be performing more scans than needed, but they
+         * will also contain duplicate counts.
+         * 
+         * for now we just have to assume that slices will not overlap.
+         */
+        List<ScanSpec> scanSpecs = new ArrayList<ScanSpec>();
+
+        List<Range> partialSpec = new ArrayList<Range>();
+
+        int groupKeyLen = 0, curKeyLen = 0;
+
+        for (Dimension dim : cuboid.getCuboidDimensions()) {
+            String dimName = dim.getName();
+            dimName2GroupKeyOffsetMap.put(dimName, curKeyLen);
+            curKeyLen += dim.getKeyLen();
+            if (groupDimensions.contains(dim.getName()))
+                groupKeyLen = curKeyLen;
+        }
+
+        // for (int i = 0; i < numGroupKeys; i++) {
+        // Dimension dim = cuboid.getCuboidDimensions().get(i);
+        // dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
+        // groupKeyLen += dim.getKeyLen();
+        // }
+
+        byte[][] measureQualifiers = new byte[measures.size()][];
+        int mCnt = 0;
+        for (String mName : measures) {
+            measureName2indexMap.put(mName, mCnt);
+            measureQualifiers[mCnt++] = Bytes.toBytes(mName);
+        }
+
+        Measure[] measuresArr = new Measure[measures.size()];
+
+        int i = 0;
+        Map<String, ? extends Measure> measureMap = cube.getMeasures();
+        // we already validated measure names are valid during add()
+        for (String measure : measures)
+            measuresArr[i++] = measureMap.get(measure);
+
+        generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
+
+        return scanSpecs;
+
+    }
+
     @Override
     public AggregateResultSet execute() throws HblException {
         try {
-            Validate.notNull(cube, "A cube not set");
-            Cuboid cuboid = findCuboid();
-
-            Validate.notNull(cuboid, "Unable to find a suitable cuboid for the slice query.");
-
-            /*
-             * FIXME, TODO: check slices for overlapping. otherwise, if slices
-             * overlap, not only we'd be performing more scans than needed, but
-             * they will also contain duplicate counts.
-             * 
-             * for now we just have to assume that slices will not overlap.
-             */
-            List<ScanSpec> scanSpecs = new ArrayList<ScanSpec>();
-
-            List<Range> partialSpec = new ArrayList<Range>();
-
-            int groupKeyLen = 0, curKeyLen = 0;
-
             Map<String, Integer> dimName2GroupKeyOffsetMap = new HashMap<String, Integer>();
-
-            for (Dimension dim : cuboid.getCuboidDimensions()) {
-                String dimName = dim.getName();
-                dimName2GroupKeyOffsetMap.put(dimName, curKeyLen);
-                curKeyLen += dim.getKeyLen();
-                if (groupDimensions.contains(dim.getName()))
-                    groupKeyLen = curKeyLen;
-            }
-
-            // for (int i = 0; i < numGroupKeys; i++) {
-            // Dimension dim = cuboid.getCuboidDimensions().get(i);
-            // dimName2GroupKeyOffsetMap.put(dim.getName(), groupKeyLen);
-            // groupKeyLen += dim.getKeyLen();
-            // }
-
-            byte[][] measureQualifiers = new byte[measures.size()][];
             Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
-            int mCnt = 0;
-            for (String mName : measures) {
-                measureName2indexMap.put(mName, mCnt);
-                measureQualifiers[mCnt++] = Bytes.toBytes(mName);
-            }
-
-            Measure[] measuresArr = new Measure[measures.size()];
-
-            int i = 0;
-            Map<String, ? extends Measure> measureMap = cube.getMeasures();
-            // we already validated measure names are valid during add()
-            for (String measure : measures)
-                measuresArr[i++] = measureMap.get(measure);
-
-            generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
+            List<ScanSpec> scanSpecs = generateScanSpecs(dimName2GroupKeyOffsetMap, measureName2indexMap);
 
             return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
         } catch (IOException exc) {
