@@ -18,11 +18,14 @@
  */
 package com.inadco.hbl.mapreduce;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 
-class HblInputSplit extends InputSplit {
+class HblInputSplit extends InputSplit implements Writable {
     private String regionLocation;
     private byte[] startGroupingKey;
     private byte[] endGroupingKey;
@@ -55,6 +58,36 @@ class HblInputSplit extends InputSplit {
 
     public byte[] getEndGroupingKey() {
         return endGroupingKey;
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeUTF(regionLocation);
+        out.writeShort((short) startGroupingKey.length);
+        out.write(startGroupingKey);
+        if (endGroupingKey == null) {
+            out.writeShort(0);
+        } else {
+            out.writeShort((short) endGroupingKey.length);
+            out.write(endGroupingKey);
+        }
+
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        regionLocation = in.readUTF();
+        int keylen = in.readShort() & 0xFFFF;
+        startGroupingKey = new byte[keylen];
+        in.readFully(startGroupingKey);
+        keylen = in.readShort() & 0xffff;
+        if (keylen == 0)
+            endGroupingKey = null;
+        else {
+            endGroupingKey = new byte[keylen];
+            in.readFully(endGroupingKey);
+        }
+
     }
 
 }

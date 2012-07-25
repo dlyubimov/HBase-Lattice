@@ -66,18 +66,67 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
     private int              currentIndex = -1;
 
-    public FilteringScanSpecScanner(ScanSpec scanSpec, HTablePool tablePool) throws IOException {
+    /**
+     * 
+     * @param scanSpec
+     * @param tablePool
+     * @param splitStartKey
+     *            optional: input split's requested beginning of the table
+     * @param splitEndKey
+     *            optional: input split's requested end of the table (half-open;
+     *            null value means till the end of the table)
+     * @param inputFormatTableName
+     *            optional: input format's table name used to assert idempotency
+     *            of execution accross all split tasks.
+     * @throws IOException
+     */
+    public FilteringScanSpecScanner(ScanSpec scanSpec,
+                                    HTablePool tablePool,
+                                    byte[] splitStartKey,
+                                    byte[] splitEndKey,
+                                    String inputFormatTableName) throws IOException {
         super();
         this.scanSpec = scanSpec;
         Validate.notNull(scanSpec);
         Validate.notEmpty(scanSpec.getMeasureQualifiers(), "scan requested no measures");
 
         byte[] tableName = Bytes.toBytes(scanSpec.getCuboid().getCuboidTableName());
+
+        if (inputFormatTableName != null && !tableName.equals(inputFormatTableName))
+
+            throw new IOException(
+                String.format("Input format validation failed: expected table name %s from front end "
+                    + "but different in the back end: %s.", inputFormatTableName, tableName));
+
         CompositeKeyRowFilter krf = new CompositeKeyRowFilter(scanSpec.getRanges());
         byte[] startRow = krf.getCompositeBound(true);
         byte[] endRow = krf.getCompositeBound(false);
         if (HblUtil.incrementKey(endRow, 0, endRow.length))
             endRow = null;
+
+        /*
+         * process split constraints, if given.
+         */
+        if (splitStartKey != null) {
+            if (Bytes.compareTo(startRow, splitStartKey) < 0)
+                startRow = splitStartKey;
+            if (splitEndKey != null) {
+                if (endRow == null)
+                    endRow = splitEndKey;
+                else if (Bytes.compareTo(splitEndKey, endRow) > 0)
+                    endRow = splitEndKey;
+            }
+            /*
+             * as a result of such correction, it may happen (although should
+             * not) that our correction for split resulted in a negative
+             * interval.
+             * 
+             * if that's the case, then it means empty scan and we just fix it
+             * by throwing end row to be the same as start.
+             */
+            if (endRow != null && Bytes.compareTo(endRow, startRow) > 0)
+                endRow = startRow;
+        }
 
         Scan scan = new Scan();
         scan.setCaching(CACHING);
@@ -95,7 +144,13 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
         closeables.addFirst(scanner);
 
         closeables.remove(table);
-        tablePool.putTable(table);
+        /*
+         * this has been deprecated in 0.92. use close() instead.
+         * 
+         * tablePool.putTable(table);
+         */
+        table.close();
+
     }
 
     @Override

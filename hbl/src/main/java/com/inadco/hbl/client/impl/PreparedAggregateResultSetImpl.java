@@ -54,8 +54,19 @@ public class PreparedAggregateResultSetImpl extends AggregateResultSetImpl imple
                                    Map<String, Integer> measureName2IndexMap,
                                    Map<String, Integer> dimName2GroupKeyOffsetMap,
                                    Map<Integer, Object> resultDefByIndex,
-                                   Map<String, Object> resultDefByAlias) throws IOException {
-        super(scanSpecs, es, tpool, afr, measureName2IndexMap, dimName2GroupKeyOffsetMap);
+                                   Map<String, Object> resultDefByAlias,
+                                   byte[] splitStartKey,
+                                   byte[] splitEndKey,
+                                   String splitCuboidTableName) throws IOException {
+        super(scanSpecs,
+              es,
+              tpool,
+              afr,
+              measureName2IndexMap,
+              dimName2GroupKeyOffsetMap,
+              splitStartKey,
+              splitEndKey,
+              splitCuboidTableName);
         this.resultDefByAlias = resultDefByAlias;
         this.resultDefByIndex = resultDefByIndex;
     }

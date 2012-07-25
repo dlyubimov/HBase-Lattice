@@ -199,7 +199,38 @@ public class AggregateQueryImpl implements AggregateQuery {
             Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
             List<ScanSpec> scanSpecs = generateScanSpecs(dimName2GroupKeyOffsetMap, measureName2indexMap);
 
-            return createResultSet(scanSpecs, es, tpool, afr, measureName2indexMap, dimName2GroupKeyOffsetMap);
+            return createResultSet(scanSpecs,
+                                   es,
+                                   tpool,
+                                   afr,
+                                   measureName2indexMap,
+                                   dimName2GroupKeyOffsetMap,
+                                   null,
+                                   null,
+                                   null);
+        } catch (IOException exc) {
+            throw new HblException(exc.getMessage(), exc);
+        } finally {
+            reset();
+        }
+    }
+
+    public AggregateResultSet execute(byte[] startSplitKey, byte[] endSplitKey, String enforcedCuboidTableName)
+        throws HblException {
+        try {
+            Map<String, Integer> dimName2GroupKeyOffsetMap = new HashMap<String, Integer>();
+            Map<String, Integer> measureName2indexMap = new HashMap<String, Integer>();
+            List<ScanSpec> scanSpecs = generateScanSpecs(dimName2GroupKeyOffsetMap, measureName2indexMap);
+
+            return createResultSet(scanSpecs,
+                                   es,
+                                   tpool,
+                                   afr,
+                                   measureName2indexMap,
+                                   dimName2GroupKeyOffsetMap,
+                                   startSplitKey,
+                                   endSplitKey,
+                                   enforcedCuboidTableName);
         } catch (IOException exc) {
             throw new HblException(exc.getMessage(), exc);
         } finally {
@@ -222,14 +253,48 @@ public class AggregateQueryImpl implements AggregateQuery {
         this.allowComplements = allowComplements;
     }
 
+    /**
+     * 
+     * @param scanSpecs
+     * @param es
+     * @param tpool
+     * @param afr
+     * @param measureName2IndexMap
+     * @param dimName2GroupKeyOffsetMap
+     * @param startSplitKey
+     *            optional: if given, enforce MR split constraints per half-open
+     *            [startSplitKey,endSplitKey). note that in this case
+     *            endSplitKey can still be null and means
+     *            "till the end of the table".
+     * @param endSplitKey
+     *            optional.
+     * @param enforcedCuboidTableName
+     *            optional. if passed on, ensures that the cuboid table selected
+     *            is the same as given, thus inforcing idempotent cuboid. Used
+     *            only by HblInputSplit to assert idempotent optimizer
+     *            processing.
+     * @return
+     * @throws IOException
+     */
     protected AggregateResultSetImpl createResultSet(final List<ScanSpec> scanSpecs,
                                                      final ExecutorService es,
                                                      final HTablePool tpool,
                                                      final AggregateFunctionRegistry afr,
                                                      final Map<String, Integer> measureName2IndexMap,
-                                                     final Map<String, Integer> dimName2GroupKeyOffsetMap)
-        throws IOException {
-        return new AggregateResultSetImpl(scanSpecs, es, tpool, afr, measureName2IndexMap, dimName2GroupKeyOffsetMap);
+                                                     final Map<String, Integer> dimName2GroupKeyOffsetMap,
+                                                     final byte[] startSplitKey,
+                                                     final byte[] endSplitKey,
+                                                     final String enforcedCuboidTableName) throws IOException {
+        return new AggregateResultSetImpl(
+            scanSpecs,
+            es,
+            tpool,
+            afr,
+            measureName2IndexMap,
+            dimName2GroupKeyOffsetMap,
+            startSplitKey,
+            endSplitKey,
+            enforcedCuboidTableName);
     }
 
     /**

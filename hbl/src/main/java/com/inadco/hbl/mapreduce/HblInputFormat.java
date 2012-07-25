@@ -27,7 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -35,6 +35,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import com.inadco.hbl.client.AggregateResult;
+import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.HblQueryClient;
 import com.inadco.hbl.client.impl.PreparedAggregateQueryImpl;
@@ -42,7 +43,7 @@ import com.inadco.hbl.client.impl.scanner.CompositeKeyRowFilter;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.util.HblUtil;
 
-public class HblInputFormat extends InputFormat<IntWritable, AggregateResult> {
+public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
 
     public static final String PROP_QUERY            = "hbl.mapred.query";
     public static final String PROP_PARAM_NO         = "hbl.mapred.paramno";
@@ -199,8 +200,8 @@ public class HblInputFormat extends InputFormat<IntWritable, AggregateResult> {
                     if (endSplit == null || Bytes.compareTo(endSplit, endKey) > 0)
                         endSplit = endKey;
                 }
-                HRegionLocation hloc = htable.getRegionLocation(startSplit,false);
-                
+                HRegionLocation hloc = htable.getRegionLocation(startSplit, false);
+
                 result.add(new HblInputSplit(hloc.getHostname(), startSplit, endSplit));
 
             }
@@ -220,10 +221,66 @@ public class HblInputFormat extends InputFormat<IntWritable, AggregateResult> {
     }
 
     @Override
-    public RecordReader<IntWritable, AggregateResult> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public RecordReader<NullWritable, AggregateResult> createRecordReader(InputSplit split, TaskAttemptContext context)
         throws IOException, InterruptedException {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        return new RecordReader<NullWritable, AggregateResult>() {
 
+            private AggregateResultSet ars;
+
+            @Override
+            public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
+                InterruptedException {
+
+                try {
+                    Configuration conf = context.getConfiguration();
+                    HblQueryClient hblQueryClient = new HblQueryClient(conf);
+                    HblInputSplit hblSplit = (HblInputSplit) split;
+
+                    PreparedAggregateQueryImpl paq = (PreparedAggregateQueryImpl) hblQueryClient.createPreparedQuery();
+                    paq.prepare(getHblQuery(conf));
+
+                    String cuboidTableName = conf.get(PROP_CUBOID_TABLENAME);
+                    if (cuboidTableName == null)
+                        throw new HblException("Invalid cuboid name at backend. Something in MR happened wrong.");
+
+                    int paramNo = getParamNo(conf);
+                    for (int i = 0; i < paramNo; i++)
+                        paq.setHblParameter(i, getParamNo(conf));
+
+                    ars = paq.execute(hblSplit.getStartGroupingKey(), hblSplit.getEndGroupingKey(), cuboidTableName);
+
+                } catch (HblException exc) {
+                    throw new IOException(exc);
+                }
+
+            }
+
+            @Override
+            public boolean nextKeyValue() throws IOException, InterruptedException {
+                return ars==null?false:ars.hasNext();
+            }
+
+            @Override
+            public NullWritable getCurrentKey() throws IOException, InterruptedException {
+                return NullWritable.get();
+            }
+
+            @Override
+            public AggregateResult getCurrentValue() throws IOException, InterruptedException {
+                return ars.current();
+            }
+
+            @Override
+            public float getProgress() throws IOException, InterruptedException {
+                // TODO Auto-generated method stub
+                return 0;
+            }
+
+            @Override
+            public void close() throws IOException {
+                ars.close();
+            }
+
+        };
+    }
 }

@@ -122,8 +122,6 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         resultDefsByIndex = new HashMap<Integer, Object>();
 
     }
-    
-    
 
     void assignASTParams() throws HblException {
         Validate.notNull(selectAST, "statement not prepared");
@@ -146,7 +144,7 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
         }
 
     }
-    
+
     @Override
     public List<ScanSpec> generateScanSpecs(Map<String, Integer> dimName2GroupKeyOffsetMap,
                                             Map<String, Integer> measureName2indexMap) throws IOException, HblException {
@@ -160,7 +158,10 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
                                                      HTablePool tpool,
                                                      AggregateFunctionRegistry afr,
                                                      Map<String, Integer> measureName2IndexMap,
-                                                     Map<String, Integer> dimName2GroupKeyOffsetMap) throws IOException {
+                                                     Map<String, Integer> dimName2GroupKeyOffsetMap,
+                                                     byte[] startSplitKey,
+                                                     byte[] endSplitKey,
+                                                     String enforcedCuboidTableName) throws IOException {
         return new PreparedAggregateResultSetImpl(
             scanSpecs,
             es,
@@ -169,7 +170,10 @@ public class PreparedAggregateQueryImpl extends AggregateQueryImpl implements Pr
             measureName2IndexMap,
             dimName2GroupKeyOffsetMap,
             resultDefsByIndex,
-            resultDefsByAlias);
+            resultDefsByAlias,
+            startSplitKey,
+            endSplitKey,
+            enforcedCuboidTableName);
     }
 
     /**

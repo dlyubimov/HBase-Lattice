@@ -78,7 +78,10 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
                            final HTablePool tpool,
                            final AggregateFunctionRegistry afr,
                            final Map<String, Integer> measureName2IndexMap,
-                           final Map<String, Integer> dimName2GroupKeyOffsetMap) throws IOException {
+                           final Map<String, Integer> dimName2GroupKeyOffsetMap,
+                           final byte[] startSplitKey,
+                           final byte[] endSplitKey,
+                           final String enforcedCuboidTableName) throws IOException {
         super();
 
         Validate.notNull(scanSpecs);
@@ -112,8 +115,8 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
             Callable<FilteringScanSpecScanner> callable = new Callable<FilteringScanSpecScanner>() {
 
                 @Override
-                public FilteringScanSpecScanner call() throws IOException {
-                    return new FilteringScanSpecScanner(ss, tpool);
+                public FilteringScanSpecScanner call() throws IOException, HblException {
+                    return new FilteringScanSpecScanner(ss, tpool, startSplitKey, endSplitKey, enforcedCuboidTableName);
                 }
             };
 
@@ -126,13 +129,14 @@ public class AggregateResultSetImpl implements AggregateResultSet, AggregateResu
 
         IOException lastExc = null;
         try {
-            FilteringScanSpecScanner fscanner = new FilteringScanSpecScanner(firstSpec, tpool);
+            FilteringScanSpecScanner fscanner =
+                new FilteringScanSpecScanner(firstSpec, tpool, startSplitKey, endSplitKey, enforcedCuboidTableName);
             closeables.addFirst(fscanner);
             filteringScanners.add(fscanner);
         } catch (IOException exc) {
             lastExc = exc;
             s_log.error(lastExc);
-        }
+        } 
 
         // wait for all other parallel dudes to complete.
         for (Future<FilteringScanSpecScanner> fsss : filteringScannerConstructors) {
