@@ -874,10 +874,10 @@ public class Example1 extends Configured implements Tool {
                         for (int j = 0; j < i + k + 1; j++) {
                             CompilerInput.Builder inp = CompilerInput.newBuilder();
                             inp.setDim1(id[k]);
-                            // inp.setCharDim1("dim1-as-"+(k+1));
-                            inp.clearCharDim1(); // simulate NULL
+                            inp.setCharDim1("dim1-as-"+(k+1));
                             inp.setDim2(id[k]);
-                            inp.setCharDim2("dim2-as-" + (k + 1));
+                            //                            inp.setCharDim2("dim2-as-" + (k + 1));
+                            inp.clearCharDim2(); // simulate NULL
                             inp.setDim3(id[k]);
                             inp.setCharDim3("dim3-as-" + (k + 1));
                             inp.setImpressionTime(start.getTimeInMillis());

@@ -1,9 +1,6 @@
-import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -41,10 +38,12 @@ import com.inadco.hbl.mapreduce.HblMapper;
 
 /**
  * A demo of a locality-optimized map-reduce job that runs on the result of an
- * HBL query.<P>
+ * HBL query.
+ * <P>
  * 
- * (this assumes the data is compiled and prepared by running Example1.java).
- * To run, do 
+ * (this assumes the data is compiled and prepared by running Example1.java). To
+ * run, do
+ * 
  * <pre>
  *   hadoop jar sample/target/sample-0.2.10-SNAPSHOT-hadoop-job.jar MRExample1Query
  * </pre>
@@ -59,9 +58,16 @@ public class MRExample1Query extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         Job mr = new Job(getConf(), "HBL MR Query Example");
 
+        /*
+         * input
+         */
         mr.setInputFormatClass(HblInputFormat.class);
         HblInputFormat.setHblQuery(mr, "select charDim1,SUM(impCnt) as impCnt, "
             + "SUM(click) as clickCnt from Example1 group by charDim1");
+
+        /*
+         * output
+         */
         mr.setOutputFormatClass(TextOutputFormat.class);
 
         /*
@@ -74,10 +80,27 @@ public class MRExample1Query extends Configured implements Tool {
             dfs.delete(p, true);
 
         FileOutputFormat.setOutputPath(mr, new Path(p, "out"));
-        mr.setMapperClass(MRExample1Mapper.class);
 
+        /*
+         * mapper
+         */
+        mr.setMapperClass(MRExample1Mapper.class);
+        mr.setMapOutputKeyClass(NullWritable.class);
+        mr.setMapOutputValueClass(Text.class);
+
+        /*
+         * reducer -- we don't use any here.
+         */
+        mr.setNumReduceTasks(0);
+
+        /*
+         * job classpath
+         */
         mr.setJarByClass(MRExample1Query.class);
 
+        /*
+         * go
+         */
         mr.submit();
         boolean result = mr.waitForCompletion(true);
 

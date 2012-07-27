@@ -125,7 +125,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
              * if that's the case, then it means empty scan and we just fix it
              * by throwing end row to be the same as start.
              */
-            if (endRow != null && Bytes.compareTo(endRow, startRow) > 0)
+            if (endRow != null && Bytes.compareTo(endRow, startRow) < 0)
                 endRow = startRow;
         }
 

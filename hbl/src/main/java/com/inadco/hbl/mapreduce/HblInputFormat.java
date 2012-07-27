@@ -50,7 +50,7 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
     public static final String PROP_PARAM_NO         = "hbl.mapred.paramno";
     public static final String PROP_PARAM            = "hbl.mapred.param.";
     public static final String PROP_CUBOID_TABLENAME = "hbl.mapred.cuboidtable";
-    
+
     public HblInputFormat() {
         super();
     }
@@ -262,7 +262,10 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
 
             @Override
             public boolean nextKeyValue() throws IOException, InterruptedException {
-                return ars==null?false:ars.hasNext();
+                if (!ars.hasNext())
+                    return false;
+                ars.next();
+                return true;
             }
 
             @Override
