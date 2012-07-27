@@ -29,6 +29,12 @@ class HblInputSplit extends InputSplit implements Writable {
     private String regionLocation;
     private byte[] startGroupingKey;
     private byte[] endGroupingKey;
+    
+    
+
+    public HblInputSplit() {
+        super();
+    }
 
     HblInputSplit(String regionLocation, byte[] startGroupingKey, byte[] endGroupingKey) {
         super();

@@ -90,7 +90,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
         Validate.notNull(scanSpec);
         Validate.notEmpty(scanSpec.getMeasureQualifiers(), "scan requested no measures");
 
-        byte[] tableName = Bytes.toBytes(scanSpec.getCuboid().getCuboidTableName());
+        String tableName = scanSpec.getCuboid().getCuboidTableName();
 
         if (inputFormatTableName != null && !tableName.equals(inputFormatTableName))
 
@@ -98,6 +98,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
                 String.format("Input format validation failed: expected table name %s from front end "
                     + "but different in the back end: %s.", inputFormatTableName, tableName));
 
+        byte[] tableNameBytes = Bytes.toBytes(scanSpec.getCuboid().getCuboidTableName());
         CompositeKeyRowFilter krf = new CompositeKeyRowFilter(scanSpec.getRanges());
         byte[] startRow = krf.getCompositeBound(true);
         byte[] endRow = krf.getCompositeBound(false);
@@ -136,7 +137,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
         scan.setFilter(krf);
 
-        HTableInterface table = tablePool.getTable(tableName);
+        HTableInterface table = tablePool.getTable(tableNameBytes);
         Validate.notNull(table);
         closeables.addFirst(new IOUtil.PoolableHtableCloseable(tablePool, table));
 

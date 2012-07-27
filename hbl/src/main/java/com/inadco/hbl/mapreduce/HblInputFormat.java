@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -49,9 +50,13 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
     public static final String PROP_PARAM_NO         = "hbl.mapred.paramno";
     public static final String PROP_PARAM            = "hbl.mapred.param.";
     public static final String PROP_CUBOID_TABLENAME = "hbl.mapred.cuboidtable";
+    
+    public HblInputFormat() {
+        super();
+    }
 
-    public static void setHblQuery(Configuration conf, String query) {
-        conf.set(PROP_QUERY, query);
+    public static void setHblQuery(Job job, String query) {
+        job.getConfiguration().set(PROP_QUERY, query);
     }
 
     static String getHblQuery(Configuration conf) {

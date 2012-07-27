@@ -13,13 +13,17 @@
       <unpack>false</unpack>
       <outputDirectory>/lib</outputDirectory>
       <scope>runtime</scope>
+      <excludes>
+        <exclude>${groupId}:${artifactId}</exclude>
+      </excludes>
     </dependencySet>
-
-<!--     <dependencySet> -->
-<!--       <unpack>true</unpack> -->
-<!--       <outputDirectory>/</outputDirectory> -->
-<!--       <scope>runtime</scope> -->
-<!--     </dependencySet> -->
+    
+    <dependencySet>
+      <unpack>true</unpack>
+      <includes>
+        <include>${groupId}:${artifactId}</include>
+      </includes>
+    </dependencySet>
 
 
   </dependencySets>

@@ -139,6 +139,11 @@ public class AggregateQueryImpl implements AggregateQuery {
 
     public List<ScanSpec> generateScanSpecs(Map<String, Integer> dimName2GroupKeyOffsetMap,
                                             Map<String, Integer> measureName2indexMap) throws IOException, HblException {
+        if (dimName2GroupKeyOffsetMap == null)
+            dimName2GroupKeyOffsetMap = new HashMap<String, Integer>(11);
+        if (measureName2indexMap == null)
+            measureName2indexMap = new HashMap<String, Integer>(11);
+        
         Validate.notNull(cube, "A cube not set");
         Cuboid cuboid = findCuboid();
 

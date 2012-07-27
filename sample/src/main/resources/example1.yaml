@@ -32,6 +32,7 @@
     - !SimpleCuboid [[*dim3, *dimImpressionTime ]]
     - !SimpleCuboid [[*dim1, *dim2, *dimImpressionTime]]
     - !SimpleCuboid [[*dim1, *cdim1, *dim2, *cdim2, *dimImpressionTime]]
+    - !SimpleCuboid [[*cdim1, *dimImpressionTime]]
     
   - # measures 
     - !NumericMeasure [ impCnt ]
