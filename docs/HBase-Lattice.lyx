@@ -108,21 +108,44 @@ What it is
 \end_layout
 
 \begin_layout Standard
-HBase Lattice is an attempt at BI solution.
- Namely, it is an attempt at building HBase-based incremental OLAP cube.
+HBase Lattice is an attempt at a big data BI solution.
+ Namely, it is an attempt at implementation of HBase-based incremental OLAP-ish
+ cubes.
  
 \end_layout
 
 \begin_layout Standard
-I scanned surroundings and noticed at least 2 such attempts which for various
- reasons (for most part, maturity and staleness) did not fit our purposes.
- 
+Like some MOLAP and ROLAP solutions, HBase-Lattice copes with aggregate
+ queries by prebuilding certain cuboids in a cube lattice model.
+ Hence, the name.
 \end_layout
 
 \begin_layout Standard
-Like some MOLAP solutions, HBase-Lattice copes with aggregate queries by
- prebuilding certain cuboids in a cube lattice models.
- 
+Support of OLAP features (in MDX sense) is fairly limited, but being a big
+ data solution, the project does not limit itself just to traditional OLAP
+ feature set either.
+ E.g.
+ there's a way to run and consume HBL query as a locality-aware distributed
+ MapReduce job, thus enabling fast export/processing of the cube data.
+ Similarly, cube update is also a distributed job.
+ Bottom line, I think it is good to be fairly open-minded in scope definition
+ within a big data environment in the sense that some things in a standard
+ are difficult to achieve and can be thrown away while some 
+\begin_inset Quotes eld
+\end_inset
+
+nonstandard
+\begin_inset Quotes erd
+\end_inset
+
+ features may become quite powerful enablers in the world of Big Data.
+ I think this is approximately the same reason why the Hive project doesn't
+ follow the exact set of SQL standard either.
+\end_layout
+
+\begin_layout Standard
+Querying data is available as an API, or HBL query dialect and at the moment
+ such clients are available for Java, MapReduce and R environments.
 \end_layout
 
 \begin_layout Standard
@@ -271,6 +294,12 @@ Another motivation is to be able to do things within the same resource space
  bulk data transfer and import.
 \end_layout
 
+\begin_layout Standard
+I scanned surroundings and noticed at least 2 such attempts which for various
+ reasons (for most part, maturity and staleness) did not fit our purposes.
+ 
+\end_layout
+
 \begin_layout Section
 Differentiating aspects of HBL vs.
  MOLAP, ROLAP and cube lattice model in general
@@ -360,28 +389,14 @@ MapReduce compiler allows to do distributed aggregation of the data before
 \end_layout
 
 \begin_layout Paragraph
-Querying the data.
+Custom HBase filtering.
 \end_layout
 
 \begin_layout Standard
-Data querying is available in two ways: 
-\end_layout
-
-\begin_layout Itemize
-an API query class (not unlike the declarative api way to construct query
- objects in Hibernate), and 
-\end_layout
-
-\begin_layout Itemize
-a simplistic query language that translates into that api calls to setup
- a query from reporting tools (again, not unlike HQL support in Hibernate).
- 
-\end_layout
-
-\begin_layout Standard
-In either case, a special custom hbase filter is used to allow to skip over
- the rows we are not really interested in, so the scan iterations are kept
- going over mostly relevant facts only.
+A special custom hbase filter is used to allow to skip over the rows we
+ are not really interested in during composite key scan, so the scan iterations
+ keep going over mostly relevant facts only and can skip over significant
+ portion of the data between first and last scan rows.
 \end_layout
 
 \begin_layout Section
@@ -455,8 +470,7 @@ TODO: write command line wrappers for steps 2-4
 \end_layout
 
 \begin_layout Subsubsection
-Embedded approach.
- 
+Embedded approach
 \end_layout
 
 \begin_layout Standard
@@ -475,7 +489,13 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
 \end_layout
 
 \begin_layout Subsubsection
-R approach to the workflow.
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:R-approach-to"
+
+\end_inset
+
+R approach to the workflow
 \begin_inset Foot
 status open
 
@@ -849,7 +869,11 @@ name "fig:R-histogram-of"
 \end_inset
 
 R histogram of impression counts in simulated logs spanning several months
- worth of simulated data.
+ worth of data simulated by 
+\emph on
+Example1.java
+\emph default
+.
  
 \begin_inset Newline newline
 \end_inset
@@ -895,7 +919,7 @@ status open
 \end_layout
 
 \begin_layout Subsection
-Specifying a model.
+Specifying a model
 \end_layout
 
 \begin_layout Standard
@@ -1377,10 +1401,464 @@ Since custom filters are used for querying, one jar (hbl-0.1.2.jar as of the
 \end_layout
 
 \begin_layout Subsection
-Query API
+Querying
 \end_layout
 
 \begin_layout Standard
+Within the Java world, there are 3 different ways to query HBL: 
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+AggregateQuery 
+\family default
+which is a declarative way to add slicing and grouping predicates (not unlike
+ Hibernate's Query).
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+PreparedAggregateQuery: 
+\family default
+the HBL query language to add slicing and grouping predicates, as well as
+ inline application of aggregate functions.
+ This is quite similar to JDBC's PreparedQuery (and perhaps there's not
+ much rationale why JDBC could not be eventually used except JDBC is much
+ more demanding in terms of metadata).
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+HblInputFormat 
+\family default
+which is a way to run HBL query in a locality-sensitive distributed way
+ as well as continue working on HBL results in a MapReduce environment.
+\end_layout
+
+\begin_layout Standard
+There's also an R package available to run HBL Queries and transform the
+ results into an R data frames, which is basically a wrapper around 
+\family typewriter
+PreparedAggregateQuery
+\family default
+ API along with some data transfer mechanism from Java to R.
+ This is described in brief detail in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:R-approach-to"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Declarative predicates (
+\begin_inset Formula $\propto$
+\end_inset
+
+
+\family typewriter
+AggregateQuery
+\family default
+ )
+\end_layout
+
+\begin_layout Standard
+See Example1.java for examples of uses of 
+\family typewriter
+AggregateQuery.
+
+\family default
+ Java query api is used to specify slicinig and grouping predicates (not
+ unlike in Hibernate's Query API).
+\end_layout
+
+\begin_layout Subsubsection
+Querying with a prepared query 
+\begin_inset Newline newline
+\end_inset
+
+(
+\begin_inset Formula $\propto$
+\end_inset
+
+
+\family typewriter
+PreparedAggregateQuery
+\family default
+)
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+TODO: write a command line shell (perhaps akin to HBase shell) to enable
+ ad-hoc query runs.
+\end_layout
+
+\begin_layout Standard
+See the example for how to prepare and use query.
+ It is recommended to use prepared query repeatedly to save on parsing it
+ into an AST tree.
+ (After all, that's what prepared queries are for).
+\end_layout
+
+\begin_layout Standard
+Approximate current query syntax is (see RFC-822 for the BNF syntax used):
+ 
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "95col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+'select' select-expr *(',' select-expr) 'from' cube-name [where-clause]
+ [group-clause]
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+select-expr = measure-name / aggr-function [ 'as' alias-name ]
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+aggregate-function = function-name '(' measure-name ')'
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+where-clause = 'where' slice-spec *(',' slice-spec)
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+slice-spec = dimension-name 'in' ('[' / '(') value / '?' [ ',' ( value /
+ '?' ) ] (']' / ')')
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+group-clause = 'group by' dimension-name *(, dimension-name)
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+measure-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+cube-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+alias-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+function-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+dimension-name = ID / '?' ; id rules or substitution via a parameter
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family typewriter
+value = ( '
+\backslash
+'' LITERAL '
+\backslash
+'' ) / LONG / DOUBLE
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "95col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+select d1 as dim1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
+ group by d1
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Where-clause 
+\emph default
+is essentially a slice specification.
+ Hence specification is imposed on a dimension using opened or closed interval
+ semantics.
+ E.g.
+ [1,3) is a so-called half-open interval which includes between values of
+ 1 (including) and 3 (excluding).
+ The limitation of the 
+\emph on
+where-clause 
+\emph default
+is that currently one cannot specify more than one slice specification for
+ the same dimension.
+ Semantic result of an attempt to specify multiple slices for the same dimension
+ is currently undefined.
+ 
+\end_layout
+
+\begin_layout Standard
+Aggregating over multidimensional hyperplane (a plane perpendicular to an
+ axis and going thru a specific point on that axis) is hence equivalent
+ to specifying '
+\family typewriter
+where dimension in [?]
+\family default
+' (
+\emph on
+degenerate 
+\emph default
+dimension interval).
+\end_layout
+
+\begin_layout Standard
+Aggregate functions may return 
+\family typewriter
+NULL
+\family default
+ if a measure group had been empty (or consisted only of 
+\family typewriter
+NULL
+\family default
+ measure values).
+ This semantics is consistent with 
+\family typewriter
+SUM()
+\family default
+ and some other aggregate functions semantics in SQL and Pig.
+ As a corner case, a measure group might have been empty if reduced measure
+ scope was applied during compilation.
+ Reduced scope fact stream basically is equivalent to a full fact stream
+ having all facts for the excluded measures as 
+\family typewriter
+NULL
+\family default
+.
+\end_layout
+
+\begin_layout Paragraph
+Query limitations.
+\end_layout
+
+\begin_layout Itemize
+There has to be a cuboid specifying all dimensions in a group clause in
+ the leftmost positions.
+ Hence, plan optimizer may complain if certain grouping is not possible
+ due to lack of suitable cuboid.
+\end_layout
+
+\begin_layout Itemize
+Complement scan optimizations for hierarchies are not implemented in this
+ release (only in our prototype).
+\end_layout
+
+\begin_layout Itemize
+There's currently no way to run some useful analytic queries like 'select
+ COUNT(fact), ip group by ip having COUNT(fact) > 10000'.
+ 
+\end_layout
+
+\begin_layout Itemize
+One has to select at least one measure aggregate in the query.
+ Technically, there should be no reason why not support a request for dimension
+ members satisfying 
+\emph on
+where-clause
+\emph default
+ conditions only, but the way it is currently designed, it need a least
+ one measure to sum up in an aggregate (even if one doesn't use it).
+\end_layout
+
+\begin_layout Itemize
+Unlike with MDX, there's no 
+\emph on
+optimized 
+\emph default
+way to query a dimension or hierarchy membership.
+ Since the system is pretty dynamic, new members might appear at any time
+ and at this point we don't keep track of distinct list of them.
+ 
+\emph on
+It is possible to query members in a particular slice though, including
+ the total cube, 
+\emph default
+but that would be a full table scan over shortest cuboid still.
+\end_layout
+
+\begin_layout Subsubsection
+Running location-sensitive query as a MapReduce job 
+\begin_inset Newline newline
+\end_inset
+
+(
+\family typewriter
+
+\begin_inset Formula $\propto$
+\end_inset
+
+HblInputFormat
+\family default
+)
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One of most obvious consequences to using HBase scans as a way of querying
+ multidimensional data is that most query work still can be distributed
+ based on location proximity to region server.
+ That applies equally well to queries that produce long results, as long
+ as queries that do a bit of inline grouping due to various reasons but
+ not necessarily produce huge results.
+\end_layout
+
+\begin_layout Standard
+HBase-Lattice project has now support for that in a form of 
+\family typewriter
+HblInputFormat
+\family default
+.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
 \begin_inset ERT
 status open
 
@@ -1393,7 +1871,72 @@ color{comment}
 
 \end_inset
 
-TODO
+Pig's 
+\emph on
+LoadFunc
+\emph default
+ work is still underway at this moment.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ See 
+\family typewriter
+MRExample1Query
+\family default
+ for an example how to run a simple distributed HBL prepared query.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+right now limitation for prepared parameters is that they are serialized
+ as string values only thru MR configuration so substitution of parameters
+ is limited to cases where string values are supported by the substitution
+ use case.
+ In particular, I think the date/hour hierarchy currently may be somewhat
+ a problem.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -1408,7 +1951,35 @@ status open
 \end_layout
 
 \begin_layout Subsubsection
-Supported aggregate functions at this time.
+Querying HBL from R
+\end_layout
+
+\begin_layout Standard
+This has been outlined as a part of 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:R-approach-to"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Supported standard aggregate functions
 \end_layout
 
 \begin_layout Itemize
@@ -1684,200 +2255,33 @@ status open
 
 \end_layout
 
+\begin_layout Subsubsection
+User defined aggregate functions
+\end_layout
+
 \begin_layout Standard
 Api allows to add new custom aggregate functions fairly easily, it's just
  all we needed at the moment.
-\end_layout
-
-\begin_layout Subsection
-Querying with a prepared query 
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-TODO: write a command line shell (perhaps akin to HBase shell) to enable
- ad-hoc query runs.
-\end_layout
-
-\begin_layout Standard
-See the example for how to prepare and use query.
- It is recommended to use prepared query repeatedly to save on parsing it
- into an AST tree.
- (After all, that's what prepared queries are for).
-\end_layout
-
-\begin_layout Standard
-Approximate current query syntax is (see RFC-822 for the BNF syntax used):
  
-\end_layout
-
-\begin_layout Standard
-
-\family typewriter
-\begin_inset Box Boxed
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "95col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status collapsed
-
-\begin_layout Plain Layout
-
-\family typewriter
-'select' select-expr *(',' select-expr) 'from' cube-name [where-clause]
- [group-clause]
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-select-expr = measure-name / aggr-function [ 'as' alias-name ]
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-aggregate-function = function-name '(' measure-name ')'
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-where-clause = 'where' slice-spec *(',' slice-spec)
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-slice-spec = dimension-name 'in' ('[' / '(') value / '?' [ ',' ( value /
- '?' ) ] (']' / ')')
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-group-clause = 'group by' dimension-name *(, dimension-name)
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-measure-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-cube-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-alias-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-function-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-dimension-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\family typewriter
-value = ( '
-\backslash
-'' LITERAL '
-\backslash
-'' ) / LONG / DOUBLE
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Example:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Box Boxed
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "95col%"
-special "none"
-height "1in"
-height_special "totalheight"
+\begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-\family typewriter
-select d1 as dim1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
- group by d1
+{
+\backslash
+color{comment}
+\end_layout
+
+\end_inset
+
+TODO
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \end_inset
@@ -1885,117 +2289,7 @@ select d1 as dim1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
 
 \end_layout
 
-\begin_layout Standard
-
-\emph on
-Where-clause 
-\emph default
-is essentially a slice specification.
- Hence specification is imposed on a dimension using opened or closed interval
- semantics.
- E.g.
- [1,3) is a so-called half-open interval which includes between values of
- 1 (including) and 3 (excluding).
- The limitation of the 
-\emph on
-where-clause 
-\emph default
-is that currently one cannot specify more than one slice specification for
- the same dimension.
- Semantic result of an attempt to specify multiple slices for the same dimension
- is currently undefined.
- 
-\end_layout
-
-\begin_layout Standard
-Aggregating over multidimensional hyperplane (a plane perpendicular to an
- axis and going thru a specific point on that axis) is hence equivalent
- to specifying '
-\family typewriter
-where dimension in [?]
-\family default
-' (
-\emph on
-degenerate 
-\emph default
-dimension interval).
-\end_layout
-
-\begin_layout Standard
-Aggregate functions may return 
-\family typewriter
-NULL
-\family default
- if a measure group had been empty (or consisted only of 
-\family typewriter
-NULL
-\family default
- measure values).
- This semantics is consistent with 
-\family typewriter
-SUM()
-\family default
- and some other aggregate functions semantics in SQL and Pig.
- As a corner case, a measure group might have been empty if reduced measure
- scope was applied during compilation.
- Reduced scope fact stream basically is equivalent to a full fact stream
- having all facts for the excluded measures as 
-\family typewriter
-NULL
-\family default
-.
-\end_layout
-
-\begin_layout Paragraph
-Query limitations.
-\end_layout
-
-\begin_layout Itemize
-There has to be a cuboid specifying all dimensions in a group clause in
- the leftmost positions.
- Hence, plan optimizer may complain if certain grouping is not possible
- due to lack of suitable cuboid.
-\end_layout
-
-\begin_layout Itemize
-Complement scan optimizations for hierarchies are not implemented in this
- release (only in our prototype).
-\end_layout
-
-\begin_layout Itemize
-There's currently no way to run some useful analytic queries like 'select
- COUNT(fact), ip group by ip having COUNT(fact) > 10000'.
- 
-\end_layout
-
-\begin_layout Itemize
-One has to select at least one measure aggregate in the query.
- Technically, there should be no reason why not support a request for dimension
- members satisfying 
-\emph on
-where-clause
-\emph default
- conditions only, but the way it is currently designed, it need a least
- one measure to sum up in an aggregate (even if one doesn't use it).
-\end_layout
-
-\begin_layout Itemize
-Unlike with MDX, there's no 
-\emph on
-optimized 
-\emph default
-way to query a dimension or hierarchy membership.
- Since the system is pretty dynamic, new members might appear at any time
- and at this point we don't keep track of distinct list of them.
- 
-\emph on
-It is possible to query members in a particular slice though, including
- the total cube, 
-\emph default
-but that would be a full table scan over shortest cuboid still.
-\end_layout
-
-\begin_layout Subsection
+\begin_layout Section
 Complement and additive scan query optimizations.
  
 \end_layout
