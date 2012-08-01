@@ -114,7 +114,7 @@ public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
             if (splitEndKey != null) {
                 if (endRow == null)
                     endRow = splitEndKey;
-                else if (Bytes.compareTo(splitEndKey, endRow) > 0)
+                else if (Bytes.compareTo(splitEndKey, endRow) < 0)
                     endRow = splitEndKey;
             }
             /*

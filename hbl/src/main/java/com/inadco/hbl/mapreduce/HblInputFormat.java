@@ -161,22 +161,30 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
 
             int splitsNum = breaks.length;
 
+            // DEBUG
+            //            System.out.printf("splits :%d\n", splitsNum);
+
             for (int i = 1; i <= splitsNum; i++) {
-                // adjust split boundary to the group boundary.
                 byte[] startSplit = breaks[i - 1];
                 byte[] endSplit = i == splitsNum ? null : breaks[i];
 
-                if (groupKeyLen < startSplit.length) {
-                    if ((startSplit[groupKeyLen] & 0x80) == 0x80) {
-                        if (HblUtil.incrementKey(endSplit, 0, groupKeyLen))
-                            breaks[i] = endSplit = null; /* end region */
-                    }
-                    if (endSplit != null)
-                        Arrays.fill(endSplit, groupKeyLen, endSplit.length, (byte) 0);
-                }
+                /*
+                 * adjust split boundary to the group boundary. We kind of
+                 * assume that the first region always starts with an empty key
+                 * so it is, whatever it is, must be o.k. already.
+                 */
+
+                // if (groupKeyLen < startSplit.length) {
+                // if ((startSplit[groupKeyLen] & 0x80) == 0x80) {
+                // if (HblUtil.incrementKey(endSplit, 0, groupKeyLen))
+                // breaks[i] = endSplit = null; /* end region */
+                // }
+                
+                if (endSplit != null && endSplit.length > groupKeyLen)
+                    Arrays.fill(endSplit, groupKeyLen, endSplit.length, (byte) 0);
 
                 /*
-                 * Skip -- and get rid of -- degenerate group slits (e.g. no
+                 * Skip -- and get rid of -- degenerate group splits (e.g. no
                  * single group fits into the split.))
                  */
                 if (endSplit != null && 0 == Bytes.compareTo(startSplit, endSplit)) {
@@ -187,7 +195,7 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
                 /*
                  * if end split less than start key, skip the split too.
                  */
-                if (endSplit != null && Bytes.compareTo(endSplit, startKey) >= 0)
+                if (endSplit != null && Bytes.compareTo(endSplit, startKey) <= 0)
                     continue;
                 /*
                  * if start split less than start key, use start key for the
@@ -208,6 +216,18 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
 
                 result.add(new HblInputSplit(hloc.getHostname(), cuboidTableName, startSplit, endSplit));
             }
+
+            // DEBUG
+//            int i = 0;
+//            for (InputSplit split : result) {
+//                HblInputSplit hblSplit = (HblInputSplit) split;
+//                byte[] sk = hblSplit.getStartGroupingKey();
+//                byte[] ek = hblSplit.getEndGroupingKey();
+//                if (ek == null)
+//                    ek = new byte[0];
+//
+//                System.out.printf("hbl split %d: start %X:%X.\n", ++i, new BigInteger(1, sk), new BigInteger(1, ek));
+//            }
 
             return result;
 
