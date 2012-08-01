@@ -73,6 +73,7 @@ class HblInputSplit extends InputSplit implements Writable {
     @Override
     public void write(DataOutput out) throws IOException {
         out.writeUTF(regionLocation);
+        out.writeUTF(cuboidTable);
         out.writeShort((short) startGroupingKey.length);
         out.write(startGroupingKey);
         if (endGroupingKey == null) {
@@ -87,6 +88,7 @@ class HblInputSplit extends InputSplit implements Writable {
     @Override
     public void readFields(DataInput in) throws IOException {
         regionLocation = in.readUTF();
+        cuboidTable = in.readUTF();
         int keylen = in.readShort() & 0xFFFF;
         startGroupingKey = new byte[keylen];
         in.readFully(startGroupingKey);
