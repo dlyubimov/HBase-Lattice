@@ -240,16 +240,17 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
             }
 
             // DEBUG
-            int i = 0;
-            for (InputSplit split : result) {
-                HblInputSplit hblSplit = (HblInputSplit) split;
-                byte[] sk = hblSplit.getStartGroupingKey();
-                byte[] ek = hblSplit.getEndGroupingKey();
-                if (ek == null)
-                    ek = new byte[0];
-
-                System.out.printf("hbl split %d: start %X:%X.\n", ++i, new BigInteger(1, sk), new BigInteger(1, ek));
-            }
+            // int i = 0;
+            // for (InputSplit split : result) {
+            // HblInputSplit hblSplit = (HblInputSplit) split;
+            // byte[] sk = hblSplit.getStartGroupingKey();
+            // byte[] ek = hblSplit.getEndGroupingKey();
+            // if (ek == null)
+            // ek = new byte[0];
+            //
+            // System.out.printf("hbl split %d: start %X:%X.\n", ++i, new
+            // BigInteger(1, sk), new BigInteger(1, ek));
+            // }
 
             return result;
 
