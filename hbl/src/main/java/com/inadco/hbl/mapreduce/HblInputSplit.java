@@ -29,16 +29,16 @@ class HblInputSplit extends InputSplit implements Writable {
     private String regionLocation;
     private byte[] startGroupingKey;
     private byte[] endGroupingKey;
-    
-    
+    private String cuboidTable;
 
     public HblInputSplit() {
         super();
     }
 
-    HblInputSplit(String regionLocation, byte[] startGroupingKey, byte[] endGroupingKey) {
+    HblInputSplit(String regionLocation, String cuboidTable, byte[] startGroupingKey, byte[] endGroupingKey) {
         super();
         this.regionLocation = regionLocation;
+        this.cuboidTable = cuboidTable;
         this.startGroupingKey = startGroupingKey;
         this.endGroupingKey = endGroupingKey;
     }
@@ -64,6 +64,10 @@ class HblInputSplit extends InputSplit implements Writable {
 
     public byte[] getEndGroupingKey() {
         return endGroupingKey;
+    }
+
+    public String getCuboidTable() {
+        return cuboidTable;
     }
 
     @Override

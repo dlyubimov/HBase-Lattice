@@ -46,10 +46,9 @@ import com.inadco.hbl.util.HblUtil;
 
 public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
 
-    public static final String PROP_QUERY            = "hbl.mapred.query";
-    public static final String PROP_PARAM_NO         = "hbl.mapred.paramno";
-    public static final String PROP_PARAM            = "hbl.mapred.param.";
-    public static final String PROP_CUBOID_TABLENAME = "hbl.mapred.cuboidtable";
+    public static final String PROP_QUERY    = "hbl.mapred.query";
+    public static final String PROP_PARAM_NO = "hbl.mapred.paramno";
+    public static final String PROP_PARAM    = "hbl.mapred.param.";
 
     public HblInputFormat() {
         super();
@@ -207,16 +206,8 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
                 }
                 HRegionLocation hloc = htable.getRegionLocation(startSplit, false);
 
-                result.add(new HblInputSplit(hloc.getHostname(), startSplit, endSplit));
-
+                result.add(new HblInputSplit(hloc.getHostname(), cuboidTableName, startSplit, endSplit));
             }
-
-            /*
-             * Just for the sake of controlling the idempotency of cuboid
-             * selection optimization on the backend's task side, we are passing
-             * in the cuboid table selected at the front end's model.
-             */
-            conf.set(PROP_CUBOID_TABLENAME, cuboidTableName);
 
             return result;
 
@@ -244,7 +235,7 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
                     PreparedAggregateQueryImpl paq = (PreparedAggregateQueryImpl) hblQueryClient.createPreparedQuery();
                     paq.prepare(getHblQuery(conf));
 
-                    String cuboidTableName = conf.get(PROP_CUBOID_TABLENAME);
+                    String cuboidTableName = hblSplit.getCuboidTable();
                     if (cuboidTableName == null)
                         throw new HblException("Invalid cuboid name at backend. Something in MR happened wrong.");
 
