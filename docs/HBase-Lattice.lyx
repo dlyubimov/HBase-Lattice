@@ -1841,12 +1841,19 @@ color{tentative}
 \end_layout
 
 \begin_layout Standard
-One of most obvious consequences to using HBase scans as a way of querying
- multidimensional data is that most query work still can be distributed
- based on location proximity to region server.
- That applies equally well to queries that produce long results, as long
- as queries that do a bit of inline grouping due to various reasons but
- not necessarily produce huge results.
+One of the most common goals of having multidimensional database is to have
+ an exploratory OLAP capability.
+ However, sometimes it is useful to run a bulk query and dump certain projection
+ of the cube (or work on it) as a batch.
+ For example, to dump average performance metrics for all accounts in the
+ system for the last month.
+ Such query may produce a significant amount of work both on HBase-Lattice
+ side and client side that works with the results and thus may benefit enormousl
+y from a locality-sensitive worker distribution.
+ Since HBase-Lattice queries consist of HBase scans, they can be defined
+ as a MapReduce job that tries to optimize scan splits so that results of
+ multidimensional query are compiled from HBase region data located on the
+ same node as a MapReduce worker task.
 \end_layout
 
 \begin_layout Standard
@@ -1933,7 +1940,8 @@ status open
 
 \end_inset
 
-
+ The total result of the query is equivalent of concatenating results of
+ all map tasks.
 \end_layout
 
 \begin_layout Standard

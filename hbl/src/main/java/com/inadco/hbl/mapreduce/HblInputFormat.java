@@ -19,6 +19,7 @@
 package com.inadco.hbl.mapreduce;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -162,7 +163,7 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
             int splitsNum = breaks.length;
 
             // DEBUG
-            //            System.out.printf("splits :%d\n", splitsNum);
+            // System.out.printf("splits :%d\n", splitsNum);
 
             for (int i = 1; i <= splitsNum; i++) {
                 byte[] startSplit = breaks[i - 1];
@@ -174,14 +175,35 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
                  * so it is, whatever it is, must be o.k. already.
                  */
 
-                // if (groupKeyLen < startSplit.length) {
-                // if ((startSplit[groupKeyLen] & 0x80) == 0x80) {
-                // if (HblUtil.incrementKey(endSplit, 0, groupKeyLen))
-                // breaks[i] = endSplit = null; /* end region */
-                // }
-                
-                if (endSplit != null && endSplit.length > groupKeyLen)
-                    Arrays.fill(endSplit, groupKeyLen, endSplit.length, (byte) 0);
+                if (endSplit != null && endSplit.length > groupKeyLen) {
+
+                    /*
+                     * round end split boundary to the closest group key.
+                     * 
+                     * Naive test for proximity to choose between rounding up or
+                     * down.
+                     */
+                    if ((endSplit[groupKeyLen] & 0x80) == 0x80) {
+                        /* round up the end split */
+                        if (HblUtil.incrementKey(endSplit, 0, groupKeyLen))
+                            /*
+                             * if overflow during rounding up the grouping key
+                             * then assume null aka till-the-end-of-the-table
+                             * key
+                             */
+                            breaks[i] = endSplit = null;
+                    }
+                    /*
+                     * ... otherwise round down, i.e. do nothing here.
+                     */
+
+                    /*
+                     * the rounding itself by flushing lower part of the key
+                     * with 0s.
+                     */
+                    if (endSplit != null)
+                        Arrays.fill(endSplit, groupKeyLen, endSplit.length, (byte) 0);
+                }
 
                 /*
                  * Skip -- and get rid of -- degenerate group splits (e.g. no
@@ -218,16 +240,16 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
             }
 
             // DEBUG
-//            int i = 0;
-//            for (InputSplit split : result) {
-//                HblInputSplit hblSplit = (HblInputSplit) split;
-//                byte[] sk = hblSplit.getStartGroupingKey();
-//                byte[] ek = hblSplit.getEndGroupingKey();
-//                if (ek == null)
-//                    ek = new byte[0];
-//
-//                System.out.printf("hbl split %d: start %X:%X.\n", ++i, new BigInteger(1, sk), new BigInteger(1, ek));
-//            }
+            int i = 0;
+            for (InputSplit split : result) {
+                HblInputSplit hblSplit = (HblInputSplit) split;
+                byte[] sk = hblSplit.getStartGroupingKey();
+                byte[] ek = hblSplit.getEndGroupingKey();
+                if (ek == null)
+                    ek = new byte[0];
+
+                System.out.printf("hbl split %d: start %X:%X.\n", ++i, new BigInteger(1, sk), new BigInteger(1, ek));
+            }
 
             return result;
 
