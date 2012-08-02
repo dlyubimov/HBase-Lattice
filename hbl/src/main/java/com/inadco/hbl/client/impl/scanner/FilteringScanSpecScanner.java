@@ -52,7 +52,7 @@ import com.inadco.hbl.util.IOUtil;
 public class FilteringScanSpecScanner implements InputIterator<RawScanResult> {
 
     // caching. TODO: make this configurable.
-    public static final int  CACHING      = 128;
+    public static final int  CACHING      = 1000;
 
     private ScanSpec         scanSpec;
 
