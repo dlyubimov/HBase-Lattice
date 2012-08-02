@@ -216,7 +216,7 @@ Tentative deletion
 \end_layout
 
 \begin_layout Section
-Motivations
+Motivation
 \end_layout
 
 \begin_layout Itemize
@@ -294,15 +294,106 @@ Another motivation is to be able to do things within the same resource space
  bulk data transfer and import.
 \end_layout
 
+\begin_layout Section
+Notable differentiating facts
+\end_layout
+
+\begin_layout Paragraph
+Compiler is a Pig codegen.
+\end_layout
+
 \begin_layout Standard
-I scanned surroundings and noticed at least 2 such attempts which for various
- reasons (for most part, maturity and staleness) did not fit our purposes.
+The compiler component generates a Pig script at runtime based on current
+ specification of the model.
  
 \end_layout
 
-\begin_layout Section
-Differentiating aspects of HBL vs.
- MOLAP, ROLAP and cube lattice model in general
+\begin_layout Standard
+MapReduce compiler allows to do distributed aggregation of the data before
+ making updates to HBase-stored cuboids.
+ 
+\end_layout
+
+\begin_layout Standard
+It is possible to script out some additional distributed processing before
+ (or in the same time as) passing the data to compilation.
+\end_layout
+
+\begin_layout Paragraph
+Incremental data addition to the cube (aka 
+\begin_inset Quotes eld
+\end_inset
+
+compilation
+\begin_inset Quotes erd
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+Low latency for cube update cycles.
+ (as often as compiler Pig job can be complete).
+\end_layout
+
+\begin_layout Paragraph
+Custom HBase filtering for querying.
+\end_layout
+
+\begin_layout Standard
+A special custom hbase filter is used to allow to skip over the rows we
+ are not really interested in during composite key scan, so the scan iterations
+ keep going over mostly relevant facts only and can skip over significant
+ portion of the data between first and last scan rows.
+\end_layout
+
+\begin_layout Paragraph
+Four different ways to query the cube data.
+ 
+\end_layout
+
+\begin_layout Standard
+Querying is available via:
+\end_layout
+
+\begin_layout Itemize
+Declarative Java client
+\end_layout
+
+\begin_layout Itemize
+HBL query language dialect
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+MapReduce distributed query (input format) for batch consumption
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+R package for running hbl queries in R.
 \end_layout
 
 \begin_layout Paragraph
@@ -348,55 +439,19 @@ In the interest of keeping things simple, the model specification explicitly
  Consequently, not all aggregated groups are avaialable for querying.
  Working out which cuboids to compile is similar to process where DBA tries
  to figure out which indices to deploy based on use patterns.
- 
-\end_layout
-
-\begin_layout Standard
-New projectsions can be added dynamically to the system.
- Just specify new projections, deploy the model and the compiler component
- will start producing new projections right away.
- (applying new projections over past data retroactively is not easy at this
- point though.
- Pretty much the only way to do that is to drop all existing data and re-compile
- all projections over the entire historical facts again).
+ Optimizer selects most optimal (from its point of view) aggregation to
+ use for a query automatically.
+ Aggregate queries can use a range cuboids but the best performance is achieved
+ whenever grouping fits the declared cuboid aggregating dimensions.
 \end_layout
 
 \begin_layout Paragraph
-Compiler is a Pig codegen.
+API to define new dimensions and aggregate functions.
 \end_layout
 
 \begin_layout Standard
-The compiler component generates pig script at runtime based on current
- specification of the model.
- (see 
-\emph on
-sample
-\emph default
- module for example how to run these scripts).
-\end_layout
-
-\begin_layout Standard
-One of the somewhat stale projects on github used similar approach but instead
- of using Apache Pig, that project used python streaming MR.
- But the idea is very similar.
- 
-\end_layout
-
-\begin_layout Standard
-MapReduce compiler allows to do distributed aggregation of the data before
- making updates to hbased-stored cuboids.
- 
-\end_layout
-
-\begin_layout Paragraph
-Custom HBase filtering.
-\end_layout
-
-\begin_layout Standard
-A special custom hbase filter is used to allow to skip over the rows we
- are not really interested in during composite key scan, so the scan iterations
- keep going over mostly relevant facts only and can skip over significant
- portion of the data between first and last scan rows.
+Addition of custom dimension or measure type, or aggregate functions, is
+ fairly easy and straightforward.
 \end_layout
 
 \begin_layout Section
@@ -1940,8 +1995,13 @@ status open
 
 \end_inset
 
- The total result of the query is equivalent of concatenating results of
+ The total result of the query is equivalent tpo concatenating results of
  all map tasks.
+ Extend 
+\family typewriter
+HblMapper
+\family default
+ abstract mapper for the mapper task.
 \end_layout
 
 \begin_layout Standard

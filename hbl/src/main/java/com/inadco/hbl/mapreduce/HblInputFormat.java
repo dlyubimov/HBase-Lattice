@@ -19,7 +19,6 @@
 package com.inadco.hbl.mapreduce;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -181,10 +180,17 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
                      * round end split boundary to the closest group key.
                      * 
                      * Naive test for proximity to choose between rounding up or
-                     * down.
+                     * down. This "optimization" is of course very crude since
+                     * it assumes uniformly distributed dimensional key data.
+                     * Which sometimes may be 50% wrong (e.g. calendar-time
+                     * dimension will always be rounded down only). However, we
+                     * cannot guess how many records may be present in the group
+                     * at this point, so... whatever.
                      */
                     if ((endSplit[groupKeyLen] & 0x80) == 0x80) {
-                        /* round up the end split */
+                        /*
+                         * round up the end split.
+                         */
                         if (HblUtil.incrementKey(endSplit, 0, groupKeyLen))
                             /*
                              * if overflow during rounding up the grouping key
