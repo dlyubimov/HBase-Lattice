@@ -35,16 +35,46 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.client.AggregateResultSet;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.HblQueryClient;
+import com.inadco.hbl.client.PreparedAggregateQuery;
+import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.client.impl.PreparedAggregateQueryImpl;
 import com.inadco.hbl.client.impl.scanner.CompositeKeyRowFilter;
 import com.inadco.hbl.client.impl.scanner.ScanSpec;
 import com.inadco.hbl.util.HblUtil;
 
-public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
+/**
+ * HblInputFormat : yet another way to query cube data in distributed way and
+ * send it off to mappers of a MapReduce task for processing.
+ * <P>
+ * 
+ * Behind the scenes, it is using {@link PreparedAggregateQuery} to execute it
+ * and therefore is using hbl query language to set it up. Use
+ * {@link #setHblQuery(Job, String)} method to set the query and
+ * {@link #setHblParam(Configuration, int, String)} method to initialize
+ * parameters for '?'. At this time, only parameters that allow conversion from
+ * a String, will work.
+ * <P>
+ * 
+ * Since query execution is a bunch of scans, this class figures out a good way
+ * to assign tasks to region locations so that scans are mostly local w.r.t to
+ * the data used.
+ * <P>
+ * 
+ * Extending {@link HblMapper} helper is recommended to ensure proper data cast
+ * to the map task.
+ * <P>
+ * 
+ * See also MRExample1Query.java in sample module for an example of a MapReduce
+ * query set up this way.
+ * <P>
+ * 
+ * @author dmitriy
+ * 
+ */
+public class HblInputFormat extends InputFormat<NullWritable, PreparedAggregateResult> {
 
     public static final String PROP_QUERY    = "hbl.mapred.query";
     public static final String PROP_PARAM_NO = "hbl.mapred.paramno";
@@ -266,9 +296,10 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
     }
 
     @Override
-    public RecordReader<NullWritable, AggregateResult> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public RecordReader<NullWritable, PreparedAggregateResult> createRecordReader(InputSplit split,
+                                                                                  TaskAttemptContext context)
         throws IOException, InterruptedException {
-        return new RecordReader<NullWritable, AggregateResult>() {
+        return new RecordReader<NullWritable, PreparedAggregateResult>() {
 
             private AggregateResultSet ars;
 
@@ -314,8 +345,8 @@ public class HblInputFormat extends InputFormat<NullWritable, AggregateResult> {
             }
 
             @Override
-            public AggregateResult getCurrentValue() throws IOException, InterruptedException {
-                return ars.current();
+            public PreparedAggregateResult getCurrentValue() throws IOException, InterruptedException {
+                return (PreparedAggregateResult) ars.current();
             }
 
             @Override

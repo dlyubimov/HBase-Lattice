@@ -21,8 +21,19 @@ package com.inadco.hbl.mapreduce;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import com.inadco.hbl.client.AggregateResult;
+import com.inadco.hbl.client.PreparedAggregateResult;
 
-public abstract class HblMapper<KEYOUT, VALUEOUT> extends Mapper<NullWritable, AggregateResult, KEYOUT, VALUEOUT> {
+/**
+ * Abstract base for MapReduce query map tasks receiving hbl query data.<P>
+ * 
+ * @see HblInputFormat
+ * 
+ * @author dmitriy
+ * 
+ * @param <KEYOUT>
+ * @param <VALUEOUT>
+ */
+public abstract class HblMapper<KEYOUT, VALUEOUT> extends
+    Mapper<NullWritable, PreparedAggregateResult, KEYOUT, VALUEOUT> {
 
 }

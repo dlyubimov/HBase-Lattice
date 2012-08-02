@@ -11,7 +11,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.inadco.hbl.client.AggregateResult;
 import com.inadco.hbl.client.HblException;
 import com.inadco.hbl.client.PreparedAggregateResult;
 import com.inadco.hbl.mapreduce.HblInputFormat;
@@ -112,10 +111,9 @@ public class MRExample1Query extends Configured implements Tool {
         private final Text val = new Text();
 
         @Override
-        protected void map(NullWritable key, AggregateResult value, Context context) throws IOException,
+        protected void map(NullWritable key, PreparedAggregateResult par, Context context) throws IOException,
             InterruptedException {
             try {
-                PreparedAggregateResult par = (PreparedAggregateResult) value;
 
                 /*
                  * Just write tab-separated lines -- group, impCnt, clickCnt.
