@@ -186,7 +186,7 @@ public class HblInputFormat extends InputFormat<NullWritable, PreparedAggregateR
             if (HblUtil.incrementKey(endKey, 0, endKey.length))
                 endKey = null; // right-unbounded
 
-            HTable htable = new HTable(cuboidTableName);
+            HTable htable = new HTable(context.getConfiguration(), cuboidTableName);
             byte[][] breaks = htable.getStartKeys();
 
             int splitsNum = breaks.length;
