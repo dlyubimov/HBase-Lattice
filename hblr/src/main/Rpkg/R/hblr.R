@@ -206,42 +206,60 @@ setParameter.HblQuery <- function (paramIndex, value ) {
 #' without having to re-prepare it.
 #' 
 #' @method execute HblQuery
+#' @param JCONV_FUN a function to convert non-numeric java object to an R primitive type
+#' that we can put into the resulting frame cell. By default, it uses 
+#' \link{hbl.JCONV_TOSTRING} which is a call to java.lang.Object.toString(). 
+#' @param ROW_FUN a function that, if specified, postprocesses supplied list 
+#' into a new list to form final rows of the result data frame. Returned values should 
+#' be consistent accross entire data set. Perhaps a way to add more computed attributes 
+#' to the data set if needed.
 #' @return data frame corresponding to query results. Data frame names correspond to the 
 #' aliases used in the query. 
 #' 
-execute.HblQuery <- function ( ) {
+execute.HblQuery <- function ( JCONV_FUN=hbl.JCONV_TOSTRING, ROW_FUN=NULL ) {
 	rs <- q$execute() 
-    on.exit(rs$close(), add=T)
+	on.exit(rs$close(), add=T)
 	aliases <- sapply ( rs$getAliases(), function(alias) as.character(alias$toString()))
 	
-	
-	r <- data.frame(stringsAsFactors=F)
+	r <- NULL
 	
 	nextRow <- 0
 	while ( .jcall(rs,"Z","hasNext", simplify=T) ) {
 		nextRow <- nextRow+1 
 		.jcall(rs,"V","next")
 		hblrow <- .jcall(rs,"Ljava/lang/Object;","current")
-		for (alias in aliases) {
-			a <- .jcall(hblrow,"Ljava/lang/Object;","getObject", alias, evalArray=T, simplify = T, use.true.class=T)
-			if ( mode(a)=='raw') { 
-				# handling hex dimension values, byte arrays
-				a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
-				
-			} else if ( as.character(class(a)) =='jobjRef') {
-				if ( a%instanceof%"java.lang.Number") {
-					a<-.jcall(a,"D","doubleValue",simplify=T)	
-				} else {
-					a<- .jcall(a,"Ljava/lang/String;","toString",simplify = T)
-				}
-			}
-			r[nextRow,alias] <- ifelse(is.null(a),NA,a)
-		}
+		
+		processedRow <- lapply(aliases,function(alias) {
+					a<- .jcall(hblrow,"Ljava/lang/Object;","getObject", alias, evalArray=T, simplify = T, use.true.class=T)
+					if (!is.null(a)) { 
+						if ( mode(a)=='raw') { 
+							# handling hex dimension values, byte arrays
+							a<- paste(format(as.hexmode(as.integer(a)),width=2,upper.case=T),collapse="")
+							
+						} else if ( as.character(class(a)) =='jobjRef') {
+							if ( a%instanceof%"java.lang.Number") {
+								a<-.jcall(a,"D","doubleValue",simplify=T)	
+							} else {
+								a<- JCONV_FUN(a)
+							}
+						}
+					} else  
+						a <- NA
+					
+				})
+		names(processedRow) <- aliases
+		
+		if(!is.null(ROW_FUN))
+			processedRow <- ROW_FUN(processedRow)
+		
+		if ( nextRow == 1 )	
+			r <- data.frame(processedRow, stringsAsFactors=F) else
+			r[nextRow,] <- processedRow
 	}
 	if ( nextRow == 0 ) { 
-			#todo: is there a more efficient way of doing this?
-			r <- data.frame(stringsAsFactors=F)
-			for (alias in aliases) r[[alias]] <- character(0)
+		#todo: is there a more efficient way of doing this?
+		r <- data.frame(stringsAsFactors = F)
+		for (alias in aliases) r[[alias]] <- character(0)
 	}
 	r 
 }
@@ -352,6 +370,24 @@ hbl.HblAdmin <- setRefClass("HblAdmin",
 				deployCube=deployCube.HblAdmin,
 				saveModel=saveModel.HblAdmin
 		))
+
+#'
+#' Default java toString() mapping
+hbl.JCONV_TOSTRING<-function(x) {
+	.jcall(x,"Ljava/lang/String;","toString",simplify=T)
+}
+
+hbl.JCONV_CANNYAVG<- function(x, JCONV_FUN=hbl.JCONV_TOSTRING) {
+	if(x %instanceof% "com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer") { 
+		.jcall(x,"D","getValue",simplify=T)
+	} else JCONV_FUN(x)
+}
+	
+hbl.JCONV_CANNYAVGNOW<- function(x, now, JCONV_FUN=hbl.JCONV_TOSTRING) {
+	if(x %instanceof% "com.inadco.hbl.math.aggregators.OnlineCannyAvgSummarizer") { 
+		.jcall(x,"D","getValueNow", now, simplify=T)
+	} else JCONV_FUN(x)
+}
 
 ###################################
 # incremental compilation         # 
