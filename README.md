@@ -7,10 +7,10 @@ and emphasis on Time Series data.
 
 Like OLAP, it has concepts of facts, measures, dimensions and dimension hierarchies. 
 Data query is supported by means of 
-# declarative query api or 
-# simple select-like query language; 
-# HblInputFormat for distributed locality-sensitive bulk cube queries /exports; 
-# R package to load summaries as R data frames for further processing.
+1. declarative query api or 
+2. simple select-like query language; 
+3. HblInputFormat for distributed locality-sensitive bulk cube queries /exports; 
+4. R package to load summaries as R data frames for further processing.
 
 
 
