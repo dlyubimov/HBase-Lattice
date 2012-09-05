@@ -6,8 +6,11 @@ available for query by means of parallelizable MapReduce incremental compiler,
 and emphasis on Time Series data.
 
 Like OLAP, it has concepts of facts, measures, dimensions and dimension hierarchies. 
-Data query is supported by means of 1) declarative query api or 2) simple 
-select-like query language. 
+Data query is supported by means of 
+# declarative query api or 
+# simple select-like query language; 
+# HblInputFormat for distributed locality-sensitive bulk cube queries /exports; 
+# R package to load summaries as R data frames for further processing.
 
 
 
@@ -15,19 +18,6 @@ Documentation
 ============= 
 
 Check out the docs folder. 
-
-NEWS
-----
-
-Now has R package, "hblr", to run hbl queries form inside R directly into HBL . 
-R setup package is fairly simple (see ecor/install.sh to compile and install from sources). 
-
-This depends on two packages: 1) rJava (standard R-java integration package) 
-and 2) ecor (from ecoadapters project, tested with ecor-0.4.0-snapshot at this point of time) 
-
-Compiled R packages are also available as maven artifact from the maven repository configured 
-in pom's. See documentation and test.R for example of use.
-
 
 Build
 =====
@@ -42,6 +32,12 @@ https://github.com/dlyubimov/dlyubimov-maven-repo/raw/master/releases for tge ma
 local snapshot build will be a better choice for anyone who wants to try out the HEAD of trunk.)
 
 all released builds there are tagged in the git (see tags).
+
+The R package builds when -DR option is specified to maven. 
+However, there are additional requirements for building R artifact 
+(namely, R and dependent packages installed locally). R module releases 
+are also available as prebuilt from the maven repository mentioned above.
+They have "rpkg" maven classifier.
 
 Contributors
 ============ 
