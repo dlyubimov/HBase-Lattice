@@ -543,6 +543,45 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
  code generation.
 \end_layout
 
+\begin_layout Paragraph
+Note on how to run Example1.java:
+\end_layout
+
+\begin_layout Standard
+Compile project with maven so that example job file is built (it will be
+ used by Hadoop at the backend).
+ Then open example1.java in Eclipse and choose 
+\begin_inset Quotes eld
+\end_inset
+
+Run As
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $\rightarrow$
+\end_inset
+
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Java application
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For out-of-Eclipse experience, you need to run it from the 
+\begin_inset Quotes eld
+\end_inset
+
+sample
+\begin_inset Quotes erd
+\end_inset
+
+ maven module directory so the hadoop job file is found.
+\end_layout
+
 \begin_layout Subsubsection
 \begin_inset CommandInset label
 LatexCommand label
@@ -872,6 +911,55 @@ dframe
 \end_layout
 
 \begin_layout Standard
+Note the use of half-open slice specification for time slices.
+ This is a recommended way to slice time series data.
+ Since time dimension is not really continuous but is transformed into a
+ time hierarchy with lowest granularity of 1 hour, the slice spec of [
+\begin_inset Quotes eld
+\end_inset
+
+2011/9/1
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+2011/11/1
+\begin_inset Quotes erd
+\end_inset
+
+] really means range from 
+\begin_inset Quotes eld
+\end_inset
+
+2011/9/1 00:00:00 UTC
+\begin_inset Quotes erd
+\end_inset
+
+ to 
+\begin_inset Quotes eld
+\end_inset
+
+2011/11/1 01:00:00 UTC
+\begin_inset Quotes erd
+\end_inset
+
+ i.e.
+ includes 1 more hour than the obvious intent here.
+ To fix the situation, a half-open slice spec 
+\begin_inset Quotes eld
+\end_inset
+
+[?,?)
+\begin_inset Quotes erd
+\end_inset
+
+ is used.
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -953,9 +1041,7 @@ The binning queries time and plotting time will not depend on actual count
 \end_layout
 
 \begin_layout Standard
-There is not much more details at this point other than in this example.
- Further and up-to-date details could be found in R help system for the
- 
+Further and up-to-date details could be found in R help system for the 
 \emph on
 hblr
 \emph default
@@ -1819,10 +1905,27 @@ Query limitations.
 \end_layout
 
 \begin_layout Itemize
-There has to be a cuboid specifying all dimensions in a group clause in
- the leftmost positions.
- Hence, plan optimizer may complain if certain grouping is not possible
- due to lack of suitable cuboid.
+There has to be a suitable cuboid present and built (see 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Suitable-cuboid"
+
+\end_inset
+
+.)
 \end_layout
 
 \begin_layout Itemize
@@ -2070,8 +2173,8 @@ color{tentative}
 
 \end_inset
 
-As per conventions in Pig and SQL, this pig will return NULL for empty groups
- (groups with no single fact encountered).
+As per conventions in Pig and SQL, this function will return NULL for empty
+ groups (groups with no single fact encountered).
 \begin_inset ERT
 status open
 
@@ -2121,7 +2224,7 @@ status open
 \end_inset
 
  Formaly: 
-\begin_inset Formula $\mbox{count}\left(X\right)=\sum_{i=1}^{n}x_{i}$
+\begin_inset Formula $\mbox{count}\left(X\right)=N$
 \end_inset
 
 .
@@ -2129,7 +2232,7 @@ status open
 
 \begin_layout Itemize
 Exponentially (or, rather, Canny function) weighted average for facts with
- time-based sampling 
+ time-based irregular sampling 
 \series bold
 
 \begin_inset Formula $\left(x,t\right)$
@@ -2158,7 +2261,7 @@ see metrics doc and example.
 
 \begin_layout Itemize
 Exponentially (or, rather, Canny function) weighted rate for facts with
- time-based sampling 
+ time-based irregular sampling 
 \begin_inset Formula $\left(\mbox{count},t\right)$
 \end_inset
 
@@ -2541,8 +2644,23 @@ Hence, it follows that we should model a hierarchy in a way so that its
 Optimization and known deficiencies to watch for
 \end_layout
 
+\begin_layout Standard
+Most, if not all, of HBL optimization actually revolves around choosing
+ the right set of available cuboids.
+ Choice of cuboids is encompassed by a set of frequently-run (or potentially
+ run) queries.
+ This and other optimization/known deficiency topics are discussed here.
+\end_layout
+
 \begin_layout Subsection
 Suitable cuboid
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Suitable-cuboid"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2567,7 +2685,7 @@ If a query slices by set of dimensions
 and
 \bar default
  
-\begin_inset Formula $G\cup S_{d}$
+\begin_inset Formula $G\cup S_{d}'$
 \end_inset
 
  dimensions are in the lead positions of 
@@ -2585,15 +2703,87 @@ and
 \begin_inset Formula $\left[a,a\right]$
 \end_inset
 
-).
-\end_layout
+); and 
+\begin_inset Formula $S_{d}'\subset S_{d}$
+\end_inset
 
-\begin_layout Subsection
-Shorter cuboids
+ is any subset of 
+\begin_inset Formula $S_{d}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
-If an often-run query groups by A and B, it can be served by any of cuboisd
+For example, if we have a query:
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+select A count(m1) as m1Count from Cube 
+\begin_inset Newline newline
+\end_inset
+
+where B in [?] group by A
+\end_layout
+
+\begin_layout Standard
+then any of cuboids with dimensions (A,B); (B,A); (A,C,B) or (B,A,C) etc.
+ are suitable to run the query (albeit they will provide different performance;
+ optimizer will try to choose an 
+\begin_inset Quotes eld
+\end_inset
+
+optimal
+\begin_inset Quotes erd
+\end_inset
+
+ one).
+ Cuboids (B,C,A); (C,A,B) or (C,B,A) will not be 
+\begin_inset Quotes eld
+\end_inset
+
+suitable
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+For a similar query:
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+select A count(m1) as m1Count from Cube 
+\begin_inset Newline newline
+\end_inset
+
+where B in [?], C in [?,?) group by A
+\end_layout
+
+\begin_layout Standard
+examples of 
+\begin_inset Quotes eld
+\end_inset
+
+suitable
+\begin_inset Quotes erd
+\end_inset
+
+ cuboids are (A,C,B); (A,B,C); (B,A,C); (B,A,D,C) or (A,D,C,B) etc.
+ Examples of non-suitable cuboids are (B,C,A); (C,A,B); (C,B,A) etc.
+\end_layout
+
+\begin_layout Subsection
+Queries over shorter cuboids normally run faster
+\end_layout
+
+\begin_layout Standard
+If an often-run query groups by A and B, it can be served by any of cuboids
  with dimensions (A,B), (A,B,C), (A,B,C,D) but will ran fastest with (A,B).
  Optimizer will make the right choice but only if (A,B) is actually available.
 \end_layout
@@ -2739,6 +2929,12 @@ Per HBase tactics, it is important to maintain uniform key distribution
  By the same logic, it is almost never useful to put time related hierarchies
  into the lead position unless the nature of application provides uniform
  interest over the entire time period analyzed.
+\end_layout
+
+\begin_layout Standard
+Additional instruments include traditional HBase techniques such as query
+ hot spot detection and elimination (perhaps by inducing a forced split
+ on a cuboid table).
 \end_layout
 
 \begin_layout Subsection
