@@ -870,7 +870,7 @@ status open
 
 \begin_layout Plain Layout
 
-<<sampleRQuery>>=
+<<sampleRQuery, cache=T>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -1012,7 +1012,7 @@ status open
 
 \begin_layout Plain Layout
 
-<<SampleQueryAndPlot>>=
+<<SampleQueryAndPlot,cache=T>>=
 \end_layout
 
 \begin_layout Plain Layout
