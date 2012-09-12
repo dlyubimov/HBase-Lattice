@@ -5,11 +5,15 @@
 \textclass article
 \begin_preamble
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\usepackage{fullpage}
 \usepackage{color}
 \definecolor{tentative}{rgb}{0.4,0.6,0.7}
 \definecolor{comment}{rgb}{0.7,0.4,0.4}
 \end_preamble
 \use_default_options true
+\begin_modules
+knitr
+\end_modules
 \maintain_unincluded_children false
 \language english
 \language_package default
@@ -87,7 +91,7 @@ Dmitriy Lyubimov
 
 \size small
 \emph on
-dlyubimov@apache.org
+dlyubimov at apache dot org
 \end_layout
 
 \begin_layout Standard
@@ -98,6 +102,39 @@ LatexCommand tableofcontents
 
 
 \begin_inset Newpage cleardoublepage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<knitrInit,echo=F,results='hide',warning=F,message=F>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+library(hblr)
+\end_layout
+
+\begin_layout Plain Layout
+
+library(ggplot2)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
 \end_inset
 
 
@@ -827,87 +864,93 @@ status open
 
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<sampleRQuery>>=
+\end_layout
+
+\begin_layout Plain Layout
+
 library(hblr) 
 \end_layout
 
-\begin_layout LyX-Code
-q <- hbl.HblQuery$new(c("select dim1, COUNT(impCnt) ", 							
+\begin_layout Plain Layout
+
+q <- hbl.HblQuery$new(c(
 \end_layout
 
-\begin_deeper
-\begin_layout LyX-Code
-"as impCnt from Example1 ", 							
+\begin_layout Plain Layout
+
+	"select dim1, COUNT(impCnt) ", 							
 \end_layout
 
-\begin_layout LyX-Code
-"where impressionTime in [?,?) ", 							
+\begin_layout Plain Layout
+
+	"as impCnt from Example1 ", 							
 \end_layout
 
-\begin_layout LyX-Code
-\begin_inset Quotes eld
-\end_inset
+\begin_layout Plain Layout
 
-,dim1 in [?] 
-\begin_inset Quotes eld
-\end_inset
-
-, 							
+	"where impressionTime in [?,?),", 							
 \end_layout
 
-\begin_layout LyX-Code
-"group by dim1")); 
+\begin_layout Plain Layout
+
+	"dim1 in [?] ", 							
 \end_layout
 
-\end_deeper
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
+	"group by dim1")); 
+\end_layout
+
+\begin_layout Plain Layout
+
 timerange <- strptime(c("2011/9/1", "2011/11/1"), 			
 \end_layout
 
-\begin_deeper
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 "%Y/%m/%d") 
 \end_layout
 
-\end_deeper
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 q$setParameter(0,timerange[1]) 	
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 q$setParameter(1,timerange[2]) 	
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 q$setParameter(2,"1") 
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 system.time(dframe <- q$execute())  
 \end_layout
 
-\begin_layout LyX-Code
+\begin_layout Plain Layout
+
 dframe 
-\begin_inset Newline newline
-\end_inset
-
-
-\begin_inset Newline newline
-\end_inset
-
-
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout LyX-Code
-                              dim1 impCnt 
+\begin_layout Plain Layout
+
+@
 \end_layout
 
-\begin_layout LyX-Code
-1 00000000000000000000000000000001  14760 
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -957,6 +1000,126 @@ Note the use of half-open slice specification for time slices.
 \end_inset
 
  is used.
+\end_layout
+
+\begin_layout Standard
+Another example on the test data(lifetime):
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<SampleQueryAndPlot>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+library(ggplot2)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+dframe <- hbl.HblQuery$new(c(
+\end_layout
+
+\begin_layout Plain Layout
+
+		"select dim1, SUM(impCnt) as impCnt, ",
+\end_layout
+
+\begin_layout Plain Layout
+
+		"SUM(click) as clickCnt ",
+\end_layout
+
+\begin_layout Plain Layout
+
+		"from Example1 group by dim1"))$execute();
+\end_layout
+
+\begin_layout Plain Layout
+
+dframe
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#rearrange
+\end_layout
+
+\begin_layout Plain Layout
+
+dframe <- rbind(
+\end_layout
+
+\begin_layout Plain Layout
+
+	data.frame(dim1=dframe$dim1,count=dframe$impCnt,group="impressions"),
+\end_layout
+
+\begin_layout Plain Layout
+
+	data.frame(dim1=dframe$dim1,count=dframe$clickCnt,group="clicks"))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#flipped barplot with dodge by event category
+\end_layout
+
+\begin_layout Plain Layout
+
+ggplot(dframe,aes(x=dim1,y=count,fill=group))+
+\end_layout
+
+\begin_layout Plain Layout
+
+		geom_bar(stat="identity",position="dodge")+
+\end_layout
+
+\begin_layout Plain Layout
+
+		coord_flip()+
+\end_layout
+
+\begin_layout Plain Layout
+
+		opts(
+\end_layout
+
+\begin_layout Plain Layout
+
+				axis.text.y=theme_text(angle=90,size=8),
+\end_layout
+
+\begin_layout Plain Layout
+
+				legend.position="bottom")
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1260,7 +1423,7 @@ At this time, compiler will not accept NULL values for dimensions because
  dimension values as a part of a composite hbase key.
  If it is desirable to accept quietly NULL values as dimensional values
  in fact stream, such NULLs may be transformed into a reserved non-null
- value in the compiler's preambula script.
+ value in the compiler's preamble script.
  Alternatively, some dimension implementations (
 \family typewriter
 HexDimension
@@ -1367,13 +1530,9 @@ Cube compilation is done via incremental Pig script dynamically generated
  Instead, it relies on a fragment of the script that reads input into a
  predefined Pig relation, to be supplied.
  This Pig-scripted fragment is called 
-\begin_inset Quotes eld
-\end_inset
-
-preambula
-\begin_inset Quotes erd
-\end_inset
-
+\emph on
+preamble
+\emph default
  and expected to be supplied via Spring 
 \family typewriter
 Resource
@@ -1413,7 +1572,7 @@ HBL_INPUT
  See 
 \begin_inset CommandInset href
 LatexCommand href
-name "Preambula script in sample module"
+name "Preamble script in sample module"
 target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/resources/example1-preambula.pig"
 
 \end_inset
@@ -1422,7 +1581,7 @@ target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/mai
 \end_layout
 
 \begin_layout Standard
-If the script is being run directly in Pig's executable, preambula perhaps
+If the script is being run directly in Pig's executable, preamble perhaps
  should also register hbl jar as additional classpath jar with 
 \family typewriter
 register()
@@ -1451,10 +1610,10 @@ on.
 \end_layout
 
 \begin_layout Standard
-Preambula is also an opportunity to massage fact stream data a little bit
+Preamble is also an opportunity to massage fact stream data a little bit
  before handing off to compiler.
- Preambula doesn't suit to host complex preprocessors though because of
- the codegen'd nature of the final script.
+ Preamble doesn't suit to host complex preprocessors though because of the
+ codegen'd nature of the final script.
  If complex data preprocessing is required, it probably better be done by
  the logging application or a separate preprocessing MR job.
 \end_layout
