@@ -3,6 +3,13 @@
 \begin_document
 \begin_header
 \textclass article
+\begin_preamble
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\usepackage{fullpage}
+\usepackage{color}
+\definecolor{tentative}{rgb}{0.4,0.6,0.7}
+\definecolor{comment}{rgb}{0.7,0.4,0.4}
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
