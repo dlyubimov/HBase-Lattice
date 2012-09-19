@@ -1518,6 +1518,106 @@ Measure values could be NULL in the fact stream.
  NULL but COUNT() will produce 0.
 \end_layout
 
+\begin_layout Subsubsection
+Specifying cuboids.
+\end_layout
+
+\begin_layout Standard
+Cuboid specification basically has about the same meaning as choosing aggregate
+ tables in ROLAP solutions.
+ The main atribute of cuboid specification is a 
+\emph on
+sequence of dimensions
+\emph default
+.
+ It is a sequence because order is important from both performance point
+ of view and range of queries a cuboid may serve.
+\end_layout
+
+\begin_layout Standard
+The question of what cuboids is fairly complex.
+ The general philosophy behind data structures as much the same as in regular
+ RDBMS or OLAP.
+ Selection of which data structure to build has the same goal: we don't
+ know which queries exactly will be used.
+ However, we can identify some 
+\emph on
+families
+\emph default
+ of queries that may superset the actual query set used, and choose to optimize
+ these query supersets.
+ E.g.
+ a DBA does not exactly know what queries will be run in DBMS, but he or
+ she may choose to optimize families of queries thru supporting index range
+ scan on a particular attribute of a particular table, thus making decisions
+ about particuar index.
+\end_layout
+
+\begin_layout Standard
+Cuboids are much the same.
+ Each cuboid can serve, or is 
+\emph on
+suitable,
+\emph default
+ for a particular family of possible queries.
+ Further discussion about cuboid suitability can be found in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Suitable-cuboid"
+
+\end_inset
+
+.
+ Different cuboids may have, and in practice often do, an intersection of
+ queries they both are suitable for; however, their performace in serving
+ particular set of queries may differ as further discussed in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Optimization-and-known"
+
+\end_inset
+
+.
+ If there are multiple choices for the same query, usually HBL does the
+ right thing and chooses cuboid which in practice is likely to be much faster
+ to process.
+ So for most part we want to be concrened mostly about cuboid suitability
+ rather than performance.
+ However, it doesn't mean that we should create just most generally suitable
+ cuboids.
+ Usually very general cuboids (i.e.
+ having most dimensions) are performing well only for a fraction of their
+ servicable query sets; and to answer specific queries faster, creation
+ of cuboids with very few dimensions is still advised, since they reduce
+ amount of scanning and real time aggregation required.
+\end_layout
+
 \begin_layout Subsection
 Incremental cube compilation
 \end_layout
@@ -1619,6 +1719,12 @@ Preamble is also an opportunity to massage fact stream data a little bit
 \end_layout
 
 \begin_layout Subsubsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Fact-stream-Pig"
+
+\end_inset
+
 Fact stream Pig schema requirements
 \end_layout
 
@@ -1637,11 +1743,7 @@ It must have all defined dimensions.
 \end_layout
 
 \begin_layout Itemize
-It must have at least one measure fact
-\strikeout on
- (currently, of either long or double type only)
-\strikeout default
-.
+It must have at least one measure fact.
  The measure is recognized by having the same name as in model description.
  The scope of measures may be reduced by using exclude/include api on the
  compiler bean (see sample module for an example).
@@ -1684,6 +1786,164 @@ status open
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsubsection
+Multiple fact streams and compilation process partitioning
+\end_layout
+
+\begin_layout Standard
+In HBL there are two ways to partition process of adding new facts to the
+ cube: by measures and by cuboids.
+\end_layout
+
+\begin_layout Paragraph
+Partitioning compilation process by measures.
+\end_layout
+
+\begin_layout Standard
+There's often a requirement to process not one stream but rather several
+ streams.
+ A typical example (from the world of ad networks) is when the system collects
+ impression logs and click logs as separate fact datasets.
+ Suppose we want to have 2 measures in the cube, impression count and click
+ count.
+ Then the processing of the impression log may be transformed to contain
+ all dimensions (say, time, domain id or hash) and only single numeric measure
+ -- impression count.
+ On the other hand, click log may have all dimensions as well and a click
+ count.
+ Processing these two fact streams disjointly and asynchronously will effectivel
+y build the complete cube with both measures.
+\end_layout
+
+\begin_layout Standard
+Under these circumstances, we want to set up two independent compiler cycles
+ (and thus, two generated pig scripts).
+ When generating compiler script for impressions, we want to specify to
+ process impression counts only.
+ We can select a particular subset of measures by specifying 
+\family typewriter
+Pig8CubeIncrementalCompiler
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Bean
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+#set
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family typewriter
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+MeasureInclude()
+\family default
+ and 
+\family typewriter
+Pig8CubeIncrementalCompilerBean#setMeasureExclude()
+\family default
+.
+ This technique has been briefly mentioned in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+S
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Fact-stream-Pig"
+
+\end_inset
+
+.
+ Symmetrically similar considerations apply when compiling click facts.
+\end_layout
+
+\begin_layout Paragraph
+Partitioning compilation process by cuboids.
+\end_layout
+
+\begin_layout Standard
+Sometimes it makes sense to skip certain cuboid compilations when compiling
+ based on a certain stream.
+ Suppose, as in the previous example, we have impression and click streams.
+ Suppose, impression stream has knowledge of impression time dimension but
+ click stream has both impression time by that time, and the click time
+ as well.
+ Since click time is not really available during processing the impression
+ facts, it doesn't make sense to compile any cuboids containing click time
+ hierarchy during impression log compilation since this doesn't create any
+ interesting knowledge but would decrease (sometimes, quite significantly)
+ the compiler load.
+\end_layout
+
+\begin_layout Standard
+HBL handles cuboid inclusion/exclusion by means of assigning a 
+\emph on
+compilerGroup
+\emph default
+ to each cuboid specification (which is optional) and then using 
+\family typewriter
+Pig8CubeIncrementalCompilerBean#setCuboidGroupsInclude()
+\family default
+ to specify cuboid groups to be included in that particular compilation
+ cycle.
+ (By default, all cuboids are compiled).
+ Seel also 
+\family typewriter
+
+\begin_inset CommandInset href
+LatexCommand href
+name "example1.yaml"
+target "https://github.com/dlyubimov/HBase-Lattice/blob/dev-0.1.x/sample/src/main/resources/example1.yaml"
+
+\end_inset
+
+
+\family default
+ for an example of 
+\emph on
+compilerGroup
+\emph default
+ attribute use.
 \end_layout
 
 \begin_layout Subsection
@@ -1839,7 +2099,7 @@ width "95col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
@@ -2801,6 +3061,13 @@ Hence, it follows that we should model a hierarchy in a way so that its
 
 \begin_layout Section
 Optimization and known deficiencies to watch for
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Optimization-and-known"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
