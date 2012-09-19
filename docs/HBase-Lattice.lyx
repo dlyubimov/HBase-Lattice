@@ -1830,7 +1830,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1844,7 +1843,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1858,7 +1856,6 @@ status open
 
 \begin_layout Plain Layout
 
-\family typewriter
 
 \backslash
 -
@@ -1927,7 +1924,7 @@ Pig8CubeIncrementalCompilerBean#setCuboidGroupsInclude()
  to specify cuboid groups to be included in that particular compilation
  cycle.
  (By default, all cuboids are compiled).
- Seel also 
+ See also 
 \family typewriter
 
 \begin_inset CommandInset href
