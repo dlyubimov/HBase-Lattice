@@ -150,6 +150,173 @@ Observation values are
 \end_layout
 
 \begin_layout Section
+Short summary
+\end_layout
+
+\begin_layout Paragraph
+Exponentially weighted time series analysis.
+ 
+\end_layout
+
+\begin_layout Standard
+Weighing irregularly weighted facts using simple exponent or difference
+ of exponents (the latter is almost as simple but has desired property of
+ 
+\begin_inset Formula $f'\left(0\right)=0$
+\end_inset
+
+.
+ With regular exponent, most recent abservations get discounted at highest
+ rate than any other observations 
+\begin_inset Formula $f'\left(e^{-x}\right)=-1$
+\end_inset
+
+.
+ This is suboptimal in some situations.
+ Difference of exponents is as simple as single exponent weighting but has
+ desired identity of 
+\begin_inset Formula $f'\left(x\right)=0$
+\end_inset
+
+.
+ We provide irregularly sampled average and rate using this technique.
+\end_layout
+
+\begin_layout Paragraph
+Binomial Bayesian estimators.
+ 
+\end_layout
+
+\begin_layout Standard
+Exponentially weighted time series estimators representing Bayesian treatment
+ (right now, for Bernoulli events only).
+ The idea is that given prior belief 
+\begin_inset Formula $\mbox{Beta}\left(\alpha,\beta\right)$
+\end_inset
+
+ and some time series evidence (a bunch of Bernoulli trials) 
+\begin_inset Formula $\mathbf{X}$
+\end_inset
+
+, we can derive posterior belief 
+\begin_inset Formula $\mbox{Beta}\left(\alpha',\beta'\right)$
+\end_inset
+
+.
+ We consider 
+\begin_inset Formula $\mathbf{X}=\left(\mathbf{x},\mathbf{t}\right)$
+\end_inset
+
+, i.e.
+ matrix consisting of bunch of observations 
+\begin_inset Formula $\left(x^{\left(1\right)},t^{\left(2\right)}\right),$
+\end_inset
+
+ 
+\begin_inset Formula $\left(x^{\left(2\right)},t^{\left(2\right)}\right)...\left(x^{\left(n\right)},t^{\left(n\right)}\right)$
+\end_inset
+
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+.
+ Each individual observation in the evidence is therefore tied to a moment
+ of time.
+ Next, we marry exponential weights on observations with this conjugate
+ prior analysis (i.e.
+ form of Bayesian treatment) to produce posterior belief 
+\begin_inset Formula $p\left(\boldsymbol{\theta}'|\mathbf{X},T,\boldsymbol{\theta}\right)$
+\end_inset
+
+ for hyper-parameters (
+\begin_inset Formula $T$
+\end_inset
+
+ is the amount of significant history under weighing assumptions).
+ Finally, once we know shape of the posterior, we can produce posterior
+ belief estimators for Bernoulli p (as an expectation of distribution density)
+ and other interesting things such as credible intervals (in the open version,
+ 
+\begin_inset Formula $\mathbb{E}\left(p\left(\boldsymbol{\theta}'|\mathbf{X},T,\boldsymbol{\theta}\right)\right)$
+\end_inset
+
+ only).
+ Skipping math details, in this version we make some assumptions about prior
+ variance to simplify things a bit but still need prior mean further denoted
+ as 
+\begin_inset Formula $P_{0}$
+\end_inset
+
+: 
+\begin_inset Formula $P_{0}=\mathbb{E}\left(p\left(x|\mathbf{\boldsymbol{\theta}}\right)\right)$
+\end_inset
+
+ to derive reasonable prior parameters 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+ so the actual posterior ends up with more human friendly parameters 
+\begin_inset Formula $p\left(\boldsymbol{\theta}'|\mathbf{X},T,P_{0}\right)$
+\end_inset
+
+.
+ Even though an 
+\family default
+\series default
+\shape default
+\size default
+\emph on
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+uninformative prior 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+can be used with estimator, most subsequent sufficiently interesting application
+s arise from ability to apply 
+\family default
+\series default
+\shape default
+\size default
+\emph on
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+Informative Prior
+\emph default
+ approach (or even chain of informative priors) for estimating prior belief
+ 
+\begin_inset Formula $P_{0}$
+\end_inset
+
+ using various HBL slicing schemes including slicing for posteriors.
+\end_layout
+
+\begin_layout Section
 Exponentially weighted average with irregular sampling
 \end_layout
 
@@ -336,7 +503,7 @@ It's not hard to see that finding complement summarizer is an inverse operation
 \end_inset
 
 .
- Assuming invertion of the combine operation, 
+ Assuming inversion of the combine operation, 
 \end_layout
 
 \begin_layout Standard
@@ -419,7 +586,7 @@ Initial parameter computation.
 
 \begin_layout Standard
 Given 
-\begin_inset Formula $\Delta t$
+\begin_inset Formula $T$
 \end_inset
 
  is the desired history length that experiences phase out down to margin
@@ -434,7 +601,7 @@ Given
  default), history decay parameter 
 \begin_inset Formula 
 \[
-\alpha=\frac{-\Delta t}{\ln m}.
+\alpha=\frac{-T}{\ln m}.
 \]
 
 \end_inset
@@ -579,7 +746,7 @@ Also, for the corner cases
  either all 0 or 1s.).
  It is not difficult to see that no prior biased estimator should ever produce
  corner cases, and the very first estimator in the chain of inference (as
- in Beta-distribution mean estimator) should assume psedo counts corresponding
+ in Beta-distribution mean estimator) should assume pseudo counts corresponding
  to 50% prior belief (no prior knowledge whatsoever).
 \end_layout
 
@@ -970,7 +1137,7 @@ Similarly to
 \family typewriter
 pNow()
 \family default
-, it is possible to pull rate from any future point of time and encorporate
+, it is possible to pull rate from any future point of time and incorporate
  the gap since last even into the rate:
 \end_layout
 
@@ -1075,7 +1242,7 @@ reference "eq:complem"
 \begin_inset Formula $S_{2}$
 \end_inset
 
- includes all measurements in the correspondent continous period (i.e.
+ includes all measurements in the correspondent continuous period (i.e.
  S1 is all events for April and 
 \begin_inset Formula $S_{2}$
 \end_inset
@@ -1173,7 +1340,7 @@ Note that if you create summarizer for
 \begin_inset Formula $\left(t_{i},t_{i+1}\right)$
 \end_inset
 
- that is unnaccounted for.
+ that is unaccounted for.
  This will create errors for both combining rates and complementing continues
  rate intervals.
  To fix that, the first sequence 
@@ -1325,8 +1492,8 @@ Given margin
 \begin_inset Formula $m$
 \end_inset
 
- and decay time 
-\begin_inset Formula $\Delta t$
+ and decay period 
+\begin_inset Formula $T$
 \end_inset
 
 , so that 
@@ -1335,7 +1502,7 @@ Given margin
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-y\left(\Delta t\right)=m,\label{eq:canny-margin}
+y\left(T\right)=m,\label{eq:canny-margin}
 \end{equation}
 
 \end_inset
@@ -1362,7 +1529,7 @@ reference "eq:canny-margin"
  as 
 \begin_inset Formula 
 \[
-\alpha\approx-\frac{\Delta t}{\ln\left(m/k\right)}.
+\alpha\approx-\frac{T}{\ln\left(m/k\right)}.
 \]
 
 \end_inset
@@ -1640,7 +1807,7 @@ v=v^{\left(0\right)} & (no\, change).
 \end_layout
 
 \begin_layout Subsection
-Pecularities of Canny rate summarizer implementation 
+Peculiarities of Canny rate summarizer implementation 
 \end_layout
 
 \begin_layout Standard
@@ -1853,7 +2020,7 @@ The logic of advancing
 \end_layout
 
 \begin_layout Subsection
-Pecularities of combining Canny rate summarizers
+Peculiarities of combining Canny rate summarizers
 \end_layout
 
 \begin_layout Standard
@@ -1935,7 +2102,7 @@ case
 \end_layout
 
 \begin_layout Subsection
-Pecularities of biased binomial Canny estimator
+Peculiarities of biased binomial Canny estimator
 \end_layout
 
 \begin_layout Standard
