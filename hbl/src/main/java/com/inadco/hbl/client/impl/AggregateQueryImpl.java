@@ -183,13 +183,13 @@ public class AggregateQueryImpl implements AggregateQuery {
             measureQualifiers[mCnt++] = Bytes.toBytes(mName);
         }
 
-        Measure[] measuresArr = new Measure[measures.size()];
-
-        int i = 0;
-        Map<String, ? extends Measure> measureMap = cube.getMeasures();
-        // we already validated measure names are valid during add()
-        for (String measure : measures)
-            measuresArr[i++] = measureMap.get(measure);
+//        Measure[] measuresArr = new Measure[measures.size()];
+//
+//        int i = 0;
+//        Map<String, ? extends Measure> measureMap = cube.getMeasures();
+//        // we already validated measure names are valid during add()
+//        for (String measure : measures)
+//            measuresArr[i++] = measureMap.get(measure);
 
         generateScanSpecs(cuboid, scanSpecs, partialSpec, 0, groupKeyLen, SliceOperation.ADD, measureQualifiers);
 

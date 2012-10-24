@@ -3,6 +3,6 @@
 # for this to work. Also have maven executable around
 
 MVN='mvn clean install -DskipTests -DR'
-VER=0.2.11-SNAPSHOT
+VER=`mvn help:evaluate -Dexpression=project.version | grep -vi "\\[INFO\\]"`
 
 sudo R CMD REMOVE hblr; { $MVN && sudo HADOOP_HOME=$HADOOP_HOME HBASE_HOME=$HBASE_HOME R_COMPILE_PKGS=1 R CMD INSTALL --build target/hblr-${VER}-rpkg; }
