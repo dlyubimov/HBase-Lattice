@@ -4482,7 +4482,11 @@ Less than optimal cuboids are creating too much io, unless used in a distributed
 \end_layout
 
 \begin_layout Standard
+
+\series bold
 Distinct count (measure) implementation.
+
+\series default
  
 \begin_inset ERT
 status open
@@ -4491,7 +4495,7 @@ status open
 
 
 \backslash
-color{comment}{
+textcolor{comment}{
 \end_layout
 
 \end_inset
@@ -4511,6 +4515,16 @@ status open
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Groups over time hierarchy not implemented.
+
+\series default
+ (Actually grouping over any custom hierarchy is not implemented.
+ Slicing only.)
 \end_layout
 
 \begin_layout Standard
