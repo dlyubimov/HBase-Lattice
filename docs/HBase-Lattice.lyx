@@ -4,11 +4,24 @@
 \begin_header
 \textclass article
 \begin_preamble
-\renewcommand{\thefootnote}{\fnsymbol{footnote}}
 \usepackage{fullpage}
-\usepackage{color}
+\usepackage{multicol}
+\usepackage{wrapfig}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shadings}
+\usetikzlibrary{fadings}
+
 \definecolor{tentative}{rgb}{0.4,0.6,0.7}
 \definecolor{comment}{rgb}{0.7,0.4,0.4}
+\definecolor{Turquoise}{rgb}{0,0.81,0.85}
+\definecolor{Violet}{rgb}{0.93,0.5,0.93}
+
+
+\newbox\mybox
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
 \end_preamble
 \use_default_options true
 \begin_modules
@@ -79,8 +92,199 @@ knitr
 
 \begin_body
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{wrapfigure}[1]{l}{0.2
+\backslash
+textwidth}
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\backslash
+vspace{-130pt}
+\end_layout
+
+\begin_layout Plain Layout
+
+ 
+\backslash
+begin{center}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{tikzpicture}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+def
+\backslash
+nodeshadowed[#1]#2;{
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\backslash
+node[scale=2,above,#1]{
+\end_layout
+
+\begin_layout Plain Layout
+
+		
+\backslash
+global
+\backslash
+setbox
+\backslash
+mybox=
+\backslash
+hbox{#2}
+\end_layout
+
+\begin_layout Plain Layout
+
+		
+\backslash
+copy
+\backslash
+mybox}; 
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\backslash
+node[scale=2,above,#1,yscale=-1,
+\end_layout
+
+\begin_layout Plain Layout
+
+		scope fading=south,opacity=0.4]{
+\backslash
+box
+\backslash
+mybox};
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+nodeshadowed [at={(-5,8)},yslant=0.08]{
+\backslash
+LARGE 
+\backslash
+textcolor{Turquoise}{ 
+\end_layout
+
+\begin_layout Plain Layout
+
+$ 
+\backslash
+int_{_
+\backslash
+Theta}$
+\backslash
+textbf{(
+\backslash
+large $
+\backslash
+mathbb{HB}l$
+\backslash
+LARGE )}}};
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{tikzpicture}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{center}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{wrapfigure}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Title
 HBase Lattice Quick Start
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+This manual is an example too! Plots and query example responses are generated
+ against live 
+\emph on
+Example1.java
+\emph default
+ data using 
+\emph on
+knitr
+\emph default
+ R package written by Yihui Xie, which IMO is one seriously cool piece of
+ software -- along with R itself, of course.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Author
@@ -95,13 +299,34 @@ dlyubimov at apache dot org
 \end_layout
 
 \begin_layout Standard
-\begin_inset CommandInset toc
-LatexCommand tableofcontents
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+~
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
 
 \end_inset
 
 
-\begin_inset Newpage cleardoublepage
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
 \end_inset
 
 
@@ -113,7 +338,57 @@ status open
 
 \begin_layout Plain Layout
 
-<<knitrInit,echo=F,results='hide',warning=F,message=F>>=
+
+\backslash
+hrulefill
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+SweaveOpts{echo=F,warning=F,message=F}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<<knitrInit,results='hide'>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -124,6 +399,15 @@ library(hblr)
 \begin_layout Plain Layout
 
 library(ggplot2)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#knit_hooks$set(chunk = function(x, options) x)
 \end_layout
 
 \begin_layout Plain Layout
@@ -628,7 +912,7 @@ name "sub:R-approach-to"
 
 R approach to the workflow
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset ERT
@@ -765,8 +1049,14 @@ Deploying/updating cube model from an R script.
 \end_layout
 
 \begin_layout Standard
-The following is an example of deploying/updating Example1 model using R
- script.
+The figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Example-of-deploying"
+
+\end_inset
+
+ is an example of deploying/updating Example1 model using R script.
  
 \family typewriter
 HblAdmin
@@ -788,6 +1078,12 @@ status open
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float figure
+wide true
+sideways false
+status open
+
 \begin_layout LyX-Code
 # deploy/update HBL cube model from file 	
 \end_layout
@@ -805,6 +1101,49 @@ hblAdmin <- hbl.HblAdmin$new(model.file.name=
 \end_deeper
 \begin_layout LyX-Code
 hblAdmin$deployCube() 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Example-of-deploying"
+
+\end_inset
+
+Example of deploying a model update using R
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Paragraph
@@ -842,7 +1181,14 @@ HblQuery
 \family default
 \emph default
 is the R5 class defining prepared HBL query api.
- The following is an example how to query 
+ The figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:R-query-example"
+
+\end_inset
+
+ is an example how to query 
 \begin_inset Quotes eld
 \end_inset
 
@@ -850,7 +1196,112 @@ example1
 \begin_inset Quotes erd
 \end_inset
 
- compiled data for particular date/time interval and dimension :
+ compiled data for particular date/time interval and dimension.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note the use of half-open slice specification for time slices.
+ This is a recommended way to slice time series data.
+ Since time dimension is not really continuous but is transformed into a
+ time hierarchy with lowest granularity of 1 hour, the slice spec of [
+\begin_inset Quotes eld
+\end_inset
+
+2011/9/1
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+2011/11/1
+\begin_inset Quotes erd
+\end_inset
+
+] really means range from 
+\begin_inset Quotes eld
+\end_inset
+
+2011/9/1 00:00:00 UTC
+\begin_inset Quotes erd
+\end_inset
+
+ to 
+\begin_inset Quotes eld
+\end_inset
+
+2011/11/1 01:00:00 UTC
+\begin_inset Quotes erd
+\end_inset
+
+ i.e.
+ includes 1 more hour than the obvious intent here.
+ To fix the situation, a half-open slice spec 
+\begin_inset Quotes eld
+\end_inset
+
+[?,?)
+\begin_inset Quotes erd
+\end_inset
+
+ is used.
+\end_layout
+
+\begin_layout Standard
+Another example on the test data(lifetime) is shown in the figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Another-R-example"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{
+\backslash
+color{tentative}
+\end_layout
+
+\end_inset
+
+Another test in the R sample code produces time series histogram over entire
+ range of simulated data (which in Example1 simulates only few days in each
+ month, progressively simulating increased impression log entries day-to-day)
+ spanning several months worth of impression counts (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:R-histogram-of"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Further and up-to-date details could be found in R help system for the 
+\emph on
+hblr
+\emph default
+ package.
 \begin_inset ERT
 status open
 
@@ -870,7 +1321,29 @@ status open
 
 \begin_layout Plain Layout
 
-<<sampleRQuery, cache=T>>=
+
+\backslash
+end{multicols}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<sampleRQuery, cache=F, echo=T>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -948,71 +1421,66 @@ dframe
 @
 \end_layout
 
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:R-query-example"
+
+\end_inset
+
+R query example
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-Note the use of half-open slice specification for time slices.
- This is a recommended way to slice time series data.
- Since time dimension is not really continuous but is transformed into a
- time hierarchy with lowest granularity of 1 hour, the slice spec of [
-\begin_inset Quotes eld
-\end_inset
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
 
-2011/9/1
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-2011/11/1
-\begin_inset Quotes erd
-\end_inset
-
-] really means range from 
-\begin_inset Quotes eld
-\end_inset
-
-2011/9/1 00:00:00 UTC
-\begin_inset Quotes erd
-\end_inset
-
- to 
-\begin_inset Quotes eld
-\end_inset
-
-2011/11/1 01:00:00 UTC
-\begin_inset Quotes erd
-\end_inset
-
- i.e.
- includes 1 more hour than the obvious intent here.
- To fix the situation, a half-open slice spec 
-\begin_inset Quotes eld
-\end_inset
-
-[?,?)
-\begin_inset Quotes erd
-\end_inset
-
- is used.
-\end_layout
-
-\begin_layout Standard
-Another example on the test data(lifetime):
-\end_layout
-
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-<<SampleQueryAndPlot,cache=T>>=
+<<SampleQueryAndPlot,cache=T, dev='tikz', echo=T, out.width='.7
+\backslash
+
+\backslash
+linewidth', fig.align='center'>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -1079,6 +1547,10 @@ dframe <- rbind(
 
 \begin_layout Plain Layout
 
+\end_layout
+
+\begin_layout Plain Layout
+
 #flipped barplot with dodge by event category
 \end_layout
 
@@ -1117,35 +1589,43 @@ ggplot(dframe,aes(x=dim1,y=count,fill=group))+
 @
 \end_layout
 
-\end_inset
-
+\begin_layout Plain Layout
 
 \end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
 
 \begin_layout Plain Layout
 
-{
+
 \backslash
-color{tentative}
+hrulefill
 \end_layout
 
 \end_inset
 
-Another test in the R sample code produces time series histogram over entire
- range of simulated data (which in Example1 simulates only few days in each
- month, progressively simulating increased impression log entries day-to-day)
- spanning several months worth of impression counts (
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "fig:R-histogram-of"
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Another-R-example"
 
 \end_inset
 
-)
+Another R example
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1157,7 +1637,27 @@ status collapsed
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename Example1-R-hist.pdf
-	width 90col%
+	width 90text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
 
 \end_inset
 
@@ -1194,27 +1694,31 @@ The binning queries time and plotting time will not depend on actual count
 
 \end_layout
 
-\begin_layout Plain Layout
-
-\end_layout
-
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-Further and up-to-date details could be found in R help system for the 
-\emph on
-hblr
-\emph default
- package.
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
 \begin_layout Plain Layout
 
-}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
 \end_layout
 
 \end_inset
@@ -1867,7 +2371,150 @@ MeasureInclude()
 \family default
  and 
 \family typewriter
-Pig8CubeIncrementalCompilerBean#setMeasureExclude()
+Pig8
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Cube
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Inc
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+remen
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tal
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Com
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+piler
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Bean#set
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Mea
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+sure
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Ex
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+clude()
 \family default
 .
  This technique has been briefly mentioned in 
@@ -1919,7 +2566,163 @@ compilerGroup
 \emph default
  to each cuboid specification (which is optional) and then using 
 \family typewriter
-Pig8CubeIncrementalCompilerBean#setCuboidGroupsInclude()
+Pig8
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Cube
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Inc
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+remen
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+tal
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Com
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+piler
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Bean#set
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Cu
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+boid
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Groups
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+Inc
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+-
+\end_layout
+
+\end_inset
+
+lude()
 \family default
  to specify cuboid groups to be included in that particular compilation
  cycle.
@@ -2078,13 +2881,26 @@ See the example for how to prepare and use query.
 \end_layout
 
 \begin_layout Standard
-Approximate current query syntax is (see RFC-822 for the BNF syntax used):
+Approximate current query syntax is given in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:BNF-of-HBL"
+
+\end_inset
+
+(see RFC-822 for the BNF syntax used).
  
 \end_layout
 
 \begin_layout Standard
 
 \family typewriter
+\begin_inset Float figure
+wide true
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
 \begin_inset Box Boxed
 position "t"
 hor_pos "c"
@@ -2092,127 +2908,83 @@ has_inner_box 1
 inner_pos "t"
 use_parbox 0
 use_makebox 0
-width "95col%"
+width "95line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 'select' select-expr *(',' select-expr) 'from' cube-name [where-clause]
  [group-clause]
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 select-expr = measure-name / aggr-function [ 'as' alias-name ]
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 aggregate-function = function-name '(' measure-name ')'
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 where-clause = 'where' slice-spec *(',' slice-spec)
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 slice-spec = dimension-name 'in' ('[' / '(') value / '?' [ ',' ( value /
  '?' ) ] (']' / ')')
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 group-clause = 'group by' dimension-name *(, dimension-name)
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 measure-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 cube-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 alias-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 function-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 dimension-name = ID / '?' ; id rules or substitution via a parameter
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
-\begin_layout Plain Layout
+\begin_layout LyX-Code
 
-\family typewriter
+\size footnotesize
 value = ( '
 \backslash
 '' LITERAL '
@@ -2225,34 +2997,51 @@ value = ( '
 
 \end_layout
 
-\begin_layout Standard
-Example:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Box Boxed
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "95col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
+\begin_layout Plain Layout
+\begin_inset Caption
 
 \begin_layout Plain Layout
 
 \family typewriter
-select d1 as dim1, COUNT( m1 ) from Example where d1 in [?], time in [?,?)
- group by d1
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:BNF-of-HBL"
+
+\end_inset
+
+
+\family default
+BNF of HBL query
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Example:
+\end_layout
+
+\begin_layout LyX-Code
+select d1 as dim1, COUNT( m1 ) 
+\end_layout
+
+\begin_layout LyX-Code
+from Example 
+\end_layout
+
+\begin_layout LyX-Code
+where d1 in [?], 
+\end_layout
+
+\begin_layout LyX-Code
+time in [?,?) group by d1
 \end_layout
 
 \begin_layout Standard
@@ -3141,10 +3930,12 @@ and
 For example, if we have a query:
 \end_layout
 
-\begin_layout Standard
+\begin_layout LyX-Code
+select A, COUNT(m1) as m1Count 
+\end_layout
 
-\family typewriter
-select A, COUNT(m1) as m1Count from Cube 
+\begin_layout LyX-Code
+from Cube 
 \begin_inset Newline newline
 \end_inset
 
@@ -3178,14 +3969,26 @@ suitable
 For a similar query:
 \end_layout
 
-\begin_layout Standard
+\begin_layout LyX-Code
 
 \family typewriter
-select A, COUNT(m1) as m1Count from Cube 
+select A, COUNT(m1) as m1Count 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+from Cube 
 \begin_inset Newline newline
 \end_inset
 
-where B in [?], C in [?,?) group by A
+where B in [?], C in [?,?) 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+group by A
 \end_layout
 
 \begin_layout Standard
@@ -3298,7 +4101,13 @@ Example 1.
 \begin_layout LyX-Code
 
 \family typewriter
-select A,B, SUM(M) from cube where B in [?] group by A,B
+select A,B, SUM(M) from cube 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+where B in [?] group by A,B
 \end_layout
 
 \begin_layout Standard
@@ -3320,14 +4129,20 @@ Example 2.
 \begin_layout LyX-Code
 
 \family typewriter
-select A,B, SUM(M) from cube where C in [?,?] group by A,B
+select A,B, SUM(M) from cube 
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+where C in [?,?] group by A,B
 \end_layout
 
 \begin_layout Standard
 is best optimized by a presence of one of cuboids with dimensions (A,B,C)
  or (B,A,C).
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset ERT
@@ -3578,6 +4393,43 @@ status open
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{multicols}{2}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 TODOs and FIXME
 \end_layout
@@ -3602,6 +4454,68 @@ Complement scan optimizations for hierarchies are not in yet
 .
  (but there's a working prototype).
  
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Non-
+\begin_inset Quotes erd
+\end_inset
+
+odometer-order
+\begin_inset Quotes erd
+\end_inset
+
+ optimizations.
+ 
+\series default
+(e.g.
+ Hillbert curves).
+\end_layout
+
+\begin_layout Standard
+Less than optimal cuboids are creating too much io, unless used in a distributed
+ query with HblInputFormat.
+ Intermediate merging needs to be coprocessor-side, should be much less
+ I/O then and more comparable to traditional systems in that regard.
+\end_layout
+
+\begin_layout Standard
+Distinct count (measure) implementation.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+color{comment}{
+\end_layout
+
+\end_inset
+
+Actually there's not much here.
+ Current knowledge is that it is either bruite force hash table of sorts
+ or an approximation using count sketch.
+ Both approaches mean fairly significant aggregate state and merging expenses.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Non-numeric measures.
+ (COUNT() stuff can count non-numerics).
 \end_layout
 
 \begin_layout Standard
@@ -3675,6 +4589,29 @@ n.
 Pivoting UI: how to enable them? an MDX minimum dialect (which is an effort
  similar to building a Mondrian or whatever tranlsator)? what minimum subset
  of MDX is needed for such UI? embed our own dialect into jpivot?
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{multicols}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+hrulefill
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_body
