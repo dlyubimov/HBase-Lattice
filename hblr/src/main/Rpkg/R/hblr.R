@@ -242,10 +242,10 @@ execute.HblQuery <- function ( JCONV_FUN=hbl.JCONV_TOSTRING, ROW_FUN=NULL ) {
 							} else {
 								a<- JCONV_FUN(a)
 							}
-						}
+						} else a
 					} else  
 						a <- NA
-					
+					a
 				})
 		names(processedRow) <- aliases
 		
