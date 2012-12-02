@@ -44,7 +44,9 @@ They have "rpkg" maven classifier.
 Contributors
 ============ 
 
-Please check out [Features sought after](https://github.com/dlyubimov/HBase-Lattice/wiki/Features-sought-after) wiki page.
+The potential features and improvements are listed in a doc section. Most glaring are lack of use 
+of co-processors, approximate distnct count sketch, and additional spatial scan methodologies such 
+as Hilbert curves.
 
 
 LICENSE
