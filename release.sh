@@ -4,6 +4,10 @@
 # set MVN_GITHUB_RELEASE_REPO per deploy -DaltDeploymentREpository rules ( <id>::default::<url>)
 # to push to during deployment. 
 
+# set those in environment where the actual repo snapshot lies 
+# MVN_GITHUB_RELEASE_REPO=releases::default::file:/home/dmitriy/projects/github/dlyubimov-maven-repo/releases
+# MVN_GITHUB_SNAPSHOT_REPO=snapshots::default::file:/home/dmitriy/projects/github./dlyubimov-maven-repo/snapshots
+
 
 . ./branch.sh
 
